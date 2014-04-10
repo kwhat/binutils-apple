@@ -35,20 +35,20 @@ struct mod_term_data {
 /*
  * Global types, variables and routines declared in the file modinit_sections.c.
  */
-__private_extern__ unsigned long ninit;
-__private_extern__ unsigned long nterm;
+extern unsigned long ninit;
+extern unsigned long nterm;
 
-__private_extern__ void mod_section_merge(
+extern void mod_section_merge(
     struct mod_term_data *data, 
     struct merged_section *ms,
     struct section *s, 
     struct section_map *section_map,
     enum bool redo_live);
-__private_extern__ void mod_section_order(
+extern void mod_section_order(
     struct mod_term_data *data, 
     struct merged_section *ms);
-__private_extern__ void mod_section_reset_live(
+extern void mod_section_reset_live(
     struct mod_term_data *data, 
     struct merged_section *ms);
-__private_extern__ void mod_section_free(
+extern void mod_section_free(
     struct mod_term_data *data);

@@ -34,6 +34,6 @@
 /*
  * rnd() rounds v to a multiple of r.
  */
-__private_extern__ uint64_t rnd(
+extern uint64_t rnd(
     uint64_t v,
     uint64_t r);

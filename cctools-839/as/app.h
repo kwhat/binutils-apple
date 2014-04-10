@@ -1,4 +1,4 @@
-#import <stdio.h>
+#include <stdio.h>
 
 extern FILE *scrub_file;
 extern char *scrub_string;

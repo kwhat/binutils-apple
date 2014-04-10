@@ -166,7 +166,8 @@ char *str)
 	if(p != NULL)
 	    p[1] = '\0';
 
-	return(makestr(prefix, str, NULL));
+    //NOTE, here we add a target alias to command str;
+	return(makestr(prefix, PROGRAM_PREFIX, str, NULL));
 }
 
 /*

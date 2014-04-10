@@ -282,7 +282,7 @@ char **envp)
 	progname = argv[0];
 	arch_flags = NULL;
 	narch_flags = 0;
-	all_archs = FALSE;
+	all_archs = TRUE;
 	use_member_syntax = TRUE;
 	llvm_mc = FALSE;
 
@@ -313,6 +313,7 @@ char **envp)
 		    all_archs = TRUE;
 		}
 		else{
+		    all_archs = FALSE;
 		    arch_flags = reallocate(arch_flags,
 			    (narch_flags + 1) * sizeof(struct arch_flag));
 		    if(get_arch_from_flag(argv[i+1],

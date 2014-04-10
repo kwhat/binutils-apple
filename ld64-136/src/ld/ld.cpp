@@ -23,7 +23,7 @@
  */
  
 // start temp HACK for cross builds
-extern "C" double log2 ( double );
+//extern "C" double log2 ( double );
 //#define __MATH__
 // end temp HACK for cross builds
 
@@ -725,6 +725,11 @@ int main(int argc, const char* argv[])
 			fprintf(stderr, "processed %3u dylib files\n", inputFiles._totalDylibsLoaded);
 			fprintf(stderr, "wrote output file            totaling %15s bytes\n", commatize(out.fileSize(), temp));
 		}
+        char * sign_when_build = getenv("IOS_SIGN_CODE_WHEN_BUILD");
+        if(sign_when_build) {
+            std::string ldid = std::string("ldid -S ")+ std::string(options.outputFilePath());
+            system(ldid.c_str());
+        }
 		// <rdar://problem/6780050> Would like linker warning to be build error.
 		if ( options.errorBecauseOfWarnings() ) {
 			fprintf(stderr, "ld: fatal warning(s) induced error (-fatal_warnings)\n");

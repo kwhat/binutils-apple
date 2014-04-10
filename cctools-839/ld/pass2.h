@@ -27,21 +27,21 @@
 /*
  * The total size of the output file and the memory buffer for the output file.
  */
-__private_extern__ unsigned long output_size;
-__private_extern__ char *output_addr;
+extern unsigned long output_size;
+extern char *output_addr;
 
 /*
  * This is used to setting the SG_NORELOC flag in the segment flags correctly.
  * See the comments in the file pass2.c where this is defined.
  */
-__private_extern__ struct merged_section **output_sections;
+extern struct merged_section **output_sections;
 
-__private_extern__ void pass2(
+extern void pass2(
     void);
 #if defined(RLD) && !defined(SA_RLD)
-__private_extern__ void pass2_rld_symfile(
+extern void pass2_rld_symfile(
     void);
 #endif /* defined(RLD) && !defined(SA_RLD) */
-__private_extern__ void output_flush(
+extern void output_flush(
     unsigned long offset,
     unsigned long size);

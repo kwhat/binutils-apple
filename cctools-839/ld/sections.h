@@ -147,95 +147,95 @@ struct order_load_map {
 };
 
 /* the pointer to the head of the output file's section list */
-__private_extern__ struct merged_segment *merged_segments;
+extern struct merged_segment *merged_segments;
 #ifdef RLD
-__private_extern__ struct merged_segment *original_merged_segments;
+extern struct merged_segment *original_merged_segments;
 #endif /* RLD */
 
 /* the total number relocation entries */
-__private_extern__ unsigned long nreloc;
+extern unsigned long nreloc;
 
 /*
  * This is set to TRUE if any of the input objects do not have the
  * MH_SUBSECTIONS_VIA_SYMBOLS bit set in the mach_header flags field.
  */
-__private_extern__ enum bool some_non_subsection_via_symbols_objects;
+extern enum bool some_non_subsection_via_symbols_objects;
 
-__private_extern__ void merge_sections(
+extern void merge_sections(
     void);
-__private_extern__ void remove_debug_segments(
+extern void remove_debug_segments(
     void);
-__private_extern__ void merge_literal_sections(
+extern void merge_literal_sections(
     enum bool redo_live);
-__private_extern__ void layout_ordered_sections(
+extern void layout_ordered_sections(
     void);
-__private_extern__ enum bool is_literal_output_offset_live(
+extern enum bool is_literal_output_offset_live(
     struct merged_section *ms,
     unsigned long output_offset);
-__private_extern__ void parse_order_line(
+extern void parse_order_line(
     char *line,
     char **archive_name,
     char **object_name,
     char **symbol_name,
     struct merged_section *ms,
     unsigned long line_number);
-__private_extern__ void resize_live_sections(
+extern void resize_live_sections(
     void);
-__private_extern__ void relayout_relocs(
+extern void relayout_relocs(
     void);
-__private_extern__ void output_literal_sections(
+extern void output_literal_sections(
     void);
-__private_extern__ void output_sections_from_files(
+extern void output_sections_from_files(
     void);
-__private_extern__ void output_section(
+extern void output_section(
     struct section_map *map);
-__private_extern__ unsigned long pass2_nsect_merged_symbol_section_type(
+extern unsigned long pass2_nsect_merged_symbol_section_type(
     struct merged_symbol *merged_symbol);
-__private_extern__ void nop_pure_instruction_scattered_sections(
+extern void nop_pure_instruction_scattered_sections(
     void);
-__private_extern__ void flush_scatter_copied_sections(
+extern void flush_scatter_copied_sections(
     void);
-__private_extern__ void live_marking(
+extern void live_marking(
     void);
-__private_extern__ struct fine_reloc *get_fine_reloc_for_merged_symbol(
+extern struct fine_reloc *get_fine_reloc_for_merged_symbol(
     struct merged_symbol *merged_symbol,
     struct section_map **local_map);
-__private_extern__ unsigned long r_symbolnum_from_r_value(
+extern unsigned long r_symbolnum_from_r_value(
     unsigned long r_value,
     struct object_file *obj);
-__private_extern__ struct merged_section *create_merged_section(
+extern struct merged_section *create_merged_section(
     struct section *s);
-__private_extern__ struct merged_segment *lookup_merged_segment(
+extern struct merged_segment *lookup_merged_segment(
     char *segname);
-__private_extern__ struct merged_section *lookup_merged_section(
+extern struct merged_section *lookup_merged_section(
     char *segname,
     char *sectname);
-__private_extern__ enum bool is_merged_symbol_coalesced(
+extern enum bool is_merged_symbol_coalesced(
     struct merged_symbol *merged_symbol);
-__private_extern__ int qsort_load_order_values(
+extern int qsort_load_order_values(
     const struct load_order *load_order1,
     const struct load_order *load_order2);
-__private_extern__ unsigned long align_to_input_mod(
+extern unsigned long align_to_input_mod(
     unsigned long output_offset,
     unsigned long input_offset,
     unsigned long align);
 #ifdef RLD
-__private_extern__ void reset_merged_sections(
+extern void reset_merged_sections(
     void);
-__private_extern__ void zero_merged_sections_sizes(
+extern void zero_merged_sections_sizes(
     void);
-__private_extern__ void remove_merged_sections(
+extern void remove_merged_sections(
     void);
 #endif /* RLD */
 
 #ifdef DEBUG
-__private_extern__ void print_merged_sections(
+extern void print_merged_sections(
     char *string);
-__private_extern__ void print_merged_section_stats(
+extern void print_merged_section_stats(
     void);
-__private_extern__ void print_name_arrays(
+extern void print_name_arrays(
     void);
-__private_extern__ void print_load_order(
+extern void print_load_order(
     struct load_order *load_order,
     unsigned long nload_order,
     struct merged_section *ms,

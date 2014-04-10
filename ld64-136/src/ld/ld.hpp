@@ -30,6 +30,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <assert.h>
+#include "configure.h"
 
 #include <vector>
 #include <set>

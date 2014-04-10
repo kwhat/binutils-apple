@@ -136,7 +136,7 @@ _STRUCT_PPC_THREAD_STATE
 };
 #endif /* __DARWIN_UNIX03 */
 
-#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+//#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
 
 #pragma pack(4)			/* Make sure the structure stays as we defined it */
 
@@ -236,7 +236,7 @@ _STRUCT_PPC_THREAD_STATE64
 
 #pragma pack()
 
-#endif /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
+//#endif /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
 
 /* This structure should be double-word aligned for performance */
 
@@ -353,7 +353,7 @@ _STRUCT_PPC_EXCEPTION_STATE
 };
 #endif /* __DARWIN_UNIX03 */
 
-#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
+//#if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE)
 #if __DARWIN_UNIX03
 #define _STRUCT_PPC_EXCEPTION_STATE64	struct __darwin_ppc_exception_state64
 _STRUCT_PPC_EXCEPTION_STATE64
@@ -385,7 +385,7 @@ _STRUCT_PPC_EXCEPTION_STATE64
 #endif
 };
 #endif /* __DARWIN_UNIX03 */
-#endif /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
+//#endif /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
 
 #pragma pack()
 

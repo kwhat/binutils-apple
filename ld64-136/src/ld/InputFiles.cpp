@@ -318,7 +318,7 @@ ld::File* InputFiles::makeFile(const Options::FileInfo& info, bool indirectDylib
 			throwf("lto file was built for %s which is not the architecture being linked (%s): %s", fileArch(p, len), _options.architectureName(), info.path);
 		}
 		else {
-			const char* libLTO = "libLTO.dylib";
+			const char* libLTO = "libLTO.so";
 			char ldPath[PATH_MAX];
 			char tmpPath[PATH_MAX];
 			char libLTOPath[PATH_MAX];
@@ -330,7 +330,7 @@ ld::File* InputFiles::makeFile(const Options::FileInfo& info, bool indirectDylib
 				if ( realpath(ldPath, tmpPath) != NULL ) {
 					char* lastSlash = strrchr(tmpPath, '/');
 					if ( lastSlash != NULL )
-						strcpy(lastSlash, "/../lib/libLTO.dylib");
+						strcpy(lastSlash, "/../lib/llvm/libLTO.so");
 					libLTO = tmpPath;
 					if ( realpath(tmpPath, libLTOPath) != NULL ) 
 						libLTO = libLTOPath;

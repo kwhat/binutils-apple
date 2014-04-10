@@ -28,17 +28,17 @@
 #define __private_extern__ __declspec(private_extern)
 #endif
 
-#import <ar.h>
+#include <ar.h>
 #ifndef AR_EFMT1
 #define	AR_EFMT1	"#1/"		/* extended format #1 */
 #endif
-#import <mach-o/loader.h>
+#include <mach-o/loader.h>
 #ifdef OFI
-#import <mach-o/dyld.h>
+#include <mach-o/dyld.h>
 #endif
-#import "stuff/bytesex.h"
-#import "stuff/bool.h"
-#import "stuff/arch.h"
+#include "stuff/bytesex.h"
+#include "stuff/bool.h"
+#include "stuff/arch.h"
 
 enum ofile_type {
     OFILE_UNKNOWN,
@@ -133,7 +133,7 @@ struct ofile {
     cpu_subtype_t lto_cpusubtype;   /* machine specifier */
 };
 
-__private_extern__ void ofile_process(
+extern void ofile_process(
     char *name,
     struct arch_flag *arch_flags,
     uint32_t narch_flags,
@@ -144,9 +144,9 @@ __private_extern__ void ofile_process(
     void (*processor)(struct ofile *ofile, char *arch_name, void *cookie),
     void *cookie);
 #ifdef OFI
-__private_extern__ NSObjectFileImageReturnCode ofile_map(
+extern NSObjectFileImageReturnCode ofile_map(
 #else
-__private_extern__ enum bool ofile_map(
+extern enum bool ofile_map(
 #endif
     const char *file_name,
     const struct arch_flag *arch_flag,	/* can be NULL */
@@ -154,9 +154,9 @@ __private_extern__ enum bool ofile_map(
     struct ofile *ofile,
     enum bool archives_with_fat_objects);
 #ifdef OFI
-__private_extern__ NSObjectFileImageReturnCode ofile_map_from_memory(
+extern NSObjectFileImageReturnCode ofile_map_from_memory(
 #else
-__private_extern__ enum bool ofile_map_from_memory(
+extern enum bool ofile_map_from_memory(
 #endif
     char *addr,
     uint64_t size,
@@ -166,49 +166,49 @@ __private_extern__ enum bool ofile_map_from_memory(
     const char *object_name,		/* can be NULL */
     struct ofile *ofile,
     enum bool archives_with_fat_objects);
-__private_extern__ void ofile_unmap(
+extern void ofile_unmap(
     struct ofile *ofile);
-__private_extern__ enum bool ofile_first_arch(
+extern enum bool ofile_first_arch(
     struct ofile *ofile);
-__private_extern__ enum bool ofile_next_arch(
+extern enum bool ofile_next_arch(
     struct ofile *ofile);
-__private_extern__ enum bool ofile_first_member(
+extern enum bool ofile_first_member(
     struct ofile *ofile);
-__private_extern__ enum bool ofile_next_member(
+extern enum bool ofile_next_member(
     struct ofile *ofile);
-__private_extern__ enum bool ofile_specific_member(
+extern enum bool ofile_specific_member(
     const char *object_name,
     struct ofile *ofile);
-__private_extern__ enum bool ofile_first_module(
+extern enum bool ofile_first_module(
     struct ofile *ofile);
-__private_extern__ enum bool ofile_next_module(
+extern enum bool ofile_next_module(
     struct ofile *ofile);
-__private_extern__ enum bool ofile_specific_module(
+extern enum bool ofile_specific_module(
     const char *module_name,
     struct ofile *ofile);
-__private_extern__ void ofile_print(
+extern void ofile_print(
     struct ofile *ofile);
-__private_extern__ uint32_t size_ar_name(
+extern uint32_t size_ar_name(
     const struct ar_hdr *ar_hdr);
-__private_extern__ int32_t ofile_get_word(
+extern int32_t ofile_get_word(
     uint64_t addr,
     uint32_t *word,
     void *get_word_data /* struct ofile *ofile */);
-__private_extern__ void archive_error(
+extern void archive_error(
     struct ofile *ofile,
     const char *format, ...)
 #ifndef __MWERKS__
     __attribute__ ((format (printf, 2, 3)))
 #endif
     ;
-__private_extern__ void archive_member_error(
+extern void archive_member_error(
     struct ofile *ofile,
     const char *format, ...)
 #ifndef __MWERKS__
     __attribute__ ((format (printf, 2, 3)))
 #endif
     ;
-__private_extern__ void Mach_O_error(
+extern void Mach_O_error(
     struct ofile *ofile,
     const char *format, ...)
 #ifndef __MWERKS__
@@ -217,7 +217,7 @@ __private_extern__ void Mach_O_error(
     ;
 
 #ifdef LTO_SUPPORT
-__private_extern__ int is_llvm_bitcode(
+extern int is_llvm_bitcode(
     struct ofile *ofile,
     char *addr,
     size_t size);

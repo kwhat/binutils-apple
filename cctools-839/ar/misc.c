@@ -164,7 +164,7 @@ void
 badfmt()
 {
 
-	errno = EFTYPE;
+	errno = EINVAL;
 	err(1, "%s", archive);
 }
 

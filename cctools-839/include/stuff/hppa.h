@@ -24,56 +24,56 @@
 #define __private_extern__ __declspec(private_extern)
 #endif
 
-__private_extern__ void calc_hppa_HILO(
+extern void calc_hppa_HILO(
     uint32_t base,
     uint32_t offset,
     uint32_t *left21,
     uint32_t *right14);
 
-__private_extern__ uint32_t assemble_17(
+extern uint32_t assemble_17(
     uint32_t x,
     uint32_t y,
     uint32_t z);
 
-__private_extern__ uint32_t assemble_21(
+extern uint32_t assemble_21(
     uint32_t x);
 
-__private_extern__ uint32_t assemble_12(
+extern uint32_t assemble_12(
     uint32_t x,
     uint32_t y);
 
-__private_extern__ uint32_t assemble_3(
+extern uint32_t assemble_3(
     uint32_t x);
 
-__private_extern__ uint32_t sign_ext(
+extern uint32_t sign_ext(
     uint32_t x,
     uint32_t len);
 
-__private_extern__ uint32_t low_sign_ext(
+extern uint32_t low_sign_ext(
     uint32_t x,
     uint32_t len);
 
-__private_extern__ uint32_t dis_assemble_21(
+extern uint32_t dis_assemble_21(
     uint32_t as21);
 
-__private_extern__ uint32_t low_sign_unext(
+extern uint32_t low_sign_unext(
     uint32_t x,
     uint32_t len);
 
-__private_extern__ void dis_assemble_17(
+extern void dis_assemble_17(
     uint32_t as17,
     uint32_t *x,
     uint32_t *y,
     uint32_t *z);
 
-__private_extern__ uint32_t sign_unext(
+extern uint32_t sign_unext(
     uint32_t x,
     uint32_t len);
 
-__private_extern__ uint32_t dis_assemble_3(
+extern uint32_t dis_assemble_3(
     uint32_t x);
 
-__private_extern__ void dis_assemble_12(
+extern void dis_assemble_12(
     uint32_t as12,
     uint32_t *x,
     uint32_t *y);

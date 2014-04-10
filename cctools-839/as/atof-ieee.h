@@ -1,4 +1,4 @@
-#import "flonum.h"
+#include "flonum.h"
 
 extern char *atof_ieee(
     char *str,

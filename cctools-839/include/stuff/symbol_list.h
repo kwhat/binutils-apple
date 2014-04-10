@@ -32,11 +32,11 @@ struct symbol_list {
     enum bool seen;	/* set if the symbol is seen in the input file */
 };
 
-__private_extern__ void setup_symbol_list(
+extern void setup_symbol_list(
     char *file,
     struct symbol_list **list,
     uint32_t *size);
 
-__private_extern__ int symbol_list_bsearch(
+extern int symbol_list_bsearch(
     const char *name,
     const struct symbol_list *sym);

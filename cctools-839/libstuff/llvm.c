@@ -3,6 +3,7 @@
 #include <libc.h>
 #include <sys/file.h>
 #include <dlfcn.h>
+#include <stdint.h>
 #include "llvm-c/Disassembler.h"
 #include "stuff/llvm.h"
 #include "stuff/allocate.h"
@@ -13,7 +14,7 @@
  * plan to include it (along with the current libLTO APIs) in a generic
  * libLLVM.dylib.
  */
-#define LIB_LLVM "libLTO.dylib"
+#define LIB_LLVM "libLTO.so"
 
 static int tried_to_load_llvm = 0;
 static void *llvm_handle = NULL;
@@ -66,10 +67,7 @@ LLVMSymbolLookupCallback SymbolLookUp)
 	    if(llvm_handle == NULL){
 		free(llvm_path);
 		llvm_path = NULL;
-		llvm_handle = dlopen("/Applications/Xcode.app/Contents/"
-				     "Developer/Toolchains/XcodeDefault."
-				     "xctoolchain/usr/lib/" LIB_LLVM,
-				     RTLD_NOW);
+		llvm_handle = dlopen("/usr/lib/llvm/" LIB_LLVM, RTLD_NOW);
 	    }
 	    if(llvm_handle == NULL)
 		return(0);

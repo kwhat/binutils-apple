@@ -289,82 +289,82 @@ struct reference_map {
  * The head of the object file list and the total count of all object files
  * in the list.
  */
-__private_extern__ struct object_list *objects;
-__private_extern__ unsigned long nobjects;
+extern struct object_list *objects;
+extern unsigned long nobjects;
 
 /*
  * A pointer to the current object being processed in pass1 or pass2.
  */
-__private_extern__ struct object_file *cur_obj;
+extern struct object_file *cur_obj;
 
 /*
  * A pointer to the base object for an incremental link if not NULL.
  */
-__private_extern__ struct object_file *base_obj;
+extern struct object_file *base_obj;
 
-__private_extern__ struct object_file *new_object_file(
+extern struct object_file *new_object_file(
     void);
 #ifndef RLD
-__private_extern__ unsigned long object_index(
+extern unsigned long object_index(
     struct object_file *obj);
 #endif
-__private_extern__ struct object_file *add_last_object_file(
+extern struct object_file *add_last_object_file(
     struct object_file *new_object);
-__private_extern__ void remove_last_object_file(
+extern void remove_last_object_file(
     struct object_file *last_object);
-__private_extern__ void print_obj_name(
+extern void print_obj_name(
     struct object_file *obj);
-__private_extern__ unsigned long size_ar_name(
+extern unsigned long size_ar_name(
     struct ar_hdr *ar_hdr);
-__private_extern__ void set_obj_resolved_path(
+extern void set_obj_resolved_path(
     struct object_file *obj);
-__private_extern__ void print_whatsloaded(
+extern void print_whatsloaded(
     void);
-__private_extern__ enum bool is_dylib_module_loaded(
+extern enum bool is_dylib_module_loaded(
     struct dylib_module *dylib_module);
-__private_extern__ unsigned long fine_reloc_output_offset(
+extern unsigned long fine_reloc_output_offset(
     struct section_map *map,
     unsigned long input_offset);
-__private_extern__ unsigned long fine_reloc_output_address(
+extern unsigned long fine_reloc_output_address(
     struct section_map *map,
     unsigned long input_offset,
     unsigned long output_base_address);
-__private_extern__ void fine_reloc_output_ref(
+extern void fine_reloc_output_ref(
     struct section_map *map,
     unsigned long input_offset,
     struct live_ref *ref);
-__private_extern__ enum bool fine_reloc_offset_in_output(
+extern enum bool fine_reloc_offset_in_output(
     struct section_map *map,
     unsigned long input_offset);
-__private_extern__ enum bool fine_reloc_offset_in_output_for_output_offset(
+extern enum bool fine_reloc_offset_in_output_for_output_offset(
     struct section_map *map,
     unsigned long output_offset);
-__private_extern__ unsigned long fine_reloc_output_sectnum(
+extern unsigned long fine_reloc_output_sectnum(
     struct section_map *map,
     unsigned long input_offset);
-__private_extern__ enum bool fine_reloc_arm(
+extern enum bool fine_reloc_arm(
     struct section_map *map,
     unsigned long input_offset);
-__private_extern__ enum bool fine_reloc_thumb(
+extern enum bool fine_reloc_thumb(
     struct section_map *map,
     unsigned long input_offset);
-__private_extern__ enum bool fine_reloc_local(
+extern enum bool fine_reloc_local(
     struct section_map *map,
     unsigned long input_offset);
-__private_extern__ struct fine_reloc *fine_reloc_for_input_offset(
+extern struct fine_reloc *fine_reloc_for_input_offset(
     struct section_map *map,
     unsigned long input_offset);
 #ifdef RLD
-__private_extern__ void clean_objects(
+extern void clean_objects(
     void);
-__private_extern__ void remove_objects(
+extern void remove_objects(
     void);
 #endif /* RLD */
 
 #ifdef DEBUG
-__private_extern__ void print_object_list(
+extern void print_object_list(
     void);
-__private_extern__ void print_fine_relocs(
+extern void print_fine_relocs(
     struct fine_reloc *fine_relocs,
     unsigned long nfine_relocs,
     char *string);

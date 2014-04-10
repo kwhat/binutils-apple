@@ -62,7 +62,7 @@ typedef union err_code {
     } pgfault;
 } err_code_t;
 
-#import <architecture/i386/sel.h>
+#include <architecture/i386/sel.h>
 
 /*
  * The actual hardware exception frame

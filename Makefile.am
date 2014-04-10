@@ -1,0 +1,2 @@
+SUBDIRS=cctools-$(CCVER) ld64-$(LDVER)
+ACLOCAL_AMFLAGS = -I m4

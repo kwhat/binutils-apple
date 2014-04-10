@@ -68,6 +68,7 @@ static char rcsid[] = "$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $"
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #include <ar.h>
 #include <dirent.h>
@@ -166,7 +167,6 @@ opened:
 		/* Locking seems to not be working */
 		case ENOTSUP:
 		case EHOSTUNREACH:
-		case EBADRPC:
 		default:
 			/* Filesystem does not support locking */
 			break;
@@ -321,7 +321,7 @@ put_arobj(cfp, sb)
 		 * things for exact binary equality.
 		 */
 		if (getenv("ZERO_AR_DATE") == NULL)
-			tv_sec = (long int)sb->st_mtimespec.tv_sec;
+			tv_sec = (long int)sb->st_mtime;
 		else
 			tv_sec = (long int)0;
 

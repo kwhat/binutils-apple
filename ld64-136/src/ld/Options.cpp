@@ -4314,7 +4314,7 @@ void Options::checkForClassic(int argc, const char* argv[])
 
 void Options::gotoClassicLinker(int argc, const char* argv[])
 {
-	argv[0] = "ld_classic";
+	argv[0] = PROGRAM_PREFIX "ld_classic";
 	// ld_classic does not support -iphoneos_version_min, so change
 	for(int j=0; j < argc; ++j) {
 		if ( (strcmp(argv[j], "-iphoneos_version_min") == 0) || (strcmp(argv[j], "-ios_version_min") == 0) ) {
