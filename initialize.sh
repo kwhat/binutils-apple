@@ -28,6 +28,7 @@ rm -Rvf ./cctools-${CCV}/libmacho/
 rm -vf ./cctools-${CCV}/PB.project
 rm -Rvf ./ld64-${LDV}/ld64.xcodeproj/
 rm -vf ./ld64-${LDV}/compile_stubs
+rm -vf ./-${LDV}/src/create_configure
 
 cp ./cctools-${CCV}/APPLE_LICENSE ./COPYING
 echo "Alexander Barker <alex@1stleg.com>" > ./AUTHORS

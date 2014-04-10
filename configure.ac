@@ -1,4 +1,7 @@
-AC_INIT([cctools], [839], [https://github.com/kwhat/cctools/])
+AC_INIT([binutils-apple], [4.6], [https://github.com/kwhat/binutils-apple/])
+
+CCTOOLS=cctools-839
+LD64=ld64-136
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -228,7 +231,7 @@ AC_SUBST(LTO_LIBS)
 AC_SUBST(LTO_DEFS)
 
 #compile ld_classic or not. only for 32bit.
-LD_CLASSIC=""
+LD32=""
 cat > conftest.c <<EOF
 #if defined(__x86_64__) || (!defined(__i386__) && defined(__LP64__))
 host_address=64
@@ -241,36 +244,43 @@ rm -f conftest.c
 
 if test "$OSBIT" = "host_address=32"; then
 AC_MSG_NOTICE(["Your system is 32bit, enable ld_classic build"])
-LD_CLASSIC="ld"
+LD32="ld"
 else
 AC_MSG_NOTICE(["Your system is 64bit, disable ld_classic"])
 fi
 
-AC_SUBST([LD_CLASSIC], [$LD_CLASSIC])
+AC_SUBST([LD32], [$LD32])
+
+AC_SUBST([CCTOOLS], [$CCTOOLS])
+AC_SUBST([LD64], [$LD64])
+
+AC_CONFIG_FILES([
+	Makefile
+	$CCTOOLS/Makefile
+	$CCTOOLS/libstuff/Makefile
+	$CCTOOLS/ar/Makefile
+	$CCTOOLS/as/Makefile
+	$CCTOOLS/as/i386/Makefile
+	$CCTOOLS/as/x86_64/Makefile
+	$CCTOOLS/as/ppc/Makefile
+	$CCTOOLS/as/ppc64/Makefile
+	
+	$CCTOOLS/misc/Makefile
+	$CCTOOLS/otool/Makefile
+	$CCTOOLS/ld/Makefile
+
+	$LD64/Makefile
+	$LD64/src/Makefile
+	$LD64/src/3rd/Makefile
+	$LD64/src/3rd/BlocksRuntime/Makefile
+	$LD64/src/ld/Makefile
+	$LD64/src/ld/parsers/Makefile
+	$LD64/src/ld/passes/Makefile
+	$LD64/src/other/Makefile
+])
+
+#AC_CONFIG_FILES([$CCTOOLS/man/Makefile])
 
 
-AC_CONFIG_FILES([Makefile libstuff/Makefile])
-AC_CONFIG_FILES([ar/Makefile])
-AC_CONFIG_FILES([as/Makefile])
-AC_CONFIG_FILES([as/arm/Makefile])
-AC_CONFIG_FILES([as/i386/Makefile])
-AC_CONFIG_FILES([as/x86_64/Makefile])
-AC_CONFIG_FILES([as/ppc/Makefile])
-AC_CONFIG_FILES([as/ppc64/Makefile])
-#AC_CONFIG_FILES([man/Makefile])
-AC_CONFIG_FILES([misc/Makefile])
-AC_CONFIG_FILES([otool/Makefile])
-#AC_CONFIG_FILES([libobjc2/Makefile])
-AC_CONFIG_FILES([ld/Makefile])
-
-
-#AC_CONFIG_FILES([ld64/Makefile])
-#AC_CONFIG_FILES([ld64/src/Makefile])
-#AC_CONFIG_FILES([ld64/src/3rd/Makefile])
-#AC_CONFIG_FILES([ld64/src/3rd/BlocksRuntime/Makefile])
-#AC_CONFIG_FILES([ld64/src/ld/Makefile])
-#AC_CONFIG_FILES([ld64/src/ld/parsers/Makefile])
-#AC_CONFIG_FILES([ld64/src/ld/passes/Makefile])
-#AC_CONFIG_FILES([ld64/src/other/Makefile])
 
 AC_OUTPUT
