@@ -1,1 +1,1 @@
-SUBDIRS=libstuff ar as misc otool @LD@
+SUBDIRS=libstuff ar as misc otool
