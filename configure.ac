@@ -1,8 +1,5 @@
 AC_INIT([binutils-apple], [4.6], [https://github.com/kwhat/binutils-apple/])
 
-CCTOOLS=cctools-839
-LD64=ld64-136
-
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
@@ -12,15 +9,15 @@ AC_ARG_PROGRAM
 #force compiler to clang
 CC=clang
 CXX=clang++
+# I am not sure why this is here or if it is needed.
 CPP="clang -E"
 
-AM_INIT_AUTOMAKE([1.10 no-define no-dist-gzip dist-bzip2 tar-ustar])
+AM_INIT_AUTOMAKE([1.10 subdir-objects no-define no-dist-gzip dist-bzip2 tar-ustar])
 
 AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
 
-AC_PREREQ([2.57])
-AC_REVISION([$Revision: 1.37 $])
+AC_PREREQ([2.64])
 
 AC_CONFIG_SRCDIR([COPYING])
 LT_PREREQ([2.2.6])
@@ -49,6 +46,13 @@ if test "$buggy_unistd"; then
   exit
 fi
 
+if test "$CC" != "clang"; then
+AC_MSG_ERROR("You must use clang to compile it")
+fi
+
+if test "$CXX" != "clang++"; then
+AC_MSG_ERROR("You must use clang to compile it")
+fi
 
 AC_CHECK_HEADERS([llvm-c/lto.h], [], [AC_MSG_ERROR([*** lto.h not found, Please install llvm dev packages according to your system])])
 AC_CHECK_HEADERS([openssl/md5.h], [], [AC_MSG_ERROR([*** md5.h not found, Please install ssl dev packages according to your system])])
@@ -181,6 +185,24 @@ CFLAGS=$ORIGCFLAGS
 AC_SUBST([WARNINGS], [$WARNINGS])
 
 
+# Checks for header files.
+AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+#AC_CHECK_HEADER_STDBOOL
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
+
+# Checks for library functions.
+AC_FUNC_CHOWN
+AC_FUNC_FORK
+AC_CHECK_FUNCS([memset strdup strrchr strtoul])
+
 AC_CHECK_LIB([dl],[dlopen],[
          DL_LIBS=-ldl
          ])
@@ -207,17 +229,29 @@ AC_C_BIGENDIAN([AC_SUBST([ENDIAN_FLAG],[-D__BIG_ENDIAN__=1])],
 # Check LTO
 AC_CHECK_PROG(HAVE_LLVM_CONFIG, llvm-config, true, false)
 
-if test "x$HAVE_LLVM_CONFIG" = "xfalse"; then
-        AC_CHECK_PROG(HAVE_LLVM_CONFIG_32, llvm-config-3.2, true, false)
-        if test "x$HAVE_LLVM_CONFIG_32" = "xfalse"; then
-                AC_MSG_ERROR([llvm-config or llvm-config-3.2 not found on your system,please install related packages])
-        else
-	        LLVM_LIBDIR=`llvm-config-3.2 --libdir`
-        	if test -f $LLVM_LIBDIR/libLTO.so;then
-                	LTO_LIBS="-L`llvm-config-3.2 --libdir` -lLTO"
-                	LTO_DEFS="-DLTO_SUPPORT=1"
-        	fi
-        fi
+#if test "x$HAVE_LLVM_CONFIG" = "xfalse"; then
+#        AC_CHECK_PROG(HAVE_LLVM_CONFIG_32, llvm-config-3.2, true, false)
+#        if test "x$HAVE_LLVM_CONFIG_32" = "xfalse"; then
+#                AC_MSG_ERROR([llvm-config or llvm-config-3.2 not found on your system,please install related packages])
+#        else
+#	        LLVM_LIBDIR=`llvm-config-3.2 --libdir`
+#        	if test -f $LLVM_LIBDIR/libLTO.so;then
+#                	LTO_LIBS="-L`llvm-config-3.2 --libdir` -lLTO"
+#                	LTO_DEFS="-DLTO_SUPPORT=1"
+#        	fi
+#        fi
+#else
+#        LLVM_LIBDIR=`llvm-config --libdir`
+#        if test -f $LLVM_LIBDIR/libLTO.so;then
+#                LTO_LIBS="-L`llvm-config --libdir` -lLTO"
+#                LTO_DEFS="-DLTO_SUPPORT=1"
+#        fi
+#fi
+
+# Check LTO
+AC_CHECK_PROG([llvm_config], [llvm-config],[yes],[no])
+if test "x$llvm-config" = "xno"; then
+        AC_MSG_ERROR("Could not find llvm-config.")
 else
         LLVM_LIBDIR=`llvm-config --libdir`
         if test -f $LLVM_LIBDIR/libLTO.so;then
@@ -226,61 +260,61 @@ else
         fi
 fi
 
-
 AC_SUBST(LTO_LIBS)
 AC_SUBST(LTO_DEFS)
 
 #compile ld_classic or not. only for 32bit.
-LD32=""
-cat > conftest.c <<EOF
-#if defined(__x86_64__) || (!defined(__i386__) && defined(__LP64__))
-host_address=64
-#else
-host_address=32
-#endif
-EOF
-OSBIT=`${CC-cc} -E conftest.c | grep host_address=`
-rm -f conftest.c
+# LD32=""
+# cat > conftest.c <<EOF
+# #if defined(__x86_64__) || (!defined(__i386__) && defined(__LP64__))
+# host_address=64
+# #else
+# host_address=32
+# #endif
+# EOF
+# OSBIT=`${CC-cc} -E conftest.c | grep host_address=`
+# rm -f conftest.c
 
-if test "$OSBIT" = "host_address=32"; then
-AC_MSG_NOTICE(["Your system is 32bit, enable ld_classic build"])
-LD32="ld"
-else
-AC_MSG_NOTICE(["Your system is 64bit, disable ld_classic"])
-fi
+# if test "$OSBIT" = "host_address=32"; then
+# AC_MSG_NOTICE(["Your system is 32bit, enable ld_classic build"])
+# LD32="ld"
+# else
+# AC_MSG_NOTICE(["Your system is 64bit, disable ld_classic"])
+# fi
 
-AC_SUBST([LD32], [$LD32])
+AC_SUBST([CCTOOLS], [cctools-839])
+AC_CHECK_SIZEOF([long]) 
+AS_IF([test "$ac_cv_sizeof_long" -eq 8], 
+    [AC_SUBST([LD], [../ld64-136])], 
+    [AC_SUBST([LD], [ld])]) 
 
-AC_SUBST([CCTOOLS], [$CCTOOLS])
-AC_SUBST([LD64], [$LD64])
 
+# sed 's/cctools-839/cctools-###' to change version numbers until
+# AC_CONFIG_FILES([$fu], [], [fu='fu']) does what it and the 
+# documentation and examples claim it should!
 AC_CONFIG_FILES([
 	Makefile
-	$CCTOOLS/Makefile
-	$CCTOOLS/libstuff/Makefile
-	$CCTOOLS/ar/Makefile
-	$CCTOOLS/as/Makefile
-	$CCTOOLS/as/i386/Makefile
-	$CCTOOLS/as/x86_64/Makefile
-	$CCTOOLS/as/ppc/Makefile
-	$CCTOOLS/as/ppc64/Makefile
-	
-	$CCTOOLS/misc/Makefile
-	$CCTOOLS/otool/Makefile
-	$CCTOOLS/ld/Makefile
+	cctools-839/Makefile
+	cctools-839/libstuff/Makefile
+	cctools-839/ar/Makefile
+	cctools-839/as/i386/Makefile
+	cctools-839/as/x86_64/Makefile
+	cctools-839/as/ppc/Makefile
+	cctools-839/as/ppc64/Makefile
+	cctools-839/as/Makefile
+	cctools-839/man/Makefile
+	cctools-839/misc/Makefile
+	cctools-839/otool/Makefile
+	cctools-839/ld/Makefile
 
-	$LD64/Makefile
-	$LD64/src/Makefile
-	$LD64/src/3rd/Makefile
-	$LD64/src/3rd/BlocksRuntime/Makefile
-	$LD64/src/ld/Makefile
-	$LD64/src/ld/parsers/Makefile
-	$LD64/src/ld/passes/Makefile
-	$LD64/src/other/Makefile
+	ld64-136/Makefile
+	ld64-136/src/Makefile
+	ld64-136/src/3rd/Makefile
+	ld64-136/src/3rd/BlocksRuntime/Makefile
+	ld64-136/src/ld/Makefile
+	ld64-136/src/ld/parsers/Makefile
+	ld64-136/src/ld/passes/Makefile
+	ld64-136/src/other/Makefile
 ])
-
-#AC_CONFIG_FILES([$CCTOOLS/man/Makefile])
-
-
 
 AC_OUTPUT

@@ -18,10 +18,10 @@ bin_PROGRAMS =  \
 	codesign_allocate
  
 LDADD =  \
-        $(top_srcdir)/libstuff/libstuff.la \
+        $(top_srcdir)/$(CCTOOLS)/libstuff/libstuff.la \
 		$(DL_LIBS) 
 		
-AM_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/foreign -I$(top_srcdir)/libstuff $(WARNINGS) $(LTO_DEFS) -D__DARWIN_UNIX03 $(ENDIAN_FLAG)
+AM_CFLAGS = -I$(top_srcdir)/$(CCTOOLS)/include -I$(top_srcdir)/$(CCTOOLS)/include/foreign -I$(top_srcdir)/$(CCTOOLS)/libstuff $(WARNINGS) $(LTO_DEFS) -D__DARWIN_UNIX03 $(ENDIAN_FLAG)
 
 checksyms_SOURCES = checksyms.c
 lipo_SOURCES = lipo.c

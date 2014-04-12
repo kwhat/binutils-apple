@@ -2,8 +2,8 @@
 
 bin_PROGRAMS = as 
 as_LDADD =  \
-        $(top_srcdir)/libstuff/libstuff.la
+        $(top_srcdir)/$(CCTOOLS)/libstuff/libstuff.la
 
-as_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/foreign -I$(top_srcdir)/libstuff $(WARNINGS) $(LTO_DEFS) -DNeXT_MOD -DASLIBEXECDIR="\"$(ASLIBEXECDIR)/\"" -D__DARWIN_UNIX03 $(ENDIAN_FLAG)
+as_CFLAGS = -I$(top_srcdir)/$(CCTOOLS)/include -I$(top_srcdir)/$(CCTOOLS)/include/foreign -I$(top_srcdir)/$(CCTOOLS)/libstuff $(WARNINGS) $(LTO_DEFS) -DNeXT_MOD -DASLIBEXECDIR="\"$(ASLIBEXECDIR)/\"" -D__DARWIN_UNIX03 $(ENDIAN_FLAG)
 
 as_SOURCES = driver.c 

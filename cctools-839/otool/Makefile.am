@@ -1,17 +1,17 @@
 bin_PROGRAMS = otool 
 
-#$(top_srcdir)/libobjc2/libobjc.la 
+#$(top_srcdir)/$(CCTOOLS)/libobjc2/libobjc.la 
 otool_LDADD =  \
-	$(top_srcdir)/libstuff/libstuff.la \
+	$(top_srcdir)/$(CCTOOLS)/libstuff/libstuff.la \
 	$(DL_LIBS) 
 
 otool_LDFLAGS = $(PTHREAD_FLAGS) -lobjc
 
-otool_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/foreign -I$(top_srcdir)/libstuff $(WARNINGS) $(LTO_DEFS) -D__DARWIN_UNIX03 $(ENDIAN_FLAG) -DOTOOL
+otool_CFLAGS = -I$(top_srcdir)/$(CCTOOLS)/include -I$(top_srcdir)/$(CCTOOLS)/include/foreign -I$(top_srcdir)/$(CCTOOLS)/libstuff $(WARNINGS) $(LTO_DEFS) -D__DARWIN_UNIX03 $(ENDIAN_FLAG) -DOTOOL
 
 otool_SOURCES =  \
 	main.c \
-	$(top_srcdir)/libstuff/ofile.c \
+	../libstuff/ofile.c \
 	ofile_print.c \
 	m68k_disasm.c \
 	i860_disasm.c \
