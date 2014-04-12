@@ -285,8 +285,8 @@ AC_SUBST(LTO_DEFS)
 AC_SUBST([CCTOOLS], [cctools-839])
 AC_CHECK_SIZEOF([long]) 
 AS_IF([test "$ac_cv_sizeof_long" -eq 8], 
-    [AC_SUBST([LD], [../ld64-136])], 
-    [AC_SUBST([LD], [ld])]) 
+    [AC_SUBST([LD], [ld64-136])], 
+    [AC_SUBST([LD], [cctools-839/ld])]) 
 
 
 # sed 's/cctools-839/cctools-###' to change version numbers until
