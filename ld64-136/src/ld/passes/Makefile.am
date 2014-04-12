@@ -17,12 +17,12 @@ libPasses_la_CXXFLAGS = \
 	$(WARNINGS) \
 	$(LTO_DEFS) \
 	$(ENDIAN_FLAGS) \
-	-I$(top_srcdir)/src/include \
-	-I$(top_srcdir)/src/include/foreign \
-	-I$(top_srcdir)/src/abstraction \
-	-I$(top_srcdir)/src/ld \
-	-I$(top_srcdir)/src/3rd \
-	-I$(top_srcdir)/src 
+	-I$(top_srcdir)/$(CCTOOLS)/include \
+	-I$(top_srcdir)/$(CCTOOLS)/include/foreign \
+	-I$(top_srcdir)/$(LD)/src/abstraction \
+	-I$(top_srcdir)/$(LD)/src/ld \
+	-I$(top_srcdir)/$(LD)/src/3rd \
+	-I$(top_srcdir)/$(LD)/src 
 
 libPasses_la_SOURCES =  \
 	branch_island.cpp  \
