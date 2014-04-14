@@ -33,7 +33,11 @@
 
 #include <vector>
 #include <set>
+#if __cplusplus >= 201103L
 #include <unordered_set>
+#else
+#include <ext/hash_set>
+#endif
 
 #include "configure.h"
 
@@ -124,7 +128,11 @@ private:
 		bool operator()(const char* left, const char* right) const { return (strcmp(left, right) == 0); }
 	};
 
+	#if __cplusplus >= 201103L
 	typedef std::unordered_set<const char*, CStringHash, CStringEquals>  StringSet;
+	#else
+	typedef __gnu_cxx::hash_set<const char*, CStringHash, CStringEquals>  StringSet;
+	#endif
 
 												MachOChecker(const uint8_t* fileContent, uint32_t fileLength, const char* path);
 	void										checkMachHeader();

@@ -35,14 +35,16 @@ AM_CFLAGS = \
     -I$(top_srcdir)/$(LD)/src/ld/passes 
 
 unwinddump_SOURCES = unwinddump.cpp
+
 machochecker_SOURCES = machochecker.cpp
+
 ObjectDump_SOURCES = \
 	ObjectDump.cpp \
 	$(top_srcdir)/$(LD)/src/ld/debugline.c 
+
 ObjectDump_LDADD =  \
 	$(top_srcdir)/$(LD)/src/ld/parsers/libParsers.la \
 	$(LTO_LIBS)  
-
 
 dyldinfo_SOURCES =  dyldinfo.cpp
 dyldinfo_LDADD =  \

@@ -33,7 +33,12 @@
 
 #include <vector>
 #include <set>
+#if __cplusplus >= 201103L
 #include <unordered_set>
+#else
+#include <ext/hash_set>
+#endif
+
 
 
 #include "MachOFileAbstraction.hpp"

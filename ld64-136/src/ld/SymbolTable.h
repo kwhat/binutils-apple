@@ -61,7 +61,11 @@ public:
 	typedef uint32_t IndirectBindingSlot;
 
 private:
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const char*, IndirectBindingSlot, CStringHash, CStringEquals> NameToSlot;
+	#else
+	typedef __gnu_cxx::hash_map<const char*, IndirectBindingSlot, CStringHash, CStringEquals> NameToSlot;
+	#endif
 
 	class ContentFuncs {
 	public:
