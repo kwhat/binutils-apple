@@ -11,7 +11,7 @@ ld_LDADD =  \
 	$(UUID_LIBS) \
 	$(LTO_LIBS)
 
-ld_LDFLAGS = $(PTHREAD_LDFLAG) -lssl
+ld_LDFLAGS = $(PTHREAD_FLAGS) -lssl
 
 ld_CXXFLAGS =  \
 	-fblocks \
