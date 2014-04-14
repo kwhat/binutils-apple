@@ -750,7 +750,7 @@ bool File<A>::justInTimeforEachAtom(const char* name, ld::File::AtomHandler& han
 	AtomAndWeak bucket;
 	if ( this->containsOrReExports(name, &bucket.weakDef, &bucket.tlv, &bucket.address) ) {
 		bucket.atom = new ExportAtom<A>(*this, name, bucket.weakDef, bucket.tlv, bucket.address);
-		_atoms[name] = bucket;
+		_atoms[name] = &bucket;
 		_providedAtom = true;
 		if ( _s_logHashtable ) fprintf(stderr, "getJustInTimeAtomsFor: %s found in %s\n", name, this->path());
 		// call handler with new export atom
