@@ -42,7 +42,11 @@
 #include <mach-o/dyld.h>
 
 #include <vector>
+#if __cplusplus >= 201103L
 #include <unordered_set>
+#else
+#include <ext/hash_set>
+#endif
 
 #include "Options.h"
 #include "ld.hpp"
@@ -100,8 +104,12 @@ private:
 	bool					printReferencedBy(const char* name, SymbolTable::IndirectBindingSlot slot);
 	void					tweakWeakness();
 
+	#if __cplusplus >= 201103L
 	typedef std::unordered_set<const char*, CStringHash, CStringEquals>  StringSet;
-
+	#else
+	typedef __gnu_cxx::hash_set<const char*, CStringHash, CStringEquals>  StringSet;
+	#endif
+	
 	class NotLive {
 	public:
 		bool operator()(const ld::Atom* atom) const {

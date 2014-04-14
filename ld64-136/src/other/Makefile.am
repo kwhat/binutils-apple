@@ -38,14 +38,14 @@ unwinddump_SOURCES = unwinddump.cpp
 machochecker_SOURCES = machochecker.cpp
 ObjectDump_SOURCES = \
 	ObjectDump.cpp \
-	$(top_srcdir)/src/ld/debugline.c 
+	$(top_srcdir)/$(CCTOOLS)/src/ld/debugline.c 
 ObjectDump_LDADD =  \
-	$(top_srcdir)/src/ld/parsers/libParsers.la \
+	$(top_srcdir)/$(CCTOOLS)/src/ld/parsers/libParsers.la \
 	$(LTO_LIBS)  
 
 
 dyldinfo_SOURCES =  dyldinfo.cpp
 dyldinfo_LDADD =  \
-	$(top_srcdir)/src/3rd/libhelper.la
+	$(top_srcdir)/$(LD)/src/3rd/libhelper.la
 
 

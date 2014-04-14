@@ -42,7 +42,11 @@
 #include <mach-o/dyld.h>
 
 #include <vector>
+#if __cplusplus >= 201103L
 #include <unordered_map>
+#else
+#include <ext/hash_map>
+#endif
 
 #include "Options.h"
 #include "ld.hpp"
@@ -64,32 +68,48 @@ private:
 		size_t	operator()(const ld::Atom*) const;
 		bool	operator()(const ld::Atom* left, const ld::Atom* right) const;
 	};
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const ld::Atom*, IndirectBindingSlot, ContentFuncs, ContentFuncs> ContentToSlot;
+	#else
+	typedef __gnu_cxx::hash_map<const ld::Atom*, IndirectBindingSlot, ContentFuncs, ContentFuncs> ContentToSlot;
+	#endif
 
 	class ReferencesHashFuncs {
 	public:
 		size_t	operator()(const ld::Atom*) const;
 		bool	operator()(const ld::Atom* left, const ld::Atom* right) const;
 	};
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const ld::Atom*, IndirectBindingSlot, ReferencesHashFuncs, ReferencesHashFuncs> ReferencesToSlot;
+	#else
+	typedef __gnu_cxx::hash_map<const ld::Atom*, IndirectBindingSlot, ReferencesHashFuncs, ReferencesHashFuncs> ReferencesToSlot;
+	#endif
 
 	class CStringHashFuncs {
 	public:
 		size_t	operator()(const ld::Atom*) const;
 		bool	operator()(const ld::Atom* left, const ld::Atom* right) const;
 	};
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const ld::Atom*, IndirectBindingSlot, CStringHashFuncs, CStringHashFuncs> CStringToSlot;
+	#else
+	typedef __gnu_cxx::hash_map<const ld::Atom*, IndirectBindingSlot, CStringHashFuncs, CStringHashFuncs> CStringToSlot;
+	#endif
 
 	class UTF16StringHashFuncs {
 	public:
 		size_t	operator()(const ld::Atom*) const;
 		bool	operator()(const ld::Atom* left, const ld::Atom* right) const;
 	};
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const ld::Atom*, IndirectBindingSlot, UTF16StringHashFuncs, UTF16StringHashFuncs> UTF16StringToSlot;
+	typedef std::unordered_map<const char*, CStringToSlot*, CStringHash, CStringEquals> NameToMap;
+	#else
+	typedef __gnu_cxx::hash_map<const ld::Atom*, IndirectBindingSlot, UTF16StringHashFuncs, UTF16StringHashFuncs> UTF16StringToSlot;
+	typedef __gnu_cxx::hash_map<const char*, CStringToSlot*, CStringHash, CStringEquals> NameToMap;
+	#endif
 
 	typedef std::map<IndirectBindingSlot, const char*> SlotToName;
-	typedef std::unordered_map<const char*, CStringToSlot*, CStringHash, CStringEquals> NameToMap;
-    
     typedef std::vector<const ld::Atom *> DuplicatedSymbolAtomList;
     typedef std::map<const char *, DuplicatedSymbolAtomList * > DuplicateSymbols;
 	

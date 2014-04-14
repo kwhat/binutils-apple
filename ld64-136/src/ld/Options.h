@@ -30,8 +30,13 @@
 #include <mach/machine.h>
 
 #include <vector>
+#if __cplusplus >= 201103L
 #include <unordered_set>
 #include <unordered_map>
+#else
+#include <ext/hash_set>
+#include <ext/hash_map>
+#endif
 
 #include "ld.hpp"
 #include "Snapshot.h"
@@ -342,8 +347,13 @@ public:
     const char*					pipelineFifo() const { return fPipelineFifo; }
 	
 private:
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const char*, unsigned int, ld::CStringHash, ld::CStringEquals> NameToOrder;
 	typedef std::unordered_set<const char*, ld::CStringHash, ld::CStringEquals>  NameSet;
+	#else
+	typedef __gnu_cxx::hash_map<const char*, unsigned int, ld::CStringHash, ld::CStringEquals> NameToOrder;
+	typedef __gnu_cxx::hash_set<const char*, ld::CStringHash, ld::CStringEquals>  NameSet;
+	#endif
 	enum ExportMode { kExportDefault, kExportSome, kDontExportSome };
 	enum LibrarySearchMode { kSearchDylibAndArchiveInEachDir, kSearchAllDirsForDylibsThenAllDirsForArchives };
 	enum InterposeMode { kInterposeNone, kInterposeAllExternal, kInterposeSome };
@@ -355,8 +365,8 @@ private:
 		bool					containsNonWildcard(const char*) const;
 		bool					empty() const			{ return fRegular.empty() && fWildCard.empty(); }
 		bool					hasWildCards() const	{ return !fWildCard.empty(); }
-		NameSet::iterator		regularBegin() const	{ return fRegular.begin(); }
-		NameSet::iterator		regularEnd() const		{ return fRegular.end(); }
+		NameSet::const_iterator	regularBegin() const	{ return fRegular.begin(); }
+		NameSet::const_iterator	regularEnd() const		{ return fRegular.end(); }
 		void					remove(const NameSet&); 
 	private:
 		static bool				hasWildCards(const char*);

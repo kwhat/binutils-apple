@@ -54,7 +54,11 @@
 #include <vector>
 #include <list>
 #include <algorithm>
+#if __cplusplus >= 201103L
 #include <unordered_map>
+#else
+#include <ext/hash_map>
+#endif
 #include <cxxabi.h>
 
 #include "Options.h"
@@ -146,8 +150,11 @@ private:
 	struct SectionEquals {
 		bool operator()(const ld::Section* left, const ld::Section* right) const;
 	};
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const ld::Section*, FinalSection*, SectionHash, SectionEquals> SectionInToOut;
-	
+	#else
+	typedef __gnu_cxx::hash_map<const ld::Section*, FinalSection*, SectionHash, SectionEquals> SectionInToOut;
+	#endif
 
 	SectionInToOut			_sectionInToFinalMap;
 	const Options&			_options;

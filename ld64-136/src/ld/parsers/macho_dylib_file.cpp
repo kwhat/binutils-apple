@@ -33,8 +33,13 @@
 #include <vector>
 #include <set>
 #include <algorithm>
-#include <unordered_map>
+#if __cplusplus >= 201103L
 #include <unordered_set>
+#include <unordered_map>
+#else
+#include <ext/hash_set>
+#include <ext/hash_map>
+#endif
 
 #include "Architectures.hpp"
 #include "MachOFileAbstraction.hpp"
@@ -187,8 +192,13 @@ private:
 		};
 	};
 	struct AtomAndWeak { ld::Atom* atom; bool weakDef; bool tlv; pint_t address; };
-	typedef std::unordered_map<const char*, AtomAndWeak, ld::CStringHash, ld::CStringEquals> NameToAtomMap;
-	typedef std::unordered_set<const char*, CStringHash, ld::CStringEquals>  NameSet;
+	#if __cplusplus >= 201103L
+	typedef std::unordered_map<const char*, Atom*, ld::CStringHash, ld::CStringEquals> CStringToAtom;
+	typedef std::unordered_set<const char*, ld::CStringHash, ld::CStringEquals>  CStringSet;
+	#else
+	typedef __gnu_cxx::hash_map<const char*, AtomAndWeak*, ld::CStringHash, ld::CStringEquals> NameToAtomMap;
+	typedef __gnu_cxx::hash_set<const char*, ld::CStringHash, ld::CStringEquals>  NameSet;
+	#endif
 
 	struct Dependent { const char* path; File<A>* dylib; bool reExport; };
 
@@ -509,14 +519,22 @@ void File<A>::buildExportHashTableFromSymbolTable(const macho_dysymtab_command<P
 		if ( _s_logHashtable ) fprintf(stderr, "ld: building hashtable of %u toc entries for %s\n", dynamicInfo->nextdefsym(), this->path());
 		const macho_nlist<P>* start = &symbolTable[dynamicInfo->iextdefsym()];
 		const macho_nlist<P>* end = &start[dynamicInfo->nextdefsym()];
+		#if __cplusplus >= 201103L
 		_atoms.reserve(dynamicInfo->nextdefsym()); // set initial bucket count
+		#else
+		_atoms.resize(dynamicInfo->nextdefsym()); // set initial bucket count
+		#endif
 		for (const macho_nlist<P>* sym=start; sym < end; ++sym) {
 			this->addSymbol(&strings[sym->n_strx()], (sym->n_desc() & N_WEAK_DEF) != 0, false, sym->n_value());
 		}
 	}
 	else {
 		int32_t count = dynamicInfo->ntoc();
-		_atoms.reserve(count); // set initial bucket count
+		#if __cplusplus >= 201103L
+		_atoms.reserve(dynamicInfo->nextdefsym()); // set initial bucket count
+		#else
+		_atoms.resize(dynamicInfo->nextdefsym()); // set initial bucket count
+		#endif
 		if ( _s_logHashtable ) fprintf(stderr, "ld: building hashtable of %u entries for %s\n", count, this->path());
 		const struct dylib_table_of_contents* toc = (dylib_table_of_contents*)(fileContent + dynamicInfo->tocoff());
 		for (int32_t i = 0; i < count; ++i) {
@@ -626,7 +644,7 @@ void File<A>::addSymbol(const char* name, bool weakDef, bool tlv, pint_t address
 		bucket.tlv = tlv;
 		bucket.address = address;
 		if ( _s_logHashtable ) fprintf(stderr, "  adding %s to hash table for %s\n", name, this->path());
-		_atoms[strdup(name)] = bucket;
+		_atoms[strdup(name)] = &bucket;
 	}
 }
 
@@ -653,7 +671,7 @@ bool File<A>::hasWeakDefinition(const char* name) const
 		
 	typename NameToAtomMap::const_iterator pos = _atoms.find(name);
 	if ( pos != _atoms.end() ) {
-		return pos->second.weakDef;
+		return pos->second->weakDef;
 	}
 	else {
 		// look in children that I re-export
@@ -662,7 +680,7 @@ bool File<A>::hasWeakDefinition(const char* name) const
 				//fprintf(stderr, "getJustInTimeAtomsFor: %s NOT found in %s, looking in child %s\n", name, this->path(), (*it)->getInstallPath());
 				typename NameToAtomMap::iterator cpos = it->dylib->_atoms.find(name);
 				if ( cpos != it->dylib->_atoms.end() ) 
-					return cpos->second.weakDef;
+					return cpos->second->weakDef;
 			}
 		}
 	}
@@ -678,7 +696,7 @@ bool File<A>::allSymbolsAreWeakImported() const
 	bool foundWeakImport = false;
 	//fprintf(stderr, "%s:\n", this->path());
 	for (typename NameToAtomMap::const_iterator it = _atoms.begin(); it != _atoms.end(); ++it) {
-		const ld::Atom* atom = it->second.atom;
+		const ld::Atom* atom = it->second->atom;
 		if ( atom != NULL ) {
 			if ( atom->weakImported() )
 				foundWeakImport = true;
@@ -703,9 +721,9 @@ bool File<A>::containsOrReExports(const char* name, bool* weakDef, bool* tlv, pi
 	// check myself
 	typename NameToAtomMap::iterator pos = _atoms.find(name);
 	if ( pos != _atoms.end() ) {
-		*weakDef = pos->second.weakDef;
-		*tlv = pos->second.tlv;
-		*defAddress = pos->second.address;
+		*weakDef = pos->second->weakDef;
+		*tlv = pos->second->tlv;
+		*defAddress = pos->second->address;
 		return true;
 	}
 	

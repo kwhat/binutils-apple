@@ -30,8 +30,13 @@
 
 #include <vector>
 #include <map>
-#include <unordered_map>
+#if __cplusplus >= 201103L
 #include <unordered_set>
+#include <unordered_map>
+#else
+#include <ext/hash_set>
+#include <ext/hash_map>
+#endif
 
 #include "ld.hpp"
 #include "dtrace_dof.h"
@@ -110,8 +115,13 @@ struct DTraceProbeInfo {
 	uint32_t						offset;
 	const char*						probeName;
 };
+#if __cplusplus >= 201103L
 typedef std::unordered_map<const char*, std::vector<DTraceProbeInfo>, CStringHash, CStringEquals>	ProviderToProbes;
 typedef	std::unordered_set<const char*, CStringHash, CStringEquals>  CStringSet;
+#else
+typedef __gnu_cxx::hash_map<const char*, std::vector<DTraceProbeInfo>, CStringHash, CStringEquals>	ProviderToProbes;
+typedef	__gnu_cxx::hash_set<const char*, CStringHash, CStringEquals>  CStringSet;
+#endif
 
 
 

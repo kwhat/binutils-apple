@@ -20,7 +20,13 @@ struct dyld_unwind_sections
 
 typedef Dl_info dl_info;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 int _NSGetExecutablePath(char *path, unsigned int *size);
+#ifdef __cplusplus
+}
+#endif
 
 int _dyld_find_unwind_sections(void* i, struct dyld_unwind_sections* sec);
 

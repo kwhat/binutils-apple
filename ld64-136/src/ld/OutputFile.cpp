@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/statfs.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
 #include <sys/param.h>
@@ -50,7 +51,11 @@
 #include <vector>
 #include <list>
 #include <algorithm>
+#if __cplusplus >= 201103L
 #include <unordered_set>
+#else
+#include <ext/hash_set>
+#endif
 
 #include <CommonCrypto/CommonDigest.h>
 #include <AvailabilityMacros.h>
@@ -65,6 +70,8 @@
 #include "LinkEdit.hpp"
 #include "LinkEditClassic.hpp"
 
+// Not sure why this isnt defined by statfs
+#define HFS_SUPER_MAGIC 0x4244
 
 namespace ld {
 namespace tool {
@@ -1696,7 +1703,7 @@ void OutputFile::writeOutputFile(ld::Internal& state)
 			// <rdar://problem/12264302> Don't use mmap on non-hfs volumes
 			struct statfs fsInfo;
 			if ( statfs(_options.outputFilePath(), &fsInfo) != -1 ) {
-				if ( strcmp(fsInfo.f_fstypename, "hfs") == 0) {
+				if ( fsInfo.f_type == HFS_SUPER_MAGIC) {
 					(void)unlink(_options.outputFilePath());
 					outputIsMappableFile = true;
 				}
@@ -1720,7 +1727,7 @@ void OutputFile::writeOutputFile(ld::Internal& state)
 			end[1] = '\0';
 			struct statfs fsInfo;
 			if ( statfs(dirPath, &fsInfo) != -1 ) {
-				if ( strcmp(fsInfo.f_fstypename, "hfs") == 0) {
+				if ( fsInfo.f_type == HFS_SUPER_MAGIC) {
 					outputIsMappableFile = true;
 				}
 			}
@@ -3505,7 +3512,11 @@ void OutputFile::synthesizeDebugNotes(ld::Internal& state)
 	const char* filename = NULL;
 	bool wroteStartSO = false;
 	state.stabs.reserve(atomsNeedingDebugNotes.size()*4);
+	#if __cplusplus >= 201103L
 	std::unordered_set<const char*, CStringHash, CStringEquals>  seenFiles;
+	#else
+	__gnu_cxx::hash_set<const char*, CStringHash, CStringEquals>  seenFiles;
+	#endif
 	for (std::vector<const ld::Atom*>::iterator it=atomsNeedingDebugNotes.begin(); it != atomsNeedingDebugNotes.end(); it++) {
 		const ld::Atom* atom = *it;
 		const ld::File* atomFile = atom->file();

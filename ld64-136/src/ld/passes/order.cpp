@@ -31,7 +31,11 @@
 
 #include <vector>
 #include <map>
+#if __cplusplus >= 201103L
 #include <unordered_map>
+#else
+#include <ext/hash_map>
+#endif
 
 #include "ld.hpp"
 #include "order.h"
@@ -83,7 +87,11 @@ private:
 		const Layout&	_layout;
 	};
 				
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const char*, const ld::Atom*, CStringHash, CStringEquals> NameToAtom;
+	#else
+	typedef __gnu_cxx::hash_map<const char*, const ld::Atom*, CStringHash, CStringEquals> NameToAtom;
+	#endif
 	
 	typedef std::map<const ld::Atom*, const ld::Atom*> AtomToAtom;
 	

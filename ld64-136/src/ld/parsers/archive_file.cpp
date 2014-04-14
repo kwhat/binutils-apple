@@ -33,8 +33,11 @@
 #include <set>
 #include <map>
 #include <algorithm>
+#if __cplusplus >= 201103L
 #include <unordered_map>
-
+#else
+#include <ext/hash_map>
+#endif
 #include "MachOFileAbstraction.hpp"
 #include "Architectures.hpp"
 
@@ -112,7 +115,11 @@ private:
 	struct MemberState { ld::relocatable::File* file; const Entry *entry; bool logged; bool loaded; uint16_t index;};
 	bool											loadMember(MemberState& state, ld::File::AtomHandler& handler, const char *format, ...) const;
 
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const char*, const struct ranlib*, ld::CStringHash, ld::CStringEquals> NameToEntryMap;
+	#else
+	typedef __gnu_cxx::hash_map<const char*, const struct ranlib*, ld::CStringHash, ld::CStringEquals> NameToEntryMap;
+	#endif
 
 	typedef typename A::P							P;
 	typedef typename A::P::E						E;

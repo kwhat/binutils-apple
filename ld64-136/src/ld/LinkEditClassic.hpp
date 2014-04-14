@@ -32,7 +32,11 @@
 #include <unistd.h>
 
 #include <vector>
+#if __cplusplus >= 201103L
 #include <unordered_map>
+#else
+#include <ext/hash_map>
+#endif
 
 #include "Options.h"
 #include "ld.hpp"
@@ -92,7 +96,11 @@ public:
 
 private:
 	enum { kBufferSize = 0x01000000 };
+	#if __cplusplus >= 201103L
 	typedef std::unordered_map<const char*, int32_t, CStringHash, CStringEquals> StringToOffset;
+	#else
+	typedef __gnu_cxx::hash_map<const char*, int32_t, CStringHash, CStringEquals> StringToOffset;
+	#endif
 
 	const uint32_t							_pointerSize;
 	std::vector<char*>						_fullBuffers;

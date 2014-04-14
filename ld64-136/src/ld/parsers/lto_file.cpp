@@ -33,8 +33,13 @@
 #include <pthread.h>
 #include <mach-o/dyld.h>
 #include <vector>
+#if __cplusplus >= 201103L
 #include <unordered_set>
 #include <unordered_map>
+#else
+#include <ext/hash_set>
+#include <ext/hash_map>
+#endif
 
 #include "MachOFileAbstraction.hpp"
 #include "Architectures.hpp"
@@ -212,8 +217,13 @@ private:
 	static const char*				tripletPrefixForArch(cpu_type_t arch);
 	static ld::relocatable::File*	parseMachOFile(const uint8_t* p, size_t len, const OptimizeOptions& options);
 
+	#if __cplusplus >= 201103L
 	typedef	std::unordered_set<const char*, ld::CStringHash, ld::CStringEquals>  CStringSet;
 	typedef std::unordered_map<const char*, Atom*, ld::CStringHash, ld::CStringEquals> CStringToAtom;
+	#else
+	typedef	__gnu_cxx::hash_set<const char*, ld::CStringHash, ld::CStringEquals>  CStringSet;
+	typedef __gnu_cxx::hash_map<const char*, Atom*, ld::CStringHash, ld::CStringEquals> CStringToAtom;
+	#endif
 	
 	class AtomSyncer : public ld::File::AtomHandler {
 	public:
