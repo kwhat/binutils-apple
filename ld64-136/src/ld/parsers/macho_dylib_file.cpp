@@ -193,11 +193,11 @@ private:
 	};
 	struct AtomAndWeak { ld::Atom* atom; bool weakDef; bool tlv; pint_t address; };
 	#if __cplusplus >= 201103L
-	typedef std::unordered_map<const char*, Atom*, ld::CStringHash, ld::CStringEquals> CStringToAtom;
-	typedef std::unordered_set<const char*, ld::CStringHash, ld::CStringEquals>  CStringSet;
+	typedef std::unordered_map<const char*, AtomAndWeak, ld::CStringHash, ld::CStringEquals> NameToAtomMap;
+	typedef std::unordered_set<const char*, CStringHash, ld::CStringEquals>  NameSet;
 	#else
-	typedef __gnu_cxx::hash_map<const char*, AtomAndWeak*, ld::CStringHash, ld::CStringEquals> NameToAtomMap;
-	typedef __gnu_cxx::hash_set<const char*, ld::CStringHash, ld::CStringEquals>  NameSet;
+	typedef __gnu_cxx::hash_map<const char*, AtomAndWeak, ld::CStringHash, ld::CStringEquals> NameToAtomMap;
+	typedef __gnu_cxx::hash_set<const char*, CStringHash, ld::CStringEquals>  NameSet;
 	#endif
 
 	struct Dependent { const char* path; File<A>* dylib; bool reExport; };
@@ -644,7 +644,7 @@ void File<A>::addSymbol(const char* name, bool weakDef, bool tlv, pint_t address
 		bucket.tlv = tlv;
 		bucket.address = address;
 		if ( _s_logHashtable ) fprintf(stderr, "  adding %s to hash table for %s\n", name, this->path());
-		_atoms[strdup(name)] = &bucket;
+		_atoms[strdup(name)] = bucket;
 	}
 }
 
@@ -671,7 +671,7 @@ bool File<A>::hasWeakDefinition(const char* name) const
 		
 	typename NameToAtomMap::const_iterator pos = _atoms.find(name);
 	if ( pos != _atoms.end() ) {
-		return pos->second->weakDef;
+		return pos->second.weakDef;
 	}
 	else {
 		// look in children that I re-export
@@ -680,7 +680,7 @@ bool File<A>::hasWeakDefinition(const char* name) const
 				//fprintf(stderr, "getJustInTimeAtomsFor: %s NOT found in %s, looking in child %s\n", name, this->path(), (*it)->getInstallPath());
 				typename NameToAtomMap::iterator cpos = it->dylib->_atoms.find(name);
 				if ( cpos != it->dylib->_atoms.end() ) 
-					return cpos->second->weakDef;
+					return cpos->second.weakDef;
 			}
 		}
 	}
@@ -696,7 +696,7 @@ bool File<A>::allSymbolsAreWeakImported() const
 	bool foundWeakImport = false;
 	//fprintf(stderr, "%s:\n", this->path());
 	for (typename NameToAtomMap::const_iterator it = _atoms.begin(); it != _atoms.end(); ++it) {
-		const ld::Atom* atom = it->second->atom;
+		const ld::Atom* atom = it->second.atom;
 		if ( atom != NULL ) {
 			if ( atom->weakImported() )
 				foundWeakImport = true;
@@ -721,9 +721,9 @@ bool File<A>::containsOrReExports(const char* name, bool* weakDef, bool* tlv, pi
 	// check myself
 	typename NameToAtomMap::iterator pos = _atoms.find(name);
 	if ( pos != _atoms.end() ) {
-		*weakDef = pos->second->weakDef;
-		*tlv = pos->second->tlv;
-		*defAddress = pos->second->address;
+		*weakDef = pos->second.weakDef;
+		*tlv = pos->second.tlv;
+		*defAddress = pos->second.address;
 		return true;
 	}
 	
@@ -750,7 +750,7 @@ bool File<A>::justInTimeforEachAtom(const char* name, ld::File::AtomHandler& han
 	AtomAndWeak bucket;
 	if ( this->containsOrReExports(name, &bucket.weakDef, &bucket.tlv, &bucket.address) ) {
 		bucket.atom = new ExportAtom<A>(*this, name, bucket.weakDef, bucket.tlv, bucket.address);
-		_atoms[name] = &bucket;
+		_atoms[name] = bucket;
 		_providedAtom = true;
 		if ( _s_logHashtable ) fprintf(stderr, "getJustInTimeAtomsFor: %s found in %s\n", name, this->path());
 		// call handler with new export atom
