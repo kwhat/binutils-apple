@@ -40,14 +40,12 @@ machochecker_SOURCES = machochecker.cpp
 
 ObjectDump_SOURCES = \
 	ObjectDump.cpp \
-	$(top_srcdir)/$(LD)/src/ld/debugline.c 
+	../ld/debugline.c 
 
 ObjectDump_LDADD =  \
 	$(top_srcdir)/$(LD)/src/ld/parsers/libParsers.la \
-	$(LTO_LIBS)  
+	$(LTO_LIBS)
 
 dyldinfo_SOURCES =  dyldinfo.cpp
 dyldinfo_LDADD =  \
 	$(top_srcdir)/$(LD)/src/3rd/libhelper.la
-
-
