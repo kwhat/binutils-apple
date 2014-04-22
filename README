@@ -1,0 +1,7 @@
+Darwin assembler as(1) and static linker ld(1), XCode Tools 4.6
+
+To Compile:
+autoreconf --install --force --verbose
+CC=clang CXX=clang++ ./configure --prefix=/usr --target=i586-apple-darwin9
+make
+make install
