@@ -5,3 +5,9 @@ autoreconf --install --force --verbose
 CC=clang CXX=clang++ ./configure --prefix=/usr --target=i586-apple-darwin9
 make
 make install
+
+Credits:
+Most of the work in this project is based on the following two projects.
+
+https://code.google.com/p/ios-toolchain-based-on-clang-for-linux/
+https://code.google.com/p/iphone-dev/
