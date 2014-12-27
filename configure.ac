@@ -32,6 +32,9 @@ AM_PROG_CC_C_O
 AC_PROG_OBJC([clang])
 AM_PROG_AS([clang])
 
+AC_PROG_CC_C99
+AX_CXX_COMPILE_STDCXX_11()
+
 AC_CHECK_TOOL([HOST_RANLIB], [ranlib], :)
 AC_CHECK_TOOL([HOST_AR], [ar], :)
 
@@ -57,6 +60,7 @@ fi
 AC_CHECK_HEADERS([llvm-c/lto.h], [], [AC_MSG_ERROR([*** lto.h not found, Please install llvm dev packages according to your system])])
 AC_CHECK_HEADERS([openssl/md5.h], [], [AC_MSG_ERROR([*** md5.h not found, Please install ssl dev packages according to your system])])
 AC_CHECK_HEADERS([uuid/uuid.h], [], [AC_MSG_ERROR([*** uuid.h not found, Please install uuid dev packages according to your system])])
+AC_CHECK_HEADERS([objc/runtime.h], [], [AC_MSG_ERROR([*** runtime.h not found, Please install objc dev packages according to your system])])
 
 #for libstuff emulated.c
 case $target_cpu in
@@ -282,39 +286,39 @@ AC_SUBST(LTO_DEFS)
 # AC_MSG_NOTICE(["Your system is 64bit, disable ld_classic"])
 # fi
 
-AC_SUBST([CCTOOLS], [cctools-839])
+AC_SUBST([CCTOOLS], [cctools-845])
 AC_CHECK_SIZEOF([long]) 
 AS_IF([test "$ac_cv_sizeof_long" -eq 8], 
-    [AC_SUBST([LD], [ld64-136])], 
-    [AC_SUBST([LD], [cctools-839/ld])]) 
+    [AC_SUBST([LD], [ld64-224.1])], 
+    [AC_SUBST([LD], [cctools-845/ld])]) 
 
 
-# sed 's/cctools-839/cctools-###' to change version numbers until
+# sed 's/cctools-845/cctools-###' to change version numbers until
 # AC_CONFIG_FILES([$fu], [], [fu='fu']) does what it and the 
 # documentation and examples claim it should!
 AC_CONFIG_FILES([
 	Makefile
-	cctools-839/Makefile
-	cctools-839/libstuff/Makefile
-	cctools-839/ar/Makefile
-	cctools-839/as/i386/Makefile
-	cctools-839/as/x86_64/Makefile
-	cctools-839/as/ppc/Makefile
-	cctools-839/as/ppc64/Makefile
-	cctools-839/as/Makefile
-	cctools-839/man/Makefile
-	cctools-839/misc/Makefile
-	cctools-839/otool/Makefile
-	cctools-839/ld/Makefile
+ 	cctools-845/Makefile
+	cctools-845/libstuff/Makefile
+	cctools-845/ar/Makefile
+	cctools-845/as/i386/Makefile
+	cctools-845/as/x86_64/Makefile
+	cctools-845/as/ppc/Makefile
+	cctools-845/as/ppc64/Makefile
+	cctools-845/as/Makefile
+	cctools-845/man/Makefile
+	cctools-845/misc/Makefile
+	cctools-845/otool/Makefile
+	cctools-845/ld/Makefile
 
-	ld64-136/Makefile
-	ld64-136/src/Makefile
-	ld64-136/src/3rd/Makefile
-	ld64-136/src/3rd/BlocksRuntime/Makefile
-	ld64-136/src/ld/Makefile
-	ld64-136/src/ld/parsers/Makefile
-	ld64-136/src/ld/passes/Makefile
-	ld64-136/src/other/Makefile
+	ld64-224.1/Makefile
+	ld64-224.1/src/Makefile
+	ld64-224.1/src/3rd/Makefile
+	ld64-224.1/src/3rd/BlocksRuntime/Makefile
+	ld64-224.1/src/ld/Makefile
+	ld64-224.1/src/ld/parsers/Makefile
+	ld64-224.1/src/ld/passes/Makefile
+	ld64-224.1/src/other/Makefile
 ])
 
 AC_OUTPUT
