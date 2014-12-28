@@ -1,7 +1,7 @@
 #!/bin/sh
 
-CCV=839
-LDV=136
+CCV=846.2.1
+LDV=236.3
 
 wget http://opensource.apple.com/tarballs/cctools/cctools-${CCV}.tar.gz
 wget http://opensource.apple.com/tarballs/ld64/ld64-${LDV}.tar.gz

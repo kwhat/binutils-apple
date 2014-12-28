@@ -1,4 +1,4 @@
-AC_INIT([binutils-apple], [4.6], [https://github.com/kwhat/binutils-apple/])
+AC_INIT([binutils-apple], [5.0], [https://github.com/kwhat/binutils-apple/])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -19,10 +19,12 @@ AM_MAINTAINER_MODE
 
 AC_PREREQ([2.64])
 
+# Specify GNU src.
+AC_GNU_SOURCE
+
 AC_CONFIG_SRCDIR([COPYING])
 LT_PREREQ([2.2.6])
 LT_INIT(disable-static)
-
 
 AC_PROG_INSTALL
 
@@ -34,6 +36,7 @@ AM_PROG_AS([clang])
 
 AC_PROG_CC_C99
 AX_CXX_COMPILE_STDCXX_11()
+
 
 AC_CHECK_TOOL([HOST_RANLIB], [ranlib], :)
 AC_CHECK_TOOL([HOST_AR], [ar], :)
@@ -286,39 +289,40 @@ AC_SUBST(LTO_DEFS)
 # AC_MSG_NOTICE(["Your system is 64bit, disable ld_classic"])
 # fi
 
-AC_SUBST([CCTOOLS], [cctools-845])
+#AC_SUBST([CCTOOLS], [cctools-846.2.1])
+
+
 AC_CHECK_SIZEOF([long]) 
 AS_IF([test "$ac_cv_sizeof_long" -eq 8], 
     [AC_SUBST([LD], [ld64-224.1])], 
-    [AC_SUBST([LD], [cctools-845/ld])]) 
+    [AC_SUBST([LD], [cctools-846.2.1/ld])]) 
 
 
-# sed 's/cctools-845/cctools-###' to change version numbers until
+# sed 's/cctools-846.2.1/cctools-###' to change version numbers until
 # AC_CONFIG_FILES([$fu], [], [fu='fu']) does what it and the 
 # documentation and examples claim it should!
 AC_CONFIG_FILES([
 	Makefile
- 	cctools-845/Makefile
-	cctools-845/libstuff/Makefile
-	cctools-845/ar/Makefile
-	cctools-845/as/i386/Makefile
-	cctools-845/as/x86_64/Makefile
-	cctools-845/as/ppc/Makefile
-	cctools-845/as/ppc64/Makefile
-	cctools-845/as/Makefile
-	cctools-845/man/Makefile
-	cctools-845/misc/Makefile
-	cctools-845/otool/Makefile
-	cctools-845/ld/Makefile
+	libstuff/Makefile
+	ar/Makefile
+	as/arm/Makefile
+	as/arm64/Makefile
+	as/i386/Makefile
+	as/x86_64/Makefile
+	as/ppc/Makefile
+	as/ppc64/Makefile
+	as/Makefile
+	man/Makefile
+	misc/Makefile
+	otool/Makefile
+	ld/Makefile
 
-	ld64-224.1/Makefile
-	ld64-224.1/src/Makefile
-	ld64-224.1/src/3rd/Makefile
-	ld64-224.1/src/3rd/BlocksRuntime/Makefile
-	ld64-224.1/src/ld/Makefile
-	ld64-224.1/src/ld/parsers/Makefile
-	ld64-224.1/src/ld/passes/Makefile
-	ld64-224.1/src/other/Makefile
+	ld64/Makefile
+	ld64/3rd/Makefile
+	ld64/3rd/BlocksRuntime/Makefile
+	ld64/parsers/Makefile
+	ld64/passes/Makefile
+	ld64/other/Makefile
 ])
 
 AC_OUTPUT
