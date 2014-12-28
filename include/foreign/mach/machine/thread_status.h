@@ -38,4 +38,5 @@
 #else
 #error architecture not supported
 #endif
+
 #endif /* _MACH_MACHINE_THREAD_STATUS_H_ */

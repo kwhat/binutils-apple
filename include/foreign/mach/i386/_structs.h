@@ -83,9 +83,7 @@ _STRUCT_X86_THREAD_STATE32
 #endif /* !__DARWIN_UNIX03 */
 /* This structure should be double-word aligned for performance */
 
-#warning "test1"
 #if __DARWIN_UNIX03
-#warning "test2"
 #define _STRUCT_FP_CONTROL	struct __darwin_fp_control
 _STRUCT_FP_CONTROL
 {
