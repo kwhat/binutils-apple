@@ -19,10 +19,12 @@ AM_MAINTAINER_MODE
 
 AC_PREREQ([2.64])
 
+# Specify GNU src.
+AC_GNU_SOURCE
+
 AC_CONFIG_SRCDIR([COPYING])
 LT_PREREQ([2.2.6])
 LT_INIT(disable-static)
-
 
 AC_PROG_INSTALL
 
@@ -31,6 +33,10 @@ AC_PROG_CXX([clang++])
 AM_PROG_CC_C_O
 AC_PROG_OBJC([clang])
 AM_PROG_AS([clang])
+
+AC_PROG_CC_C99
+AX_CXX_COMPILE_STDCXX_11()
+
 
 AC_CHECK_TOOL([HOST_RANLIB], [ranlib], :)
 AC_CHECK_TOOL([HOST_AR], [ar], :)
@@ -57,6 +63,7 @@ fi
 AC_CHECK_HEADERS([llvm-c/lto.h], [], [AC_MSG_ERROR([*** lto.h not found, Please install llvm dev packages according to your system])])
 AC_CHECK_HEADERS([openssl/md5.h], [], [AC_MSG_ERROR([*** md5.h not found, Please install ssl dev packages according to your system])])
 AC_CHECK_HEADERS([uuid/uuid.h], [], [AC_MSG_ERROR([*** uuid.h not found, Please install uuid dev packages according to your system])])
+AC_CHECK_HEADERS([objc/runtime.h], [], [AC_MSG_ERROR([*** runtime.h not found, Please install objc dev packages according to your system])])
 
 #for libstuff emulated.c
 case $target_cpu in
@@ -294,27 +301,25 @@ AS_IF([test "$ac_cv_sizeof_long" -eq 8],
 # documentation and examples claim it should!
 AC_CONFIG_FILES([
 	Makefile
-	cctools-839/Makefile
-	cctools-839/libstuff/Makefile
-	cctools-839/ar/Makefile
-	cctools-839/as/i386/Makefile
-	cctools-839/as/x86_64/Makefile
-	cctools-839/as/ppc/Makefile
-	cctools-839/as/ppc64/Makefile
-	cctools-839/as/Makefile
-	cctools-839/man/Makefile
-	cctools-839/misc/Makefile
-	cctools-839/otool/Makefile
-	cctools-839/ld/Makefile
+	libstuff/Makefile
+	ar/Makefile
+	as/arm/Makefile
+	as/i386/Makefile
+	as/x86_64/Makefile
+	as/ppc/Makefile
+	as/ppc64/Makefile
+	as/Makefile
+	man/Makefile
+	misc/Makefile
+	otool/Makefile
+	ld/Makefile
 
-	ld64-136/Makefile
-	ld64-136/src/Makefile
-	ld64-136/src/3rd/Makefile
-	ld64-136/src/3rd/BlocksRuntime/Makefile
-	ld64-136/src/ld/Makefile
-	ld64-136/src/ld/parsers/Makefile
-	ld64-136/src/ld/passes/Makefile
-	ld64-136/src/other/Makefile
+	ld64/Makefile
+	ld64/3rd/Makefile
+	ld64/3rd/BlocksRuntime/Makefile
+	ld64/parsers/Makefile
+	ld64/passes/Makefile
+	ld64/other/Makefile
 ])
 
 AC_OUTPUT
