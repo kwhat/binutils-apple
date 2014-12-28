@@ -41,3 +41,4 @@ libstuff_la_SOURCES =  \
 	unix_standard_mode.c  \
 	version_number.c  \
 	writeout.c
+

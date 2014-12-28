@@ -5,10 +5,8 @@
 #include <mach/mach_host.h>
 #include <mach/host_info.h>
 #include <sys/time.h>
-
-#ifdef _GNU_SOURCE
 #include <dlfcn.h>
-#endif
+
 struct dyld_unwind_sections
 {
     const struct mach_header*       mh;
