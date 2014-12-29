@@ -44,8 +44,7 @@
  * <machine/thread_status.h> is expected to define the flavors of the thread
  * states and the structures of those flavors for each machine.
  */
-#include <mach/thread_status.h>
-//#include <mach/machine/thread_status.h>
+#include <mach/machine/thread_status.h>
 #include <architecture/byte_order.h>
 
 /*
@@ -297,6 +296,8 @@ struct load_command {
 #define LC_DYLIB_CODE_SIGN_DRS 0x2B /* Code signing DRs copied from linked dylibs */
 #define	LC_ENCRYPTION_INFO_64 0x2C /* 64-bit encrypted segment information */
 #define LC_LINKER_OPTION 0x2D /* linker options in MH_OBJECT files */
+// Patch 12/28/2014
+#define LC_LINKER_OPTIMIZATION_HINT 0x2E /* optimization hints in MH_OBJECT files */
 
 
 /*

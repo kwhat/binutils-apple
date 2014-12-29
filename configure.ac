@@ -1,4 +1,4 @@
-AC_INIT([binutils-apple], [5.0], [https://github.com/kwhat/binutils-apple/])
+AC_INIT([binutils-apple], [5.1], [https://github.com/kwhat/binutils-apple/])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST

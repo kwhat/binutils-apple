@@ -31,10 +31,12 @@
 #include "stdio.h"
 #include "string.h"
 #include "mach-o/loader.h"
+// Patch 12/28/2014
 #include "objc/runtime.h"
 #include "stuff/allocate.h"
 #include "stuff/bytesex.h"
 #include "stuff/symbol.h"
+#include "dyld_bind_info.h"
 #include "ofile_print.h"
 
 /*
@@ -635,6 +637,7 @@ print_objc_class:
 			printf("\n");
 		    printf("\t\t      isa 0x%08x", objc_class.isa);
 
+                    // Patch 12/28/2014
 		    if(verbose && objc_getMetaClass(objc_class.name)){
 			p = get_pointer(objc_class.isa, &left, objc_sections,
 					nobjc_sections, &cstring_section);
@@ -674,8 +677,10 @@ print_objc_class:
 		    printf("\t\t     info 0x%08x",
 			   (unsigned int)objc_class.info);
 		    if(verbose){
+                        // Patch 12/28/2014
 			if(objc_getClass(objc_class.name))
 			    printf(" CLS_CLASS\n");
+                        // Patch 12/28/2014
 			else if(objc_getMetaClass(objc_class.name))
 			    printf(" CLS_META\n");
 			else
@@ -766,6 +771,7 @@ print_objc_class:
 			host_byte_sex, swapped, verbose) == FALSE)
 			printf(" (not in an " SEG_OBJC " section)\n");
 
+                    // Patch 12/28/2014
 		    if(objc_getClass(objc_class.name)){
 			printf("\tMeta Class");
 			if(get_objc_class((uint32_t)objc_class.isa,

@@ -533,6 +533,7 @@ void MachOChecker<A>::checkLoadCommands()
 				else {
 					throw "overlapping segment vm addresses";
 				}
+				// Patch 12/28/2014
 				segmentAddressRanges.push_back(std::make_pair<pint_t, pint_t>((pint_t)startAddr, (pint_t)endAddr));
 			}
 			// see if this overlaps another segment file offset range
@@ -550,6 +551,7 @@ void MachOChecker<A>::checkLoadCommands()
 				else {
 					throw "overlapping segment file data";
 				}
+				// Patch 12/28/2014
 				segmentFileOffsetRanges.push_back(std::make_pair<pint_t, pint_t>((pint_t)startOffset, (pint_t)endOffset));
 				// check is within file bounds
 				if ( (startOffset > fLength) || (endOffset > fLength) )

@@ -203,6 +203,7 @@ private:
 	void										buildExportHashTableFromSymbolTable(const macho_dysymtab_command<P>* dynamicInfo, 
 														const macho_nlist<P>* symbolTable, const char* strings,
 														const uint8_t* fileContent);
+	static uint32_t								parseVersionNumber32(const char* versionString);
 	static const char*							objCInfoSegmentName();
 	static const char*							objCInfoSectionName();
 	
@@ -230,6 +231,7 @@ private:
 	bool										_explictReExportFound;
 	bool										_wrongOS;
 	bool										_installPathOverride;
+	bool										_indirectDylibsProcessed;
 	
 	static bool									_s_logHashtable;
 };
@@ -259,7 +261,7 @@ File<A>::File(const uint8_t* fileContent, uint64_t fileLength, const char* pth, 
 	_parentUmbrella(NULL), _importAtom(NULL), _codeSignatureDR(NULL), 
 	_noRexports(false), _hasWeakExports(false), 
 	_deadStrippable(false), _hasPublicInstallName(false), 
-	 _providedAtom(false), _explictReExportFound(false), _wrongOS(false), _installPathOverride(false)
+	 _providedAtom(false), _explictReExportFound(false), _wrongOS(false), _installPathOverride(false), _indirectDylibsProcessed(false)
 {
 	const macho_header<P>* header = (const macho_header<P>*)fileContent;
 	const uint32_t cmd_count = header->ncmds();
@@ -513,6 +515,28 @@ File<A>::File(const uint8_t* fileContent, uint64_t fileLength, const char* pth, 
 	munmap((caddr_t)fileContent, fileLength);
 }
 
+//
+// Parses number of form X[.Y[.Z]] into a uint32_t where the nibbles are xxxx.yy.zz
+//
+template <typename A>
+uint32_t File<A>::parseVersionNumber32(const char* versionString)
+{
+	uint32_t x = 0;
+	uint32_t y = 0;
+	uint32_t z = 0;
+	char* end;
+	x = strtoul(versionString, &end, 10);
+	if ( *end == '.' ) {
+		y = strtoul(&end[1], &end, 10);
+		if ( *end == '.' ) {
+			z = strtoul(&end[1], &end, 10);
+		}
+	}
+	if ( (*end != '\0') || (x > 0xffff) || (y > 0xff) || (z > 0xff) )
+		throwf("malformed 32-bit x.y.z version number: %s", versionString);
+
+	return (x << 16) | ( y << 8 ) | z;
+}
 
 template <typename A>
 void File<A>::buildExportHashTableFromSymbolTable(const macho_dysymtab_command<P>* dynamicInfo, 
@@ -620,6 +644,13 @@ void File<A>::addSymbol(const char* name, bool weakDef, bool tlv, pint_t address
 					else if ( strncmp(symAction, "install_name$", 13) == 0 ) {
 						_dylibInstallPath = symName;
 						_installPathOverride = true;
+						// <rdar://problem/14448206> CoreGraphics redirects to ApplicationServices, but with wrong compat version
+						if ( strcmp(_dylibInstallPath, "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices") == 0 )
+							_dylibCompatibilityVersion = parseVersionNumber32("1.0");
+						return;
+					}
+					else if ( strncmp(symAction, "compatibility_version$", 22) == 0 ) {
+						_dylibCompatibilityVersion = parseVersionNumber32(symName);
 						return;
 					}
 					else {
@@ -792,6 +823,9 @@ bool File<A>::isPublicLocation(const char* pth)
 template <typename A>
 void File<A>::processIndirectLibraries(ld::dylib::File::DylibHandler* handler, bool addImplicitDylibs)
 {
+	// only do this once
+	if ( _indirectDylibsProcessed )
+		return;
 	const static bool log = false;
 	if ( log ) fprintf(stderr, "processIndirectLibraries(%s)\n", this->installPath());
 	if ( _linkingFlat ) {
@@ -849,6 +883,8 @@ void File<A>::processIndirectLibraries(ld::dylib::File::DylibHandler* handler, b
 	chain.prev = NULL;
 	chain.file = this;
 	this->assertNoReExportCycles(&chain);
+	
+	_indirectDylibsProcessed = true;
 }
 
 template <typename A>
@@ -983,7 +1019,8 @@ bool Parser<arm>::validFile(const uint8_t* fileContent, bool executableOrDylibor
 	}
 }
 
-#if SUPPORT_ARCH_arm64
+
+
 template <>
 bool Parser<arm64>::validFile(const uint8_t* fileContent, bool executableOrDyliborBundle)
 {
@@ -1010,68 +1047,14 @@ bool Parser<arm64>::validFile(const uint8_t* fileContent, bool executableOrDylib
 			return false;
 	}
 }
-#endif
-
-template <>
-bool Parser<ppc>::validFile(const uint8_t* fileContent, bool executableOrDyliborBundle)
-{
-	const macho_header<P>* header = (const macho_header<P>*)fileContent;
-	if ( header->magic() != MH_MAGIC )
-		return false;
-	if ( header->cputype() != CPU_TYPE_POWERPC )
-		return false;
-	switch ( header->filetype() ) {
-		case MH_DYLIB:
-		case MH_DYLIB_STUB:
-			return true;
-		case MH_BUNDLE:
-			if ( executableOrDyliborBundle )
-				return true;
-			else
-				throw "can't link with bundle (MH_BUNDLE) only dylibs (MH_DYLIB)";
-		case MH_EXECUTE:
-			if ( executableOrDyliborBundle )
-				return true;
-			else
-				throw "can't link with a main executable";
-		default:
-			return false;
-	}
-}
-
-template <>
-bool Parser<ppc64>::validFile(const uint8_t* fileContent, bool executableOrDyliborBundle)
-{
-	const macho_header<P>* header = (const macho_header<P>*)fileContent;
-	if ( header->magic() != MH_MAGIC_64 )
-		return false;
-	if ( header->cputype() != CPU_TYPE_POWERPC64)
-		return false;
-	switch ( header->filetype() ) {
-		case MH_DYLIB:
-		case MH_DYLIB_STUB:
-			return true;
-		case MH_BUNDLE:
-			if ( executableOrDyliborBundle )
-				return true;
-			else
-				throw "can't link with bundle (MH_BUNDLE) only dylibs (MH_DYLIB)";
-		case MH_EXECUTE:
-			if ( executableOrDyliborBundle )
-				return true;
-			else
-				throw "can't link with a main executable";
-		default:
-			return false;
-	}
-}
 
 
 bool isDylibFile(const uint8_t* fileContent, cpu_type_t* result, cpu_subtype_t* subResult)
 {
 	if ( Parser<x86_64>::validFile(fileContent, false) ) {
 		*result = CPU_TYPE_X86_64;
-		*subResult = CPU_SUBTYPE_X86_64_ALL;
+		const macho_header<Pointer64<LittleEndian> >* header = (const macho_header<Pointer64<LittleEndian> >*)fileContent;
+		*subResult = header->cpusubtype();
 		return true;
 	}
 	if ( Parser<x86>::validFile(fileContent, false) ) {
@@ -1085,14 +1068,13 @@ bool isDylibFile(const uint8_t* fileContent, cpu_type_t* result, cpu_subtype_t* 
 		*subResult = header->cpusubtype();
 		return true;
 	}
-	#if SUPPORT_ARCH_arm64
 	if ( Parser<arm64>::validFile(fileContent, false) ) {
 		*result = CPU_TYPE_ARM64;
 		*subResult = CPU_SUBTYPE_ARM64_ALL;
 		return true;
 	}
-	#endif
-	/* TODO Test powerpc support. */
+	/* Patch 12/28/2014
+	 * NOTE Apple is dropping powerpc support.
 	if ( Parser<ppc>::validFile(fileContent, false) ) {
 		*result = CPU_TYPE_POWERPC;
 		const macho_header<Pointer32<BigEndian> >* header = (const macho_header<Pointer32<BigEndian> >*)fileContent;
@@ -1104,7 +1086,7 @@ bool isDylibFile(const uint8_t* fileContent, cpu_type_t* result, cpu_subtype_t* 
 		*subResult = CPU_SUBTYPE_POWERPC_ALL;
 		return true;
 	}
-	
+	*/
 	return false;
 }
 

@@ -109,12 +109,14 @@ void **pmod) /* maybe NULL */
 	    p = rindex(prefix, '/');
 	    if(p != NULL)
 		p[1] = '\0';
+            // Patch 12/28/2014
 	    lto_path = makestr(prefix, "../lib/libLTO.so", NULL);
 
 	    lto_handle = dlopen(lto_path, RTLD_NOW);
 	    if(lto_handle == NULL){
 		free(lto_path);
 		lto_path = NULL;
+                // Patch 12/28/2014
 		lto_handle = dlopen("/usr/lib/llvm/libLTO.so", RTLD_NOW);
 	    }
 	    if(lto_handle == NULL)
@@ -203,6 +205,10 @@ char *target_triple)
 	else if(strncmp(target_triple, "x86_64", n) == 0){
 	    arch_flag->cputype = CPU_TYPE_X86_64;
 	    arch_flag->cpusubtype = CPU_SUBTYPE_X86_64_ALL;
+	}
+	else if(strncmp(target_triple, "x86_64h", n) == 0){
+	    arch_flag->cputype = CPU_TYPE_X86_64;
+	    arch_flag->cpusubtype = CPU_SUBTYPE_X86_64_H;
 	}
 	else if(strncmp(target_triple, "powerpc", n) == 0){
 	    arch_flag->cputype = CPU_TYPE_POWERPC;

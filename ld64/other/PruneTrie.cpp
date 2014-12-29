@@ -104,10 +104,10 @@ prune_trie(
 // The one undefined when building libprunetrie.a with libc++ is throw_length_error().
 // Adding this define here resolves that and means libprunetrie.a can be linked
 // by cctools with libc++ or libstdc++.
+/* Patch 12/28/2014
 extern "C" void foobar() __asm("__ZNKSt3__120__vector_base_commonILb1EE20__throw_length_errorEv");
 void foobar()
 {
 	throw "Size of vecor cannot be grown";
 }
-
-
+*/

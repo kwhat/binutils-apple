@@ -1,3 +1,4 @@
+// Patch 12/28/2014
 #ifndef _BIGNUM_H_
 #define _BIGNUM_H_
 

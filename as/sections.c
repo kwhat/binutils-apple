@@ -32,6 +32,12 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include "messages.h"
 #include "symbols.h"
 
+/* Patch 12/28/2014
+ * NOTE This is defined by libstuff. 
+ * FIXME Move to libstuff header. */
+#include <string.h>
+extern void strmode(/* mode_t */ int mode, char *p);
+
 /*
  * All sections' chains hang off here.  NULL means no frchains yet.
  */
