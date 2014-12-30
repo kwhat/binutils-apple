@@ -1617,6 +1617,7 @@ void OptimizationHintsAtom<A>::encode() const
 	
 	this->_encoded = true;
 }
+// Patch 12/28/2014
 #endif
 
 

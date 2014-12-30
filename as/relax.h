@@ -52,4 +52,5 @@ typedef struct relax_type {
     relax_substateT rlx_more;	  /* Next longer relax-state. */
 				  /* 0 means there is no 'next' relax-state. */
 } relax_typeS;
+// Patch 12/28/2014
 #endif

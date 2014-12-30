@@ -1,7 +1,7 @@
 #!/bin/sh
 
-CCV=855
-LDV=236.3
+CCV=862
+LDV=241.9
 
 wget http://opensource.apple.com/tarballs/cctools/cctools-${CCV}.tar.gz
 wget http://opensource.apple.com/tarballs/ld64/ld64-${LDV}.tar.gz
@@ -18,7 +18,7 @@ find ./ -name Makefile -exec rm -fv {} \;
 
 #
 find ./ -type f -name \*.[ch] | xargs sed -i 's/^#import/#include/g'
-find ./ -type f -name \*.h | xargs sed -i 's/^__private_extern__/extern/g'
+#find ./ -type f -name \*.h | xargs sed -i 's/^__private_extern__/extern/g'
 
 # Clean things we dont use.
 rm -Rvf ./cctools-${CCV}/cbtlibs/
