@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <mach-o/dyld.h>
+// Patch Alex Barker 12/28/2014
 #include <algorithm>
 #include <vector>
 #include <unordered_set>

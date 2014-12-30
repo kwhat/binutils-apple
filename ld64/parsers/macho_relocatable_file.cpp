@@ -49,6 +49,8 @@
 #include "Architectures.hpp"
 #include "ld.hpp"
 #include "macho_relocatable_file.h"
+
+// Patch Alex Barker 12/28/2014
 #include "qsort_r.h"
 
 
@@ -1871,6 +1873,7 @@ void Parser<A>::prescanSymbolTable()
 {
 	_tentativeDefinitionCount = 0;
 	_absoluteSymbolCount = 0;
+	// Patch Alex Barker 12/28/2014
 	// FIXME What exactly are we sorting here...
 	//::qsort_r_local(array, _machOSectionsCount, sizeof(uint32_t), this, &sectionIndexSorter);
 	_symbolsInSections = 0;
@@ -1967,6 +1970,7 @@ int Parser<A>::sectionIndexSorter(void* extra, const void* l, const void* r)
 template <typename A>
 void Parser<A>::makeSortedSectionsArray(uint32_t array[])
 {
+	// Patch Alex Barker 12/28/2014
 	// FIXME What is extra?  Another copy/paste gone awry?
     //::qsort_r_local(array, _symbolsInSections, sizeof(uint32_t), &extra, &symbolIndexSorter);
 	const bool log = false;
@@ -1980,6 +1984,7 @@ void Parser<A>::makeSortedSectionsArray(uint32_t array[])
 	// sort by symbol table address
 	for (uint32_t i=0; i < _machOSectionsCount; ++i)
 		array[i] = i;
+	// Patch Alex Barker 12/28/2014
 	::qsort_r_local(array, _machOSectionsCount, sizeof(uint32_t), this, &sectionIndexSorter);
 
 	if ( log ) {
@@ -2073,6 +2078,7 @@ void Parser<A>::makeSortedSymbolsArray(uint32_t array[], const uint32_t sectionA
 	
 	// sort by symbol table address
 	ParserAndSectionsArray extra = { this, sectionArray };
+	// Patch Alex Barker 12/28/2014
 	::qsort_r_local(array, _symbolsInSections, sizeof(uint32_t), &extra, &symbolIndexSorter);
 
 	

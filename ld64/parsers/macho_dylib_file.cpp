@@ -1092,7 +1092,8 @@ bool isDylibFile(const uint8_t* fileContent, cpu_type_t* result, cpu_subtype_t* 
 		return true;
 	}
 	#endif
-	/* TODO Test powerpc support. */
+	/* Patch Alex Barker 12/28/2014
+	 * NOTE Apple is dropping powerpc support. */
 	if ( Parser<ppc>::validFile(fileContent, false) ) {
 		*result = CPU_TYPE_POWERPC;
 		const macho_header<Pointer32<BigEndian> >* header = (const macho_header<Pointer32<BigEndian> >*)fileContent;

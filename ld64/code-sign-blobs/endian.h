@@ -32,6 +32,8 @@
 #include <libkern/OSByteOrder.h>
 //#include <security_utilities/utilities.h>
 #include "memutils.h"
+
+// Patch Alex Barker 12/28/2014
 #include <arpa/inet.h>
 
 namespace Security {

@@ -377,6 +377,7 @@ private:
 		bool					containsNonWildcard(const char*) const;
 		bool					empty() const			{ return fRegular.empty() && fWildCard.empty(); }
 		bool					hasWildCards() const	{ return !fWildCard.empty(); }
+		// Patch Alex Barker 12/28/2014
 		NameSet::const_iterator			regularBegin() const	{ return fRegular.begin(); }
 		NameSet::const_iterator			regularEnd() const		{ return fRegular.end(); }
 		void					remove(const NameSet&); 

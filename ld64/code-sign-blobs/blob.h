@@ -46,6 +46,8 @@
 #include "memutils.h"
 #include <errno.h>
 #include <cstdio>
+
+// Patch Alex Barker 12/28/2014
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -53,6 +55,7 @@
 namespace std {
     typedef ::FILE FILE;
 }
+
 
 namespace Security {
 
