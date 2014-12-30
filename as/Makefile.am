@@ -1,4 +1,4 @@
-# SUBDIRS=arm arm64 i386 x86_64 ppc ppc64
+SUBDIRS=arm i386 x86_64 ppc ppc64
 
 bin_PROGRAMS = as 
 as_LDADD = $(top_builddir)/libstuff/libstuff.la

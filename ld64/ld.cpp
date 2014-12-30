@@ -23,6 +23,7 @@
  */
  
 // start temp HACK for cross builds
+// Patch 12/28/2014
 //extern "C" double log2 ( double );
 //#define __MATH__
 // end temp HACK for cross builds

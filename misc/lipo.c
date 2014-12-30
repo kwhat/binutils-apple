@@ -581,7 +581,7 @@ unknown_flag:
 #else
 		       output_timep) == -1)
 #endif
-			system_fatal("can't set the modifiy times for "
+			system_fatal("can't set the modify times for "
 				     "output file: %s", output_file);
 		    break;
 		}
@@ -955,12 +955,12 @@ struct input_file *input)
 	if((fd = open(input->name, O_RDONLY)) == -1)
 	    system_fatal("can't open input file: %s", input->name);
 	if(fstat(fd, &stat_buf) == -1)
-	    system_fatal("Can't stat input file: %s", input->name);
+	    system_fatal("can't stat input file: %s", input->name);
 	size = stat_buf.st_size;
 	/* pick up set uid, set gid and sticky text bits */
 	output_filemode = stat_buf.st_mode & 07777;
 	/*
-	 * Select the eariliest modifiy time so that if the output file
+	 * Select the eariliest modify time so that if the output file
 	 * contains archives with table of contents lipo will not make them
 	 * out of date.  This logic however could make an out of date table of
 	 * contents appear up todate if another file is combined with it that
@@ -988,14 +988,14 @@ struct input_file *input)
 	    addr = mmap(0, size, PROT_READ|PROT_WRITE, MAP_FILE|MAP_PRIVATE,
 			fd, 0);
 	if((intptr_t)addr == -1)
-	    system_fatal("Can't map input file: %s", input->name);
+	    system_fatal("can't map input file: %s", input->name);
 
 	/*
 	 * Because of rdar://8087586 we do a second stat to see if the file
 	 * is still there and the same file.
 	 */
 	if(fstat(fd, &stat_buf2) == -1)
-	    system_fatal("Can't stat input file: %s", input->name);
+	    system_fatal("can't stat input file: %s", input->name);
 	if(stat_buf2.st_size != size ||
 	   stat_buf2.st_mtime != stat_buf.st_mtime)
 	    system_fatal("Input file: %s changed since opened", input->name);
@@ -1240,7 +1240,7 @@ struct replace *replace)
 	    system_fatal("can't open replacement file: %s",
 			 replace->thin_file.name);
 	if(fstat(fd, &stat_buf) == -1)
-	    system_fatal("Can't stat replacement file: %s",
+	    system_fatal("can't stat replacement file: %s",
 			 replace->thin_file.name);
 	size = stat_buf.st_size;
 	/*
@@ -1253,7 +1253,7 @@ struct replace *replace)
 	    addr = mmap(0, size, PROT_READ|PROT_WRITE, MAP_FILE|MAP_PRIVATE,
 			fd, 0);
 	if((intptr_t)addr == -1)
-	    system_error("Can't map replacement file: %s",
+	    system_error("can't map replacement file: %s",
 			 replace->thin_file.name);
 	close(fd);
 

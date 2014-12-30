@@ -60,8 +60,11 @@ char **envp)
 	    _NSGetExecutablePath(p, &bufsize);
 	}
 	prefix = realpath(p, resolved_name);
-	if(realpath == NULL)
+	/* Patch 12/29/2014
+	 * NOTE This is always true and causing a warning.
+	if(realpath ==NULL)
 	    system_fatal("realpath(3) for %s failed", p);
+	*/
 	p = rindex(prefix, '/');
 	if(p != NULL)
 	    p[1] = '\0';

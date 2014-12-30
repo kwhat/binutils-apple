@@ -369,6 +369,7 @@ char **envp)
 	(void)umask(oumask);
 
 	/* see if this is being run as ranlib */
+	// Patch 12/29/2014
 	#ifdef RANLIB
 	cmd_flags.ranlib = TRUE;
 	#endif

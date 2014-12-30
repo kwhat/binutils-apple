@@ -31,7 +31,7 @@
 #include <mach-o/fat.h>
 #include <mach-o/loader.h>
 
-// Patch Alex Barker 12/28/2014
+// Patch 12/28/2014
 #include <algorithm>
 
 #include "MachOFileAbstraction.hpp"
@@ -807,6 +807,8 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindStoreThumbHigh16:
 			printf(", then store high-16 in Thumb movt");
 			break;
+		// Patch 12/28/2014
+		// NOTE This needs to remain here until ldd.hpp removes preprocessor directive.
 		#if SUPPORT_ARCH_arm64
 		case ld::Fixup::kindStoreARM64Branch26:
 			printf(", then store as ARM64 26-bit pcrel branch");
@@ -841,6 +843,7 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindStoreARM64PCRelToGOT:
 			printf(", then store as 32-bit delta to GOT entry");
 			break;
+		// Patch 12/28/2014
 		#endif
 		case ld::Fixup::kindDtraceExtra:
 			printf("dtrace static probe extra info");
@@ -943,6 +946,8 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindSetTargetTLVTemplateOffsetLittleEndian64:
 			printf("tlv template offset of %s", referenceTargetAtomName(ref));
 			break;
+		// Patch 12/28/2014
+		// NOTE This needs to remain here until ldd.hpp removes preprocessor directive.
 		#if SUPPORT_ARCH_arm64
 		case ld::Fixup::kindStoreTargetAddressARM64Branch26:
 			printf("ARM64 store 26-bit pcrel branch to %s", referenceTargetAtomName(ref));
@@ -960,10 +965,10 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 			printf("ARM64 store 12-bit page offset of GOT of %s", referenceTargetAtomName(ref));
 			break;
 		case ld::Fixup::kindStoreTargetAddressARM64GOTLeaPage21:
-			printf("ARM64 store 21-bit pcrel ADRP for lea of %s", referenceTargetAtomName(ref));
+			printf("ARM64 store 21-bit pcrel ADRP to GOT lea for %s", referenceTargetAtomName(ref));
 			break;
 		case ld::Fixup::kindStoreTargetAddressARM64GOTLeaPageOff12:
-			printf("ARM64 store 12-bit page offset of lea of %s", referenceTargetAtomName(ref));
+			printf("ARM64 store 12-bit page offset of GOT lea of %s", referenceTargetAtomName(ref));
 			break;
 		#endif
 		//default:

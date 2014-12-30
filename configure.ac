@@ -301,12 +301,13 @@ AS_IF([test "$ac_cv_sizeof_long" -eq 8],
 # sed 's/cctools-846.2.1/cctools-###' to change version numbers until
 # AC_CONFIG_FILES([$fu], [], [fu='fu']) does what it and the 
 # documentation and examples claim it should!
+#	as/arm64/Makefile
 AC_CONFIG_FILES([
 	Makefile
 	libstuff/Makefile
 	ar/Makefile
 	as/arm/Makefile
-	as/arm64/Makefile
+
 	as/i386/Makefile
 	as/x86_64/Makefile
 	as/ppc/Makefile

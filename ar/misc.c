@@ -163,7 +163,7 @@ compare(dest)
 void
 badfmt()
 {
-
+	// Patch 12/28/2014
 	errno = EINVAL;
 	err(1, "%s", archive);
 }

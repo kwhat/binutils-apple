@@ -44,8 +44,7 @@
  * <machine/thread_status.h> is expected to define the flavors of the thread
  * states and the structures of those flavors for each machine.
  */
-#include <mach/thread_status.h>
-//#include <mach/machine/thread_status.h>
+#include <mach/machine/thread_status.h>
 #include <architecture/byte_order.h>
 
 /*

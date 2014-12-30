@@ -291,6 +291,7 @@ char **envp)
 	progname = argv[0];
 	arch_flags = NULL;
 	narch_flags = 0;
+	// Patch 12/28/2014
 	all_archs = TRUE;
 	use_member_syntax = TRUE;
 	llvm_mc = FALSE;
@@ -322,6 +323,7 @@ char **envp)
 		    all_archs = TRUE;
 		}
 		else{
+                    // Patch 12/28/2014
 		    all_archs = FALSE;
 		    arch_flags = reallocate(arch_flags,
 			    (narch_flags + 1) * sizeof(struct arch_flag));

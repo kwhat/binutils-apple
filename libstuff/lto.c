@@ -109,12 +109,14 @@ void **pmod) /* maybe NULL */
 	    p = rindex(prefix, '/');
 	    if(p != NULL)
 		p[1] = '\0';
+            // Patch 12/28/2014
 	    lto_path = makestr(prefix, "../lib/libLTO.so", NULL);
 
 	    lto_handle = dlopen(lto_path, RTLD_NOW);
 	    if(lto_handle == NULL){
 		free(lto_path);
 		lto_path = NULL;
+                // Patch 12/28/2014
 		lto_handle = dlopen("/usr/lib/llvm/libLTO.so", RTLD_NOW);
 	    }
 	    if(lto_handle == NULL)

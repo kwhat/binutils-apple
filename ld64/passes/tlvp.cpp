@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
-// Patch Alex Barker 12/28/2014
+// Patch 12/28/2014
 #include <algorithm>
 #include <vector>
 #include <map>

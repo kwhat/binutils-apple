@@ -32,7 +32,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <mach-o/dyld.h>
-// Patch Alex Barker 12/28/2014
+// Patch 12/28/2014
 #include <algorithm>
 #include <vector>
 #include <unordered_set>
@@ -48,7 +48,6 @@
 #define __STDC_LIMIT_MACROS 1
 #define __STDC_CONSTANT_MACROS 1
 #include "llvm-c/lto.h"
-
 
 namespace lto {
 	  

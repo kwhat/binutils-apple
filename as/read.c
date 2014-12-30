@@ -5034,6 +5034,8 @@ uintptr_t value)
 
 /* Return the size of a LEB128 value.  */
 
+// Patch 12/29/2014 backported from cctools-855
+#ifndef ARCH64
 static inline int
 sizeof_sleb128_32 (int32_t value)
 {
@@ -5054,7 +5056,11 @@ sizeof_sleb128_32 (int32_t value)
 
   return size;
 }
+// Patch 12/29/2014 backported from cctools-855
+#endif /* !defined(ARCH64) */
 
+// Patch 12/29/2014 backported from cctools-855
+#ifdef ARCH64
 static inline int
 sizeof_sleb128_64 (int64_t value)
 {
@@ -5075,7 +5081,11 @@ sizeof_sleb128_64 (int64_t value)
 
   return size;
 }
+// Patch 12/29/2014 backported from cctools-855
+#endif /* ARCH64 */
 
+// Patch 12/29/2014 backported from cctools-855
+#ifndef ARCH64
 static inline int
 sizeof_uleb128_32 (uint32_t value)
 {
@@ -5092,7 +5102,11 @@ sizeof_uleb128_32 (uint32_t value)
 
   return size;
 }
+// Patch 12/29/2014 backported from cctools-855
+#endif /* !defined(ARCH64) */
 
+// Patch 12/29/2014 backported from cctools-855
+#ifdef ARCH64
 static inline int
 sizeof_uleb128_64 (uint64_t value)
 {
@@ -5109,6 +5123,8 @@ sizeof_uleb128_64 (uint64_t value)
 
   return size;
 }
+// Patch 12/29/2014 backported from cctools-855
+#endif /* ARCH64 */
 
 #ifdef ARCH64
 int

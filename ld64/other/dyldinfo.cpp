@@ -39,7 +39,7 @@
 #include "MachOFileAbstraction.hpp"
 #include "Architectures.hpp"
 #include "MachOTrie.hpp"
-// Patch Alex Barker 12/28/2014
+// Patch 12/28/2014
 #include "../code-sign-blobs/superblob.h"
 
 static bool printRebase = false;

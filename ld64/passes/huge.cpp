@@ -29,7 +29,7 @@
 #include <dlfcn.h>
 #include <mach/machine.h>
 
-// Patch Alex Barker 12/28/2014
+// Patch 12/28/2014
 #include <algorithm>
 #include <vector>
 
