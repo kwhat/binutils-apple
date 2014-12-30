@@ -39,6 +39,9 @@
 #include "dyld_bind_info.h"
 #include "ofile_print.h"
 
+// Patch // Patch 12/28/2014
+typedef const char* charptr_t;
+
 /*
  * Here we need structures that have the same memory layout and size as the
  * 32-bit Objective-C 1 meta data structures.
@@ -638,7 +641,7 @@ print_objc_class:
 		    printf("\t\t      isa 0x%08x", objc_class.isa);
 
                     // Patch 12/28/2014
-		    if(verbose && objc_getMetaClass(objc_class.name)){
+		    if(verbose && objc_getMetaClass((charptr_t) (intptr_t) objc_class.name)){
 			p = get_pointer(objc_class.isa, &left, objc_sections,
 					nobjc_sections, &cstring_section);
 			if(p != NULL)
@@ -678,10 +681,10 @@ print_objc_class:
 			   (unsigned int)objc_class.info);
 		    if(verbose){
                         // Patch 12/28/2014
-			if(objc_getClass(objc_class.name))
+			if(objc_getClass((charptr_t) (intptr_t) objc_class.name))
 			    printf(" CLS_CLASS\n");
                         // Patch 12/28/2014
-			else if(objc_getMetaClass(objc_class.name))
+			else if(objc_getMetaClass((charptr_t) (intptr_t) objc_class.name))
 			    printf(" CLS_META\n");
 			else
 			    printf("\n");
@@ -772,7 +775,7 @@ print_objc_class:
 			printf(" (not in an " SEG_OBJC " section)\n");
 
                     // Patch 12/28/2014
-		    if(objc_getClass(objc_class.name)){
+		    if(objc_getClass((charptr_t) (intptr_t) objc_class.name)){
 			printf("\tMeta Class");
 			if(get_objc_class((uint32_t)objc_class.isa,
 			     &objc_class, &trunc, objc_sections, nobjc_sections,
