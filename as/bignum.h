@@ -49,5 +49,6 @@ typedef unsigned short int	LITTLENUM_TYPE;
 #define	LOG_TO_BASE_2_OF_10	(3.3219280948873623478703194294893901758651)
 /* WARNING: I haven't checked that the trailing digits are correct! */
 
+// Patch 12/28/2014
 #endif // _BIGNUM_H_
 

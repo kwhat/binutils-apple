@@ -28,7 +28,6 @@
 #include <sys/stat.h>
 // Patch 12/28/2014
 #include <sys/statfs.h>
-//#include "ld.hpp"
 
 #include <sys/mman.h>
 #include <sys/sysctl.h>
@@ -785,6 +784,10 @@ void     OutputFile::set32BE(uint8_t* loc, uint32_t value) { BigEndian::set32(*(
 uint64_t OutputFile::get64BE(uint8_t* loc) { return BigEndian::get64(*(uint64_t*)loc); }
 void     OutputFile::set64BE(uint8_t* loc, uint64_t value) { BigEndian::set64(*(uint64_t*)loc, value); }
 
+// Patch 12/28/2014
+// NOTE Backporting from ld64-236.13
+#if SUPPORT_ARCH_arm64
+
 static uint32_t makeNOP() {
 	return 0xD503201F;
 }
@@ -1194,6 +1197,9 @@ static bool withinOneMeg(uint64_t addr1, uint64_t addr2) {
 	int64_t delta = (addr2 - addr1);
 	return ( (delta < 1024*1024) && (delta > -1024*1024) );
 }
+// Patch 12/28/2014
+// NOTE Backporting from ld64-236.13
+#endif // SUPPORT_ARCH_arm64
 
 void OutputFile::setInfo(ld::Internal& state, const ld::Atom* atom, uint8_t* buffer, const std::map<uint32_t, const Fixup*>& usedByHints, 
 						uint32_t offsetInAtom, uint32_t delta, InstructionInfo* info) 
@@ -1224,36 +1230,31 @@ void OutputFile::setInfo(ld::Internal& state, const ld::Atom* atom, uint8_t* buf
 	info->instruction = get32LE(info->instructionContent);
 }	
 
+// Patch 12/28/2014
+// NOTE Backporting from ld64-236.13 to replace the patchs below.
+#if SUPPORT_ARCH_arm64
 static bool isPageKind(const ld::Fixup* fixup, bool mustBeGOT=false)
 {
 	if ( fixup == NULL )
 		return false;
 	const ld::Fixup* f;
 	switch ( fixup->kind ) {
-		// Patch 12/28/2014
-		#if SUPPORT_ARCH_arm64
 		case ld::Fixup::kindStoreTargetAddressARM64Page21:
 			return !mustBeGOT;
 		case ld::Fixup::kindStoreTargetAddressARM64GOTLoadPage21:
 		case ld::Fixup::kindStoreTargetAddressARM64GOTLeaPage21:
 			return true;
-		// Patch 12/28/2014
-		#endif
 		case ld::Fixup::kindSetTargetAddress:
 			f = fixup;
 			do { 
 				++f;
 			} while ( ! f->lastInCluster() );
 			switch (f->kind ) {
-				// Patch 12/28/2014
-				#if SUPPORT_ARCH_arm64
 				case ld::Fixup::kindStoreARM64Page21:
 					return !mustBeGOT;
 				case ld::Fixup::kindStoreARM64GOTLoadPage21:
 				case ld::Fixup::kindStoreARM64GOTLeaPage21:
 					return true;
-				// Patch 12/28/2014
-				#endif
 				default:
 					break;
 			}
@@ -1270,30 +1271,22 @@ static bool isPageOffsetKind(const ld::Fixup* fixup, bool mustBeGOT=false)
 		return false;
 	const ld::Fixup* f;
 	switch ( fixup->kind ) {
-		// Patch 12/28/2014
-		#if SUPPORT_ARCH_arm64
 		case ld::Fixup::kindStoreTargetAddressARM64PageOff12:
 			return !mustBeGOT;
 		case ld::Fixup::kindStoreTargetAddressARM64GOTLoadPageOff12:
 		case ld::Fixup::kindStoreTargetAddressARM64GOTLeaPageOff12:
 			return true;
-		// Patch 12/28/2014
-		#endif
 		case ld::Fixup::kindSetTargetAddress:
 			f = fixup;
 			do { 
 				++f;
 			} while ( ! f->lastInCluster() );
 			switch (f->kind ) {
-				// Patch 12/28/2014
-				#if SUPPORT_ARCH_arm64
 				case ld::Fixup::kindStoreARM64PageOff12:
 					return !mustBeGOT;
 				case ld::Fixup::kindStoreARM64GOTLoadPageOff12:
 				case ld::Fixup::kindStoreARM64GOTLeaPageOff12:
 					return true;
-				// Patch 12/28/2014
-				#endif
 				default:
 					break;
 			}
@@ -1303,6 +1296,9 @@ static bool isPageOffsetKind(const ld::Fixup* fixup, bool mustBeGOT=false)
 	}
 	return false;
 }
+// Patch 12/29/2014
+// NOTE Backporting from ld64-236.13
+#endif // SUPPORT_ARCH_arm64
 
 
 #define LOH_ASSERT(cond) \
@@ -1777,6 +1773,13 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
 				}
 				// The pc added will be +4 from the pc
 				delta = accumulator - (atom->finalAddress() + fit->offsetInAtom + 4);
+				// Patch 12/28/2014
+				// NOTE Backporting from ld64-236.13
+				// <rdar://problem/16652542> support bl in very large .o files
+				if ( fit->contentDetlaToAddendOnly ) {
+					while ( delta < (-16777216LL) ) 
+						delta += 0x2000000;
+				}
 				rangeCheckThumbBranch22(delta, state, atom, fit);
 				if ( _options.preferSubArchitecture() && _options.archSupportsThumb2() ) {
 					// The instruction is really two instructions:
@@ -2032,7 +2035,10 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
 #endif
 		}
 	}
-	
+
+// Patch 12/28/2014
+// NOTE Backporting from ld64-236.13	
+#if SUPPORT_ARCH_arm64
 	// after all fixups are done on atom, if there are potential optimizations, do those
 	if ( (usedByHints.size() != 0) && (_options.outputKind() != Options::kObjectFile) && !_options.ignoreOptimizationHints() ) {
 		// fill in second part of usedByHints map, so we can see the target of fixups that might be optimized
@@ -2472,9 +2478,9 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
 			}				
 		}
 	}
-
-
-	
+// Patch 12/28/2014
+// NOTE Backporting from ld64-236.13
+#endif // SUPPORT_ARCH_arm64
 
 }
 

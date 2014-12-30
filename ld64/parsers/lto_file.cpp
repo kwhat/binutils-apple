@@ -472,9 +472,11 @@ struct CommandLineOrderFileSorter
 void Parser::ltoDiagnosticHandler(lto_codegen_diagnostic_severity_t severity, const char* message, void*) 
 {
 	switch ( severity ) {
-		// Patch 12/28/2014
+#if LTO_API_VERSION >= 10
 		case LTO_DS_REMARK:
+			fprintf(stderr, "ld: LTO remark: %s\n", message);
 			break;
+#endif
 		case LTO_DS_NOTE:
 		case LTO_DS_WARNING:
 			warning("%s", message);
@@ -622,6 +624,11 @@ bool Parser::optimize(  const std::vector<const ld::Atom*>&	allAtoms,
 		}
 		else if ( nonLLVMRefs.find(name) != nonLLVMRefs.end() ) {
 			if ( logMustPreserve ) fprintf(stderr, "lto_codegen_add_must_preserve_symbol(%s) because referenced by a mach-o atom\n", name);
+			::lto_codegen_add_must_preserve_symbol(generator, name);
+		}
+		else if ( options.relocatable && hasNonllvmAtoms ) {
+			// <rdar://problem/14334895> ld -r mode but merging in some mach-o files, so need to keep libLTO from optimizing away anything
+			if ( logMustPreserve ) fprintf(stderr, "lto_codegen_add_must_preserve_symbol(%s) because -r mode disable LTO dead stripping\n", name);
 			::lto_codegen_add_must_preserve_symbol(generator, name);
 		}
 	}

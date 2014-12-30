@@ -525,8 +525,7 @@ struct Fixup
 		binding(Fixup::bindingNone),  
 		contentAddendOnly(false), contentDetlaToAddendOnly(false), contentIgnoresAddend(false) 
 			{ u.addend = addend; }
-			
-#if SUPPORT_ARCH_arm64
+
 	Fixup(Kind k, uint32_t lohKind, uint32_t off1, uint32_t off2) :
 		offsetInAtom(off1), kind(k), clusterSize(k1of1),  
 		weakImport(false), binding(Fixup::bindingNone), contentAddendOnly(false), 
@@ -540,7 +539,6 @@ struct Fixup
 			extra.info.delta2 = (off2 - off1) >> 2;
 			u.addend = extra.addend; 
 		}
-#endif			
 			
 
 	bool firstInCluster() const { 
@@ -570,8 +568,7 @@ struct Fixup
 		}
 		return false;
 	}
-	
-#if SUPPORT_ARCH_arm64
+
 	union LOH_arm64 {
 		uint64_t	addend;
 		struct {
@@ -583,8 +580,6 @@ struct Fixup
 						delta4 : 14;	
 		} info;
 	};
-#endif
-	
 };
 
 //
