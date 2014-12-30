@@ -371,13 +371,10 @@ char **envp)
 	(void)umask(oumask);
 
 	/* see if this is being run as ranlib */
-	p = strrchr(argv[0], '/');
-	if(p != NULL)
-	    p++;
-	else
-	    p = argv[0];
-	if(strncmp(p, "ranlib", sizeof("ranlib") - 1) == 0)
-	    cmd_flags.ranlib = TRUE;
+	// Patch 12/29/2014
+	#ifdef RANLIB
+	cmd_flags.ranlib = TRUE;
+	#endif
 
 	/* The default is to used long names */
 	cmd_flags.use_long_names = TRUE;
