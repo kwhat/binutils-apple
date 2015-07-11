@@ -807,9 +807,6 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindStoreThumbHigh16:
 			printf(", then store high-16 in Thumb movt");
 			break;
-		// Patch 12/28/2014
-		// NOTE This needs to remain here until ldd.hpp removes preprocessor directive.
-		#if SUPPORT_ARCH_arm64
 		case ld::Fixup::kindStoreARM64Branch26:
 			printf(", then store as ARM64 26-bit pcrel branch");
 			break;
@@ -849,8 +846,6 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindStoreARM64PCRelToGOT:
 			printf(", then store as 32-bit delta to GOT entry");
 			break;
-		// Patch 12/28/2014
-		#endif
 		case ld::Fixup::kindDtraceExtra:
 			printf("dtrace static probe extra info");
 			break;
@@ -995,9 +990,6 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindSetTargetTLVTemplateOffsetLittleEndian64:
 			printf("tlv template offset of %s", referenceTargetAtomName(ref));
 			break;
-		// Patch 12/28/2014
-		// NOTE This needs to remain here until ldd.hpp removes preprocessor directive.
-		#if SUPPORT_ARCH_arm64
 		case ld::Fixup::kindStoreTargetAddressARM64Branch26:
 			printf("ARM64 store 26-bit pcrel branch to %s", referenceTargetAtomName(ref));
 			break;
@@ -1007,14 +999,6 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindStoreTargetAddressARM64PageOff12:
 			printf("ARM64 store 12-bit page offset of %s", referenceTargetAtomName(ref));
 			break;
-		/* Patch 12/28/2014
-		case ld::Fixup::kindStoreTargetAddressARM64TLVPage21:
-			printf("ARM64 store 21-bit pcrel ADRP to TLV for %s", referenceTargetAtomName(ref));
-			break;
-		case ld::Fixup::kindStoreTargetAddressARM64TLVPageOff12:
-			printf("ARM64 store 12-bit page offset of TLV of %s", referenceTargetAtomName(ref));
-			break;
-		*/
 		case ld::Fixup::kindStoreTargetAddressARM64GOTLoadPage21:
 			printf("ARM64 store 21-bit pcrel ADRP to GOT for %s", referenceTargetAtomName(ref));
 			break;
@@ -1039,8 +1023,6 @@ void dumper::dumpFixup(const ld::Fixup* ref)
 		case ld::Fixup::kindStoreTargetAddressARM64TLVPLoadNowLeaPageOff12:
 			printf("ARM64 store 12-bit page offset of lea for TLV of %s", referenceTargetAtomName(ref));
 			break;
-		// Patch 12/28/2014
-		#endif
 		//default:
 		//	printf("unknown fixup");
 		//	break;
@@ -1263,6 +1245,7 @@ static ld::relocatable::File* createReader(const char* path)
 	objOpts.keepDwarfUnwind		= false;
 	objOpts.forceDwarfConversion = false;
 	objOpts.verboseOptimizationHints = true;
+	objOpts.armUsesZeroCostExceptions = true;
 	objOpts.subType				= sPreferredSubArch;
 #if 1
 	if ( ! foundFatSlice ) {

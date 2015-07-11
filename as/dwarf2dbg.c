@@ -2002,7 +2002,8 @@ struct frchain *ranges_section)
 #ifdef OLD
   comp_dir = getpwd ();
 #else
-  comp_dir = getwd(xmalloc(MAXPATHLEN + 1));
+  // Patched 07/11/2015
+  comp_dir = getcwd(xmalloc(MAXPATHLEN + 1), MAXPATHLEN + 1);
 #endif
   len = strlen (comp_dir) + 1;
   p = frag_more (len);

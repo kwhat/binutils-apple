@@ -1581,8 +1581,6 @@ private:
 template <typename A>
 ld::Section OptimizationHintsAtom<A>::_s_section("__LINKEDIT", "__opt_hints", ld::Section::typeLinkEdit, true);
 
-// Patch 12/28/2014
-#if SUPPORT_ARCH_arm64
 template <typename A>
 void OptimizationHintsAtom<A>::encode() const
 {
@@ -1617,8 +1615,6 @@ void OptimizationHintsAtom<A>::encode() const
 	
 	this->_encoded = true;
 }
-// Patch 12/28/2014
-#endif
 
 
 } // namespace tool 

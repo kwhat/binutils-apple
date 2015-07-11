@@ -350,7 +350,8 @@ int *line)
     char *p, *q;
     static char directory_buf[MAXPATHLEN];
 
-	getwd(directory_buf);
+	// Patch 07/11/2015
+	getcwd(directory_buf, MAXPATHLEN);
 	*fileName = NULL;
 	*directory = directory_buf;
 	*line = 0;
@@ -384,14 +385,8 @@ char *filename)
   fprintf (stderr,"as:file(%s) %s! ",
 	   filename, gripe
 	   );
-  if (errno > sys_nerr)
-    {
-      fprintf (stderr, "Unknown error #%d.", errno);
-    }
-  else
-    {
-      fprintf (stderr, "%s.", sys_errlist [errno]);
-    }
+  // Patch 07/11/2015
+  fprintf (stderr, "%s.", strerror(errno));
   (void)putc('\n', stderr);
   errno = 0;			/* After reporting, clear it. */
   if (input_file_is_open())	/* RMS says don't mention line # if not needed. */

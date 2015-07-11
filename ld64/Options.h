@@ -390,6 +390,7 @@ public:
 								linkerOptions() const { return fLinkerOptions; }
 	FileInfo					findFramework(const char* frameworkName) const;
 	FileInfo					findLibrary(const char* rootName, bool dylibsOnly=false) const;
+	bool						armUsesZeroCostExceptions() const;
 	const std::vector<SectionRename>& sectionRenames() const { return fSectionRenames; }
 	const std::vector<SegmentRename>& segmentRenames() const { return fSegmentRenames; }
 	bool						moveRoSymbol(const char* symName, const char* filePath, const char*& seg, bool& wildCardMatch) const;
@@ -411,8 +412,8 @@ private:
 		bool					empty() const			{ return fRegular.empty() && fWildCard.empty(); }
 		bool					hasWildCards() const	{ return !fWildCard.empty(); }
 		// Patch 12/28/2014
-		NameSet::const_iterator			regularBegin() const	{ return fRegular.begin(); }
-		NameSet::const_iterator			regularEnd() const		{ return fRegular.end(); }
+		NameSet::const_iterator		regularBegin() const	{ return fRegular.begin(); }
+		NameSet::const_iterator		regularEnd() const		{ return fRegular.end(); }
 		void					remove(const NameSet&); 
 	private:
 		static bool				hasWildCards(const char*);

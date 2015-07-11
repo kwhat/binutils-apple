@@ -438,6 +438,7 @@ protected:
 	virtual unsigned long			contentHash(const class Atom<A>* atom, const ld::IndirectBindingTable& ind) const;
 	virtual bool					canCoalesceWith(const class Atom<A>* atom, const ld::Atom& rhs, 
 													const ld::IndirectBindingTable& ind) const;
+	virtual	bool					ignoreLabel(const char* label) const;
 };
 
 template <typename A>
@@ -457,6 +458,7 @@ protected:
 	virtual unsigned long			contentHash(const class Atom<A>* atom, const ld::IndirectBindingTable& ind) const;
 	virtual bool					canCoalesceWith(const class Atom<A>* atom, const ld::Atom& rhs, 
 													const ld::IndirectBindingTable& ind) const;
+	virtual	bool					ignoreLabel(const char* label) const;
 };
 
 template <typename A>
@@ -476,6 +478,7 @@ protected:
 	virtual unsigned long			contentHash(const class Atom<A>* atom, const ld::IndirectBindingTable& ind) const;
 	virtual bool					canCoalesceWith(const class Atom<A>* atom, const ld::Atom& rhs, 
 													const ld::IndirectBindingTable& ind) const;
+	virtual	bool					ignoreLabel(const char* label) const;
 };
 
 
@@ -1057,6 +1060,7 @@ public:
 	bool											forceDwarfConversion() { return _forceDwarfConversion; }
 	bool											verboseOptimizationHints() { return _verboseOptimizationHints; }
 	bool											neverConvertDwarf() { return _neverConvertDwarf; }
+	bool											armUsesZeroCostExceptions() { return _armUsesZeroCostExceptions; }
 
 	macho_data_in_code_entry<P>*					dataInCodeStart() { return _dataInCodeStart; }
 	macho_data_in_code_entry<P>*					dataInCodeEnd()   { return _dataInCodeEnd; }
@@ -1207,6 +1211,7 @@ private:
 	bool										_forceDwarfConversion;
 	bool										_neverConvertDwarf;
 	bool										_verboseOptimizationHints;
+	bool										_armUsesZeroCostExceptions;
 	unsigned int								_stubsSectionNum;
 	const macho_section<P>*						_stubsMachOSection;
 	std::vector<const char*>					_dtraceProviderInfo;
@@ -1635,6 +1640,8 @@ ld::relocatable::File* Parser<A>::parse(const ParserOptions& opts)
 	// respond to -t option
 	if ( opts.logAllFiles )
 		printf("%s\n", _path);
+		
+	_armUsesZeroCostExceptions = opts.armUsesZeroCostExceptions;
 
 	// parse start of mach-o file
 	if ( ! parseLoadCommands() )
@@ -4074,6 +4081,12 @@ uint32_t Section<A>::sectionNum(class Parser<A>& parser) const
 template <> 
 uint32_t CFISection<arm>::cfiCount(Parser<arm>& parser) 
 {
+	if ( parser.armUsesZeroCostExceptions() ) {
+		// create ObjectAddressSpace object for use by libunwind
+		OAS oas(*this, (uint8_t*)this->file().fileContent()+this->_machOSection->offset());
+		return libunwind::CFI_Parser<OAS>::getCFICount(oas, 
+											this->_machOSection->addr(), this->_machOSection->size());
+	}
 	return 0; 
 }
 
@@ -4208,9 +4221,26 @@ void CFISection<arm>::cfiParse(class Parser<arm>& parser, uint8_t* buffer,
 									libunwind::CFI_Atom_Info<CFISection<arm>::OAS>::CFI_Atom_Info cfiArray[], 
 									uint32_t& count, const pint_t cuStarts[], uint32_t cuCount)
 {
-	// arm does not use zero cost exceptions
-	assert(count == 0);
+	if ( !parser.armUsesZeroCostExceptions() ) {
+		// most arm do not use zero cost exceptions
+		assert(count == 0);
+		return;
+	}
+	// create ObjectAddressSpace object for use by libunwind
+	OAS oas(*this, (uint8_t*)this->file().fileContent()+this->_machOSection->offset());
+	
+	// use libuwind to parse __eh_frame data into array of CFI_Atom_Info
+	const char* msg;
+	msg = libunwind::DwarfInstructions<OAS, libunwind::Registers_arm>::parseCFIs(
+							oas, this->_machOSection->addr(), this->_machOSection->size(), 
+							cuStarts, cuCount, parser.keepDwarfUnwind(), parser.forceDwarfConversion(), parser.neverConvertDwarf(),
+							cfiArray, count, (void*)&parser, warnFunc);
+	if ( msg != NULL ) 
+		throwf("malformed __eh_frame section: %s", msg);
 }
+
+
+
 
 template <>
 void CFISection<arm64>::cfiParse(class Parser<arm64>& parser, uint8_t* buffer, 
@@ -4362,8 +4392,6 @@ void CFISection<x86>::addCiePersonalityFixups(class Parser<x86>& parser, const C
 	}
 }
 
-
-
 #if SUPPORT_ARCH_arm64
 template <>
 void CFISection<arm64>::addCiePersonalityFixups(class Parser<arm64>& parser, const CFI_Atom_Info* cieInfo)
@@ -4388,6 +4416,30 @@ void CFISection<arm64>::addCiePersonalityFixups(class Parser<arm64>& parser, con
 	}
 }
 #endif
+
+template <>
+void CFISection<arm>::addCiePersonalityFixups(class Parser<arm>& parser, const CFI_Atom_Info* cieInfo)
+{
+	uint8_t personalityEncoding = cieInfo->u.cieInfo.personality.encodingOfTargetAddress;
+	if ( (personalityEncoding == 0x9B) || (personalityEncoding == 0x90) ) {
+		uint32_t offsetInCFI = cieInfo->u.cieInfo.personality.offsetInCFI;
+		uint32_t nlpAddr = cieInfo->u.cieInfo.personality.targetAddress;
+		Atom<arm>* cieAtom = this->findAtomByAddress(cieInfo->address);
+		Atom<arm>* nlpAtom = parser.findAtomByAddress(nlpAddr);
+		assert(nlpAtom->contentType() == ld::Atom::typeNonLazyPointer);
+		Parser<arm>::SourceLocation src(cieAtom, cieInfo->u.cieInfo.personality.offsetInCFI);
+
+		parser.addFixup(src, ld::Fixup::k1of4, ld::Fixup::kindSetTargetAddress, ld::Fixup::bindingByContentBound, nlpAtom);
+		parser.addFixup(src, ld::Fixup::k2of4, ld::Fixup::kindSubtractTargetAddress, cieAtom);
+		parser.addFixup(src, ld::Fixup::k3of4, ld::Fixup::kindSubtractAddend, offsetInCFI);
+		parser.addFixup(src, ld::Fixup::k4of4, ld::Fixup::kindStoreLittleEndian32);
+	}
+	else if ( personalityEncoding != 0 ) {
+		throwf("unsupported address encoding (%02X) of personality function in CIE", personalityEncoding);
+	}
+}
+
+
 
 template <typename A>
 void CFISection<A>::addCiePersonalityFixups(class Parser<A>& parser, const CFI_Atom_Info* cieInfo)
@@ -4634,8 +4686,7 @@ const char* CUSection<x86_64>::personalityName(class Parser<x86_64>& parser, con
 	else {
 		const pint_t* content = (pint_t*)(this->file().fileContent() + this->_machOSection->offset() + reloc->r_address());
 		pint_t personalityAddr = *content;
-		Section<x86_64>* personalitySection = parser.sectionForAddress(personalityAddr);
-		assert((personalitySection->type() == ld::Section::typeCode) && "personality column in __compact_unwind section is not pointer to function");
+		assert((parser.sectionForAddress(personalityAddr)->type() == ld::Section::typeCode) && "personality column in __compact_unwind section is not pointer to function");
 		// atoms may not be constructed yet, so scan symbol table for labels
 		const char* name = parser.scanSymbolTableForAddress(personalityAddr);
 		return name;
@@ -4690,6 +4741,36 @@ const char* CUSection<arm64>::personalityName(class Parser<arm64>& parser, const
 }
 #endif
 
+#if SUPPORT_ARCH_arm_any
+template <>
+const char* CUSection<arm>::personalityName(class Parser<arm>& parser, const macho_relocation_info<arm::P>* reloc)
+{
+	if ( reloc->r_extern() ) {
+		assert((reloc->r_type() == ARM_RELOC_VANILLA) && "wrong reloc type on personality column in __compact_unwind section");
+		const macho_nlist<P>& sym = parser.symbolFromIndex(reloc->r_symbolnum());
+		return parser.nameFromSymbol(sym);
+	}
+	else {
+		// support __LD, __compact_unwind personality entries which are pointer to personality non-lazy pointer
+		const pint_t* content = (pint_t*)(this->file().fileContent() + this->_machOSection->offset() + reloc->r_address());
+		pint_t nlPointerAddr = *content;
+		Section<arm>* nlSection = parser.sectionForAddress(nlPointerAddr);
+		if ( nlSection->type() == ld::Section::typeCode ) {
+			// personality function is defined in this .o file, so this is a direct reference to it
+			// atoms may not be constructed yet, so scan symbol table for labels
+			const char* name = parser.scanSymbolTableForAddress(nlPointerAddr);
+			return name;
+		}
+		else {
+			uint32_t symIndex = parser.symbolIndexFromIndirectSectionAddress(nlPointerAddr, nlSection->machoSection());
+			const macho_nlist<P>& nlSymbol = parser.symbolFromIndex(symIndex);
+			return parser.nameFromSymbol(nlSymbol);
+		}
+	}
+}
+#endif
+
+
 template <typename A>
 const char* CUSection<A>::personalityName(class Parser<A>& parser, const macho_relocation_info<P>* reloc)
 {
@@ -4712,7 +4793,7 @@ bool CUSection<x86_64>::encodingMeansUseDwarf(compact_unwind_encoding_t enc)
 template <>
 bool CUSection<arm>::encodingMeansUseDwarf(compact_unwind_encoding_t enc)
 {
-	return false;
+	return ((enc & UNWIND_ARM_MODE_MASK) == UNWIND_ARM_MODE_DWARF);
 }
 #endif
 
@@ -4933,6 +5014,8 @@ uint32_t SymboledSection<A>::appendAtoms(class Parser<A>& parser, uint8_t* p,
 			new (allocatedSpace) Atom<A>(*this, parser, *label, size, isAlias);
 			if ( isAlias )
 				this->_hasAliases = true;
+			if ( parser.altEntryFromSymbol(*label) )
+				this->_altEntries.insert(allocatedSpace);
 		}
 		else {
 			ld::Atom::SymbolTableInclusion inclusion = ld::Atom::symbolTableNotIn;
@@ -5070,6 +5153,11 @@ uint32_t ImplicitSizeSection<A>::appendAtoms(class Parser<A>& parser, uint8_t* p
 	return count;
 }
 
+template <typename A>
+bool Literal4Section<A>::ignoreLabel(const char* label) const
+{
+	return (label[0] == 'L') || (label[0] == 'l');
+}
 
 template <typename A>
 unsigned long Literal4Section<A>::contentHash(const class Atom<A>* atom, const ld::IndirectBindingTable& ind) const
@@ -5094,6 +5182,12 @@ bool Literal4Section<A>::canCoalesceWith(const class Atom<A>* atom, const ld::At
 	return false;
 }
 
+
+template <typename A>
+bool Literal8Section<A>::ignoreLabel(const char* label) const
+{
+	return (label[0] == 'L') || (label[0] == 'l');
+}
 
 template <typename A>
 unsigned long Literal8Section<A>::contentHash(const class Atom<A>* atom, const ld::IndirectBindingTable& ind) const
@@ -5129,6 +5223,11 @@ bool Literal8Section<A>::canCoalesceWith(const class Atom<A>* atom, const ld::At
 	return false;
 }
 
+template <typename A>
+bool Literal16Section<A>::ignoreLabel(const char* label) const
+{
+	return (label[0] == 'L') || (label[0] == 'l');
+}
 
 template <typename A>
 unsigned long Literal16Section<A>::contentHash(const class Atom<A>* atom, const ld::IndirectBindingTable& ind) const
@@ -5373,7 +5472,6 @@ ld::Atom::Scope NonLazyPointerSection<A>::scopeAtAddress(Parser<A>& parser, pint
 	else
 		return ld::Atom::scopeLinkageUnit; 
 }
-
 
 template <typename A>
 const uint8_t* CFStringSection<A>::targetContent(const class Atom<A>* atom, const ld::IndirectBindingTable& ind,

@@ -25,7 +25,7 @@
 #endif
 
 #include <mach/mach.h>
-extern kern_return_t vm_flush_cache(
+__private_extern__ kern_return_t vm_flush_cache(
     mach_port_t target_task,
     vm_address_t address,
     vm_size_t size);

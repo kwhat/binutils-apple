@@ -168,7 +168,7 @@ enum MacVersionMin { macVersionUnset=0, mac10_4=0x000A0400, mac10_5=0x000A0500,
 enum IOSVersionMin { iOSVersionUnset=0, iOS_2_0=0x00020000, iOS_3_1=0x00030100, 
 						iOS_4_2=0x00040200, iOS_4_3=0x00040300, iOS_5_0=0x00050000,
 						iOS_6_0=0x00060000, iOS_7_0=0x00070000, iOS_8_0=0x00080000,
-						iOS_Future=0x10000000};
+						iOS_9_0=0x00090000, iOS_Future=0x10000000};
  
 namespace relocatable {
 	//
@@ -530,8 +530,7 @@ struct Fixup
 		binding(Fixup::bindingNone),  
 		contentAddendOnly(false), contentDetlaToAddendOnly(false), contentIgnoresAddend(false) 
 			{ u.addend = addend; }
-// Patch 12/28/2014			
-//#if SUPPORT_ARCH_arm64
+			
 	Fixup(Kind k, uint32_t lohKind, uint32_t off1, uint32_t off2) :
 		offsetInAtom(off1), kind(k), clusterSize(k1of1),  
 		weakImport(false), binding(Fixup::bindingNone), contentAddendOnly(false), 
@@ -545,7 +544,6 @@ struct Fixup
 			extra.info.delta2 = (off2 - off1) >> 2;
 			u.addend = extra.addend; 
 		}
-//#endif			
 			
 
 	bool firstInCluster() const { 
@@ -575,8 +573,7 @@ struct Fixup
 		}
 		return false;
 	}
-// Patch 12/28/2014	
-//#if SUPPORT_ARCH_arm64
+	
 	union LOH_arm64 {
 		uint64_t	addend;
 		struct {
@@ -588,8 +585,6 @@ struct Fixup
 						delta4 : 14;	
 		} info;
 	};
-// Patch 12/28/2014
-//#endif
 	
 };
 

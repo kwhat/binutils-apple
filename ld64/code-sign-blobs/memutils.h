@@ -87,33 +87,42 @@ inline const void *alignUp(const void *p, size_t alignment = systemAlignment)
 }
 
 template <class T>
+// Patch 12/28/2014
 inline const T *increment(const void *p, __gnu_cxx::ptrdiff_t offset)
 { return reinterpret_cast<const T *>(uintptr_t(p) + offset); }
 
 template <class T>
+// Patch 12/28/2014
 inline T *increment(void *p, __gnu_cxx::ptrdiff_t offset)
 { return reinterpret_cast<T *>(uintptr_t(p) + offset); }
 
+// Patch 12/28/2014
 inline const void *increment(const void *p, __gnu_cxx::ptrdiff_t offset)
 { return increment<const void>(p, offset); }
 
+// Patch 12/28/2014
 inline void *increment(void *p, __gnu_cxx::ptrdiff_t offset)
 { return increment<void>(p, offset); }
 
 template <class T>
+// Patch 12/28/2014
 inline const T *increment(const void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
 { return increment<const T>(alignUp(p, alignment), offset); }
 
 template <class T>
+// Patch 12/28/2014
 inline T *increment(void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
 { return increment<T>(alignUp(p, alignment), offset); }
 
+// Patch 12/28/2014
 inline const void *increment(const void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
 { return increment<const void>(p, offset, alignment); }
 
+// Patch 12/28/2014
 inline void *increment(void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
 { return increment<void>(p, offset, alignment); }
 
+// Patch 12/28/2014
 inline __gnu_cxx::ptrdiff_t difference(const void *p1, const void *p2)
 { return uintptr_t(p1) - uintptr_t(p2); }
 

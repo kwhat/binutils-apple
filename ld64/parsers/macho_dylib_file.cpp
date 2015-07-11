@@ -1088,20 +1088,6 @@ bool isDylibFile(const uint8_t* fileContent, cpu_type_t* result, cpu_subtype_t* 
 		*subResult = CPU_SUBTYPE_ARM64_ALL;
 		return true;
 	}
-	/* Patch 12/28/2014
-	 * NOTE Apple is dropping powerpc support.
-	if ( Parser<ppc>::validFile(fileContent, false) ) {
-		*result = CPU_TYPE_POWERPC;
-		const macho_header<Pointer32<BigEndian> >* header = (const macho_header<Pointer32<BigEndian> >*)fileContent;
-		*subResult = header->cpusubtype();
-		return true;
-	}
-	if ( Parser<ppc64>::validFile(fileContent, false) ) {
-		*result = CPU_TYPE_POWERPC64;
-		*subResult = CPU_SUBTYPE_POWERPC_ALL;
-		return true;
-	}
-	*/
 	return false;
 }
 

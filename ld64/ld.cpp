@@ -615,8 +615,6 @@ ld::Internal::FinalSection* InternalState::getFinalSection(const ld::Section& in
 	}
 
 	// otherwise, create a new final section
-	// Patch 12/28/2014
-	bool objFile = false;
 	switch ( _options.outputKind() ) {
 		case Options::kStaticExecutable:
 		case Options::kDynamicExecutable:
@@ -648,8 +646,6 @@ ld::Internal::FinalSection* InternalState::getFinalSection(const ld::Section& in
 				//fprintf(stderr, "_sectionInToFinalMap[%p] = %p\n", &inputSection, pos->second);
 				return pos->second;
 			}
-			// Patch 12/28/2014
-			objFile = true;
 			break;
 	}
 
