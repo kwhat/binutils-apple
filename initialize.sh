@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CCV=870
-LDV=242
+LDV=242.2
 
 wget http://opensource.apple.com/tarballs/cctools/cctools-${CCV}.tar.gz
 wget http://opensource.apple.com/tarballs/ld64/ld64-${LDV}.tar.gz
@@ -29,6 +29,9 @@ rm -vf ./cctools-${CCV}/PB.project
 rm -Rvf ./ld64-${LDV}/ld64.xcodeproj/
 rm -vf ./ld64-${LDV}/compile_stubs
 rm -vf ./ld64-${LDV}/src/create_configure
+mv -vf ./ld64-${LDV}/src/* ./ld64-${LDV}/
+mv -vf ./ld64-${LDV}/ld/* ./ld64-${LDV}/
+rm -Rvf ./ld64-${LDV}/ld ./ld64-${LDV}/src
 
 cp ./cctools-${CCV}/APPLE_LICENSE ./COPYING
 echo "Alexander Barker <alex@1stleg.com>" > ./AUTHORS
