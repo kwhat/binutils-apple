@@ -23,7 +23,7 @@ otool_SOURCES =  \
 	arm_disasm.c \
 	arm64_disasm.c \
 	dyld_bind_info.c \
-	print_bytecode.c \
+	print_bitcode.c \
 	print_objc.c \
 	print_objc2_32bit.c \
 	print_objc2_64bit.c
