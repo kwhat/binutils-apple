@@ -705,7 +705,7 @@ enum bool all_archs)
 		 */
 		free(output_file);
 		output_file = makestr("strip.XXXXXX", NULL);
-		mkstemp(output_file);
+		output_file = mktemp(output_file);
 	    }
 #endif /* NMEDIT */
 	    writeout(archs, narchs, output_file, stat_buf.st_mode & 0777,
@@ -4053,7 +4053,7 @@ struct object *object)
 	 * of this arch's object file.
 	 */
 	input_file = makestr("/tmp/strip.XXXXXX", NULL);
-	mkstemp(input_file);
+	input_file = mktemp(input_file);
 
 	if((fd = open(input_file, O_WRONLY|O_CREAT, 0600)) < 0)
 	    system_fatal("can't open temporary file: %s", input_file);
@@ -4069,7 +4069,7 @@ struct object *object)
 	 * Create a temporary name for the output file of the ld -r
 	 */
 	output_file = makestr("/tmp/strip.XXXXXX", NULL);
-	mkstemp(output_file);
+	output_file = mktemp(output_file);
 
 	/*
 	 * Create the ld -r command line and execute it.

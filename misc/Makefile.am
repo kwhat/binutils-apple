@@ -15,7 +15,8 @@ bin_PROGRAMS =  \
 	segedit \
 	pagestuff \
 	ranlib \
-	codesign_allocate
+	codesign_allocate \
+	bitcode_strip
  
 LDADD = $(top_builddir)/libstuff/libstuff.la \
 		$(DL_LIBS) 
@@ -44,3 +45,4 @@ ranlib_SOURCES = libtool.c
 ranlib_CFLAGS = -DRANLIB $(AM_CFLAGS)
 codesign_allocate_SOURCES = codesign_allocate.c
 
+bitcode_strip_SOURCES = bitcode_strip.c

@@ -61,11 +61,8 @@ char **envp)
 	    _NSGetExecutablePath(p, &bufsize);
 	}
 	prefix = realpath(p, resolved_name);
-	/* Patch 12/29/2014
-	 * NOTE This is always true and causing a warning.
-	if(realpath ==NULL)
+	if(prefix == NULL)
 	    system_fatal("realpath(3) for %s failed", p);
-	*/
 	p = rindex(prefix, '/');
 	if(p != NULL)
 	    p[1] = '\0';
@@ -273,10 +270,6 @@ char **envp)
 	    run_clang = 1;
 	}
 
-#if 0
-/*
- * See rdar://9801003 where this will be changed before before NMOs and NMiOS.
- */
 	/*
 	 * Use the LLVM integrated assembler as the default with the as(1)
 	 * driver for Intel (64-bit & 32-bit) as well as ARM for 32-bit too
@@ -286,7 +279,6 @@ char **envp)
 	   arch_flag.cputype == CPU_TYPE_I386 ||
 	   arch_flag.cputype == CPU_TYPE_ARM)
 	    run_clang = 1;
-#endif
 
 	/*
 	 * Use the clang as the assembler if is the default or asked to with

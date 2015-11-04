@@ -32,6 +32,7 @@
 // Patch 12/28/2014
 #include <algorithm>
 #include <vector>
+#include <map>
 
 #include "ld.hpp"
 #include "dylibs.h"

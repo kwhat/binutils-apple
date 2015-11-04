@@ -54,4 +54,6 @@ ld_SOURCES =  \
 	Resolver.cpp  \
 	Snapshot.cpp  \
 	SymbolTable.cpp \
-	code-sign-blobs/blob.cpp
+	code-sign-blobs/blob.cpp \ 
+	textstub_dylib_file.cpp \
+	bitcode_bundle.cpp
