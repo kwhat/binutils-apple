@@ -1,4 +1,4 @@
-AC_INIT([binutils-apple], [6.0], [https://github.com/kwhat/binutils-apple/])
+AC_INIT([binutils-apple], [7.0], [https://github.com/kwhat/binutils-apple/])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -290,12 +290,10 @@ AC_SUBST(LTO_DEFS)
 # fi
 
 #AC_SUBST([CCTOOLS], [cctools-846.2.1])
-
-
-AC_CHECK_SIZEOF([long]) 
-AS_IF([test "$ac_cv_sizeof_long" -eq 8], 
-    [AC_SUBST([LD], [ld64-224.1])], 
-    [AC_SUBST([LD], [cctools-846.2.1/ld])]) 
+#AC_CHECK_SIZEOF([long]) 
+#AS_IF([test "$ac_cv_sizeof_long" -eq 8], 
+#    [AC_SUBST([LD], [ld64-224.1])], 
+#    [AC_SUBST([LD], [cctools-846.2.1/ld])]) 
 
 
 # sed 's/cctools-846.2.1/cctools-###' to change version numbers until
