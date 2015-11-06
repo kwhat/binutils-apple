@@ -27,6 +27,7 @@
 #include <sys/mman.h>
 
 #include <vector>
+#include <memory>
 
 #include "Architectures.hpp"
 #include "bitcode.hpp"
