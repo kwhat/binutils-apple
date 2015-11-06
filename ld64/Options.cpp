@@ -1121,7 +1121,9 @@ std::vector<const char*> Options::exportsData() const
 std::vector<const char*> Options::SetWithWildcards::data() const
 {
 	std::vector<const char*> data;
-	for (NameSet::iterator it=regularBegin(); it != regularEnd(); ++it) {
+	// Patch Nov 05, 2015 - Alex Barker
+	for (NameSet::const_iterator it=regularBegin(); it != regularEnd(); ++it) {
+
 		data.push_back(*it);
 	}
 	for (std::vector<const char*>::const_iterator it=fWildCard.begin(); it != fWildCard.end(); ++it) {

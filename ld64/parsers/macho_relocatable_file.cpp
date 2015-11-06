@@ -44,6 +44,9 @@
 #include <algorithm>
 #include <type_traits>
 
+// Patch Nov 05, 2015 - Alex Barker
+#include <memory>
+
 #include "dwarf2.h"
 #include "debugline.h"
 

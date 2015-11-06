@@ -27,7 +27,10 @@
 #include <sys/mman.h>
 
 #include <vector>
+
+// Patch Nov 05, 2015 - Alex Barker
 #include <memory>
+
 
 #include "Architectures.hpp"
 #include "bitcode.hpp"

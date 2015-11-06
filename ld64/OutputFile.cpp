@@ -73,6 +73,9 @@
 // Not sure why this isnt defined by statfs
 #define HFS_SUPER_MAGIC 0x4244
 
+// Patch Nov 05, 2015 - Alex Barker
+typedef char uuid_string_t[37];
+
 namespace ld {
 namespace tool {
 
