@@ -2714,8 +2714,9 @@ static int sDescriptorOfPathToRemove = -1;
 static void removePathAndExit(int sig)
 {
 	if ( sDescriptorOfPathToRemove != -1 ) {
-		char path[MAXPATHLEN];
-		if ( ::fcntl(sDescriptorOfPathToRemove, F_GETPATH, path) == 0 )
+		// FIXME Patch 11/7/15
+		//char path[MAXPATHLEN];
+		//if ( ::fcntl(sDescriptorOfPathToRemove, F_GETPATH, path) == 0 )
 			::unlink(path);
 	}
 	fprintf(stderr, "ld: interrupted\n");
