@@ -2710,15 +2710,18 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 	}
 }
 
-static int sDescriptorOfPathToRemove = -1;
+static char *tmpPathToRemove = NULL;
 static void removePathAndExit(int sig)
 {
-	if ( sDescriptorOfPathToRemove != -1 ) {
-		// FIXME Patch 11/7/15
-		//char path[MAXPATHLEN];
-		//if ( ::fcntl(sDescriptorOfPathToRemove, F_GETPATH, path) == 0 )
-			::unlink(path);
+	// Begin Patch Nov 7, 2015 - Alex Barker
+	if ( tmpPathToRemove != NULL ) {
+		struct stat path;
+		if ( ::access(tmpPathToRemove, F_OK ) != -1 )
+			::unlink(tmpPathToRemove);
+		
+		free(tmpPathToRemove);
 	}
+	// End Patch Nov 7, 2015 - Alex Barker
 	fprintf(stderr, "ld: interrupted\n");
 	exit(1);
 }
@@ -2798,7 +2801,8 @@ void OutputFile::writeOutputFile(ld::Internal& state)
 		if (strlen(tmpOutput)+strlen(filenameTemplate) < PATH_MAX) {
 			strcat(tmpOutput, filenameTemplate);
 			fd = mkstemp(tmpOutput);
-			sDescriptorOfPathToRemove = fd;
+			// Patch Nov 7, 2015 - Alex Barker
+			memcpy(tmpPathToRemove, tmpOutput, strlen(tmpOutput));
 		} 
 		else {
 			fd = open(tmpOutput, O_RDWR|O_CREAT, permissions);
@@ -2857,7 +2861,8 @@ void OutputFile::writeOutputFile(ld::Internal& state)
 		if ( ::write(fd, wholeBuffer, _fileSize) == -1 ) {
 			throwf("can't write to output file: %s, errno=%d", _options.outputFilePath(), errno);
 		}
-		sDescriptorOfPathToRemove = -1;
+		// Patch Nov 8, 2015 - Alex Barker
+		tmpPathToRemove = NULL;
 		::close(fd);
 		// <rdar://problem/13118223> NFS: iOS incremental builds in Xcode 4.6 fail with codesign error
 		// NFS seems to pad the end of the file sometimes.  Calling trunc seems to correct it...
