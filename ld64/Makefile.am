@@ -55,5 +55,5 @@ ld_SOURCES =  \
 	Snapshot.cpp  \
 	SymbolTable.cpp \
 	code-sign-blobs/blob.cpp \ 
-	textstub_dylib_file.cpp \
-	bitcode_bundle.cpp
+	parsers/textstub_dylib_file.cpp \
+	passes/bitcode_bundle.cpp

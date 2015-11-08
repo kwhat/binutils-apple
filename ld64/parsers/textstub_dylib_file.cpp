@@ -31,9 +31,9 @@
 // Patch Nov 05, 2015 - Alex Barker
 #include <memory>
 
-
 #include "Architectures.hpp"
-#include "bitcode.hpp"
+// Patch Nov 08, 2015
+#include "Bitcode.hpp"
 #include "MachOFileAbstraction.hpp"
 #include "MachOTrie.hpp"
 #include "textstub_dylib_file.hpp"

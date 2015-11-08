@@ -22,6 +22,9 @@
  * @APPLE_LICENSE_HEADER_END@
  */
 
+// Patch Nov 07, 2015
+#include <algorithm>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -37,6 +40,11 @@
 extern "C" {
 #include <xar/xar.h>
 }
+
+// Patch Nob 08, 2015
+#ifndef BITCODE_XAR_VERSION
+#define BITCODE_XAR_VERSION XAR_VERSION
+#endif
 
 #include "bitcode_bundle.h"
 
