@@ -230,6 +230,11 @@ AC_CHECK_LIB([crypto],[MD5_Init],[
          ])
 AC_SUBST(CRYPT_LIBS)
 
+AC_CHECK_LIB([xar], [xar_open],[
+         XAR_LIBS=-lxar
+         ])
+AC_SUBST(XAR_LIBS)
+
 AC_C_BIGENDIAN([AC_SUBST([ENDIAN_FLAG],[-D__BIG_ENDIAN__=1])],
 			[AC_SUBST([ENDIAN_FLAG],[-D__LITTLE_ENDIAN__=1])])
 

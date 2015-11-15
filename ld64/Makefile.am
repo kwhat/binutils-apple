@@ -9,7 +9,8 @@ ld_LDADD =  \
 	$(DL_LIBS) \
 	$(CRYPT_LIBS) \
 	$(UUID_LIBS) \
-	$(LTO_LIBS)
+	$(LTO_LIBS) \ 
+	$(XAR_LIBS)
 
 ld_LDFLAGS = $(PTHREAD_FLAGS) -lssl
 

@@ -145,13 +145,15 @@ enum bool print_xar_header)
 	    p = rindex(prefix, '/');
 	    if(p != NULL)
 		p[1] = '\0';
-	    xar_path = makestr(prefix, "../lib/libxar.dylib", NULL);
+		// Patch Nov 15, 2015 - Alex Barker
+	    xar_path = makestr(prefix, "../lib/libxar.so", NULL);
 
 	    xar_handle = dlopen(xar_path, RTLD_NOW);
 	    if(xar_handle == NULL){
 		free(xar_path);
 		xar_path = NULL;
-		xar_handle = dlopen("/usr/lib/libxar.dylib", RTLD_NOW);
+		// Patch Nov 15, 2015 - Alex Barker
+		xar_handle = dlopen("/usr/lib/libxar.so", RTLD_NOW);
 	    }
 	    if(xar_handle == NULL)
 		return;
