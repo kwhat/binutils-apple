@@ -1,4 +1,4 @@
-Darwin assembler as(1) and static linker ld(1), XCode Tools 7.0
+Darwin assembler as(1) and static linker ld(1), XCode Tools 7.1
 
 To Compile:
 autoreconf --install --force --verbose

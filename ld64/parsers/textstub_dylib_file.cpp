@@ -69,7 +69,8 @@ public:
 
 	size_t size() const { return _size; }
 
-	std::string str() const { return std::move(std::string(_p, _size)); }
+	// Patch Sep 28, 2016 - Alex Barker
+	std::string str() const { return std::string(_p, _size); }
 
 	bool empty() const { return _size == 0; }
 
@@ -447,7 +448,7 @@ public:
 		expectToken("---");
 		parseDocument(lib, archName);
 		expectToken("...");
-		return std::move(lib);
+		return lib;
 	}
 
 	bool validForArch(Token archName) {
