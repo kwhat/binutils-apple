@@ -351,6 +351,8 @@ static inline void processExportNode(const uint8_t* const start, const uint8_t* 
 		}
 		output.push_back(e);
 	}
+	if ( children > end )
+		throw "malformed trie, terminalSize extends beyond trie data";
 	const uint8_t childrenCount = *children++;
 	const uint8_t* s = children;
 	for (uint8_t i=0; i < childrenCount; ++i) {

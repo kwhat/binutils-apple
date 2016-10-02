@@ -256,6 +256,8 @@ File* Parser::parse(const uint8_t* fileContent, uint64_t fileLength, const char*
 ld::relocatable::File* Parser::parseMachOFile(const uint8_t* p, size_t len, uint32_t nextInputOrdinal, cpu_type_t arch) 
 {
 	switch ( arch ) {
+        /* Patch Oct 15, 2016 - Alex Barker
+         * Looks like ppc support is being dropped in 7.3
 		case CPU_TYPE_POWERPC:
 			if ( mach_o::relocatable::Parser<ppc>::validFile(p) )
 				return mach_o::relocatable::Parser<ppc>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
@@ -264,6 +266,7 @@ ld::relocatable::File* Parser::parseMachOFile(const uint8_t* p, size_t len, uint
 			if ( mach_o::relocatable::Parser<ppc64>::validFile(p) )
 				return mach_o::relocatable::Parser<ppc64>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
 			break;
+        */
 		case CPU_TYPE_I386:
 			if ( mach_o::relocatable::Parser<x86>::validFile(p) )
 				return mach_o::relocatable::Parser<x86>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
