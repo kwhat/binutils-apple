@@ -2710,6 +2710,7 @@ void OutputFile::computeContentUUID(ld::Internal& state, uint8_t* wholeBuffer)
 	}
 }
 
+// Patch 10/01/2016 - Alex Barker
 static char *tmpPathToRemove = NULL;
 static void removePathAndExit(int sig)
 {
