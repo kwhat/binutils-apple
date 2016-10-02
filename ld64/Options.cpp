@@ -1781,6 +1781,12 @@ void Options::parseOrderFile(const char* path, bool cstring)
 					else
 						symbolStart = NULL;
 				}
+				else if ( strncmp(symbolStart, "arm64:", 6) == 0 ) {
+					if ( fArchitecture == CPU_TYPE_ARM64 )
+						symbolStart = &symbolStart[6];
+					else
+						symbolStart = NULL;
+				}
 				if ( symbolStart != NULL ) {
 					char* objFileName = NULL;
 					char* colon = strstr(symbolStart, ".o:");
@@ -2362,7 +2368,6 @@ void Options::parse(int argc, const char* argv[])
 			else if ( strcmp(arg, "-order_file") == 0 ) {
                 snapshotFileArgIndex = 1;
 				parseOrderFile(argv[++i], false);
-				cannotBeUsedWithBitcode(arg);
 			}
 			else if ( strcmp(arg, "-order_file_statistics") == 0 ) {
 				fPrintOrderFileStatistics = true;
@@ -2454,7 +2459,6 @@ void Options::parse(int argc, const char* argv[])
 					throw "can't use -unexported_symbols_list and -exported_symbols_list";
 				fExportMode = kDontExportSome;
 				loadExportFile(argv[++i], "-unexported_symbols_list", fDontExportSymbols);
-				cannotBeUsedWithBitcode(arg);
 			}
 			else if ( strcmp(arg, "-exported_symbol") == 0 ) {
 				if ( fExportMode == kDontExportSome )
@@ -2467,7 +2471,6 @@ void Options::parse(int argc, const char* argv[])
 					throw "can't use -unexported_symbol and -exported_symbol";
 				fExportMode = kDontExportSome;
 				fDontExportSymbols.insert(argv[++i]);
-				cannotBeUsedWithBitcode(arg);
 			}
 			else if ( strcmp(arg, "-non_global_symbols_no_strip_list") == 0 ) {
                 snapshotFileArgIndex = 1;
@@ -3063,8 +3066,9 @@ void Options::parse(int argc, const char* argv[])
 			}
 			else if ( strcmp(arg, "-bitcode_hide_symbols") == 0 ) {
 				fHideSymbols = true;
-				if ( !fBundleBitcode )
-					warning("-bitcode_hide_symbols is ignored without -bitcode_bundle");
+			}
+			else if ( strcmp(arg, "-bitcode_verify") == 0 ) {
+				fVerifyBitcode = true;
 			}
 			else if ( strcmp(arg, "-bitcode_symbol_map") == 0) {
 				fReverseMapPath = argv[++i];
@@ -3089,6 +3093,24 @@ void Options::parse(int argc, const char* argv[])
 			}
 			else if ( strcmp(argv[i], "-ignore_auto_link") == 0) {
 				fIgnoreAutoLink = true;
+			}
+			else if ( strcmp(argv[i], "-allow_dead_duplicates") == 0) {
+				fAllowDeadDups = true;
+			}
+			else if ( strcmp(argv[i], "-bitcode_process_mode") == 0 ) {
+				const char* bitcode_type = argv[++i];
+				if ( bitcode_type == NULL )
+					throw "missing argument to -bitcode_process_mode";
+				else if ( strcmp(bitcode_type, "strip") == 0 )
+					fBitcodeKind = kBitcodeStrip;
+				else if ( strcmp(bitcode_type, "marker") == 0 )
+					fBitcodeKind = kBitcodeMarker;
+				else if ( strcmp(bitcode_type, "data") == 0 )
+					fBitcodeKind = kBitcodeAsData;
+				else if ( strcmp(bitcode_type, "bitcode") == 0 )
+					fBitcodeKind = kBitcodeProcess;
+				else
+					throw "unknown argument to -bitcode_process_mode {strip,marker,data,bitcode}";
 			}
 			else if ( strcmp(arg, "-rpath") == 0 ) {
 				const char* path = argv[++i];
@@ -5303,6 +5325,17 @@ void Options::checkIllegalOptionCombinations()
 	// when there is only one input and output type is object file, downgrade kBitcodeProcess to kBitcodeAsData.
 	if ( fOutputKind == Options::kObjectFile && fInputFiles.size() == 1 && fBitcodeKind == Options::kBitcodeProcess )
 		fBitcodeKind = Options::kBitcodeAsData;
+
+	// warn about bitcode option combinations
+	if ( !fBundleBitcode ) {
+		if ( fVerifyBitcode )
+			warning("-bitcode_verify is ignored without -bitcode_bundle");
+		else if ( fHideSymbols )
+			warning("-bitcode_hide_symbols is ignored without -bitcode_bundle");
+	}
+	if ( fReverseMapPath != NULL && !fHideSymbols ) {
+		throw "-bitcode_symbol_map can only be used with -bitcode_hide_symbols";
+	}
 
 	// <rdar://problem/17598404> warn if building an embedded iOS dylib for pre-iOS 8
 	// <rdar://problem/18935714> How can we suppress "ld: warning: embedded dylibs/frameworks only run on iOS 8 or later when building XCTest?

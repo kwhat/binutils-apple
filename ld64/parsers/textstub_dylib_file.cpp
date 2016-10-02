@@ -318,6 +318,10 @@ class TBDFile {
 	bool parseArchFlowSequence(Token archName) {
 		expectToken("archs");
 
+		// <rdar://problem/22268737> x86_64h fails to link against text based stubs
+		if ( archName == "x86_64h" )
+			archName = "x86_64";
+
 		bool foundArch = false;
 		parseFlowSequence([&](Token name) {
 			if ( name == archName )
@@ -448,6 +452,7 @@ public:
 		expectToken("---");
 		parseDocument(lib, archName);
 		expectToken("...");
+		// Patch Oct 02, 2016
 		return lib;
 	}
 
