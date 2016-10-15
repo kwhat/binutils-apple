@@ -1,7 +1,9 @@
 noinst_LTLIBRARIES = libPasses.la
 noinst_HEADERS =  \
+	bitcode_bundle.h \
 	branch_island.h  \
 	branch_shim.h  \
+	code_dedup.h \
 	compact_unwind.h  \
 	dtrace_dof.h  \
 	dylibs.h  \
@@ -20,12 +22,15 @@ libPasses_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/include/foreign \
 	-I$(top_srcdir)/ld64/abstraction \
+	-I$(top_srcdir)/ld64/parsers \
 	-I$(top_srcdir)/ld64/3rd \
 	-I$(top_srcdir)/ld64
 
 libPasses_la_SOURCES =  \
+	bitcode_bundle.cpp \
 	branch_island.cpp  \
 	branch_shim.cpp  \
+	code_dedup.cpp \
 	compact_unwind.cpp  \
 	dtrace_dof.cpp  \
 	dylibs.cpp  \

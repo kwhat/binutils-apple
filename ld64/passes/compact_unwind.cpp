@@ -30,6 +30,9 @@
 #include <mach/machine.h>
 #include <mach-o/compact_unwind_encoding.h>
 
+// Patch Oct 15, 2016 - Alex Barker
+#include <algorithm>
+
 #include <vector>
 #include <map>
 

@@ -35,6 +35,7 @@ AM_CFLAGS = \
 unwinddump_SOURCES = unwinddump.cpp
 
 machochecker_SOURCES = machochecker.cpp
+machochecker_LDADD = $(top_builddir)/ld64/3rd/libhelper.la
 
 ObjectDump_SOURCES = \
 	ObjectDump.cpp \

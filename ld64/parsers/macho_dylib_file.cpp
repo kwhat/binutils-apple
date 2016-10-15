@@ -45,10 +45,6 @@
 #include "MachOFileAbstraction.hpp"
 #include "MachOTrie.hpp"
 #include "generic_dylib_file.hpp"
-
-// Patch Oct 01, 2016 - Alex Barker
-#include "lto_file.hpp"
-
 #include "macho_dylib_file.h"
 #include "../code-sign-blobs/superblob.h"
 
