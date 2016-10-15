@@ -1024,7 +1024,6 @@ bool isObjectFile(const uint8_t* fileContent, uint64_t fileLength, cpu_type_t ar
 	return Parser::validFile(fileContent, fileLength, architecture, subarch);
 }
 
-
 static ld::relocatable::File *parseImpl(
           const uint8_t *fileContent, uint64_t fileLength, const char *path,
           time_t modTime, ld::File::Ordinal ordinal, cpu_type_t architecture,
@@ -1045,6 +1044,12 @@ ld::relocatable::File* parse(const uint8_t* fileContent, uint64_t fileLength,
 								cpu_type_t architecture, cpu_subtype_t subarch, bool logAllFiles,
 								bool verboseOptimizationHints)
 {
+	// do light weight check before acquiring lock
+	if ( fileLength < 4 )
+		return NULL;
+	if ( (fileContent[0] != 0xDE) || (fileContent[1] != 0xC0) || (fileContent[2] != 0x17) || (fileContent[3] != 0x0B) )
+		return NULL;
+
 	// Note: Once lto_module_create_in_local_context() and friends are thread safe
 	// this lock can be removed.
 	Mutex lock;
