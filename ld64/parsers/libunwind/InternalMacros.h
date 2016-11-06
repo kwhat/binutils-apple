@@ -46,8 +46,9 @@ struct v128 { unsigned int vec[4]; };
 
 #define EXPORT __attribute__((visibility("default"))) 
 
+// Patch Nov 06, 2016 - Alex Barker
 #define COMPILE_TIME_ASSERT( expr )    \
-		extern int compile_time_assert_failed[ ( expr ) ? 1 : -1 ] __attribute__( ( unused ) );
+		static_assert( expr, "Static assertion failed." );
 
 #define ABORT(msg) __assert_rtn(__func__, __FILE__, __LINE__, msg) 
 
