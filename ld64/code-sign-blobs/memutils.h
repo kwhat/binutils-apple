@@ -33,6 +33,9 @@
 #include <stdlib.h>
 #include <algorithm>
 
+// Patch 09/11/2016 - Alex Barker
+#include <cstddef>
+
 
 //
 // Encapsulate these very sharp tools in a separate (ugly-named) namespace
@@ -50,6 +53,7 @@ static const size_t systemAlignment = 4;
 //
 // Get the local alignment for a type, as used by the acting compiler.
 //
+// Patch 12/28/2014
 //template <class T>
 //inline size_t alignof() { struct { char c; T t; } s; return sizeof(s) - sizeof(T); }
 
@@ -86,34 +90,52 @@ inline const void *alignUp(const void *p, size_t alignment = systemAlignment)
 }
 
 template <class T>
-inline const T *increment(const void *p, __gnu_cxx::ptrdiff_t offset)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline const T *increment(const void *p, std::ptrdiff_t offset)
 { return reinterpret_cast<const T *>(uintptr_t(p) + offset); }
 
 template <class T>
-inline T *increment(void *p, __gnu_cxx::ptrdiff_t offset)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline T *increment(void *p, std::ptrdiff_t offset)
 { return reinterpret_cast<T *>(uintptr_t(p) + offset); }
 
-inline const void *increment(const void *p, __gnu_cxx::ptrdiff_t offset)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline const void *increment(const void *p, std::ptrdiff_t offset)
 { return increment<const void>(p, offset); }
 
-inline void *increment(void *p, __gnu_cxx::ptrdiff_t offset)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline void *increment(void *p, std::ptrdiff_t offset)
 { return increment<void>(p, offset); }
 
 template <class T>
-inline const T *increment(const void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline const T *increment(const void *p, std::ptrdiff_t offset, size_t alignment)
 { return increment<const T>(alignUp(p, alignment), offset); }
 
 template <class T>
-inline T *increment(void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline T *increment(void *p, std::ptrdiff_t offset, size_t alignment)
 { return increment<T>(alignUp(p, alignment), offset); }
 
-inline const void *increment(const void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline const void *increment(const void *p, std::ptrdiff_t offset, size_t alignment)
 { return increment<const void>(p, offset, alignment); }
 
-inline void *increment(void *p, __gnu_cxx::ptrdiff_t offset, size_t alignment)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline void *increment(void *p, std::ptrdiff_t offset, size_t alignment)
 { return increment<void>(p, offset, alignment); }
 
-inline __gnu_cxx::ptrdiff_t difference(const void *p1, const void *p2)
+// Patch 09/11/2016 - Alex Barker
+// Patch 12/28/2014
+inline std::ptrdiff_t difference(const void *p1, const void *p2)
 { return uintptr_t(p1) - uintptr_t(p2); }
 
 
