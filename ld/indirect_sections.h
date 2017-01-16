@@ -27,7 +27,7 @@
 /*
  * The number of indirect symbol table entries in the output file.
  */
-__private_extern__ unsigned long nindirectsyms;
+extern unsigned long nindirectsyms;
 
 /*
  * If we are still attempting to prebind when indirect_section_merge() is
@@ -37,7 +37,7 @@ __private_extern__ unsigned long nindirectsyms;
  * various problems.  But the count of relocs can't change after layout so
  * we'll put them out anyway.
  */
-__private_extern__ enum bool save_lazy_symbol_pointer_relocs;
+extern enum bool save_lazy_symbol_pointer_relocs;
 
 /*
  * The literal_data which is set into a merged_section's literal_data field for
@@ -88,31 +88,31 @@ struct indirect_item_block {
     struct indirect_item_block *next;	/* the next block */
 };
 
-__private_extern__ void indirect_section_merge(
+extern void indirect_section_merge(
     struct indirect_section_data *data, 
     struct merged_section *ms,
     struct section *s, 
     struct section_map *section_map,
     enum bool redo_live);
 
-__private_extern__ void indirect_section_order(
+extern void indirect_section_order(
     struct indirect_section_data *data, 
     struct merged_section *ms);
 
-__private_extern__ void indirect_section_reset_live(
+extern void indirect_section_reset_live(
     struct indirect_section_data *data, 
     struct merged_section *ms);
 
-__private_extern__ enum bool indirect_live_ref(
+extern enum bool indirect_live_ref(
     struct fine_reloc *fine_reloc,
     struct section_map *map,
     struct object_file *obj,
     struct ref *ref);
 
-__private_extern__ void indirect_section_free(
+extern void indirect_section_free(
     struct indirect_section_data *data);
 
-__private_extern__ enum bool legal_reference(
+extern enum bool legal_reference(
     struct section_map *from_map,
     unsigned long from_offset,
     struct section_map *to_map,
@@ -120,5 +120,5 @@ __private_extern__ enum bool legal_reference(
     unsigned long from_reloc_index,
     enum bool sectdiff_reloc);
 
-__private_extern__ void output_indirect_symbols(
+extern void output_indirect_symbols(
     void);

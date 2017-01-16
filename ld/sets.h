@@ -49,23 +49,23 @@ struct archive {
 /*
  * Pointer to the array of set structures.
  */
-__private_extern__ struct set *sets;
+extern struct set *sets;
 /*
  * Index into the array of set structures for the current set.
  */
-__private_extern__ long cur_set;
+extern long cur_set;
 
-__private_extern__ void new_set(
+extern void new_set(
     void);
-__private_extern__ void new_archive_or_fat(
+extern void new_archive_or_fat(
     char *file_name,
     char *file_addr,
     unsigned long file_size);
-__private_extern__ void remove_set(
+extern void remove_set(
     void);
-__private_extern__ void free_sets(
+extern void free_sets(
     void);
-__private_extern__ void clean_archives_and_fats(
+extern void clean_archives_and_fats(
     void);
 
 #endif /* RLD */

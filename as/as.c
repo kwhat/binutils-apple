@@ -180,14 +180,14 @@ char **envp)
 		*work_argv = NULL; /* NULL means 'not a file-name' */
 		continue;
 	    }
-	    // Patch 12/29/1204 backported from cctools-855
+	    // Patch 12/29/2014 backported from cctools-855
 	    if(strncmp(arg, "-mcpu", 5) == 0){
 		/* ignore -mcpu as it is only used with clang(1)'s integrated
 		   assembler, but the as(1) driver will pass it. */
 		*work_argv = NULL; /* NULL means 'not a file-name' */
 		continue;
 	    }
-	    // End Patch 12/29/1204
+	    // End Patch 12/29/2014
 
 	    /* Keep scanning args looking for flags. */
 	    if (arg[1] == '-' && arg[2] == 0) {

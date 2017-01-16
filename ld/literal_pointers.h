@@ -93,33 +93,33 @@ struct literal_pointer_order_line {
     unsigned long output_offset;
 };
 
-__private_extern__ void literal_pointer_merge(
+extern void literal_pointer_merge(
     struct literal_pointer_data *data, 
     struct merged_section *ms,
     struct section *s, 
     struct section_map *section_map,
     enum bool redo_live);
 
-__private_extern__ void literal_pointer_order(
+extern void literal_pointer_order(
     struct literal_pointer_data *data, 
     struct merged_section *ms);
 
-__private_extern__ void literal_pointer_reset_live(
+extern void literal_pointer_reset_live(
     struct literal_pointer_data *data, 
     struct merged_section *ms);
 
-__private_extern__ void literal_pointer_output(
+extern void literal_pointer_output(
     struct literal_pointer_data *data, 
     struct merged_section *ms);
 
-__private_extern__ void literal_pointer_free(
+extern void literal_pointer_free(
     struct literal_pointer_data *data);
 
 #ifdef DEBUG
-__private_extern__ void print_literal_pointer_data(
+extern void print_literal_pointer_data(
     struct literal_pointer_data *data, 
     char *ident);
-__private_extern__ void literal_pointer_data_stats(
+extern void literal_pointer_data_stats(
     struct literal_pointer_data *data,
     struct merged_section *ms);
 #endif /* DEBUG */

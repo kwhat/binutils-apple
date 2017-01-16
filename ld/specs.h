@@ -63,26 +63,26 @@ struct section_spec {
 };
 
 /* The structures to hold the information specified about segments */
-__private_extern__ struct segment_spec *segment_specs;
-__private_extern__ unsigned long nsegment_specs;
+extern struct segment_spec *segment_specs;
+extern unsigned long nsegment_specs;
 
-__private_extern__ struct segment_spec *create_segment_spec(
+extern struct segment_spec *create_segment_spec(
     char *segname);
-__private_extern__ struct section_spec *create_section_spec(
+extern struct section_spec *create_section_spec(
     struct segment_spec *seg_spec,
     char *sectname);
-__private_extern__ struct segment_spec * lookup_segment_spec(
+extern struct segment_spec * lookup_segment_spec(
     char *segname);
-__private_extern__ struct section_spec *lookup_section_spec(
+extern struct section_spec *lookup_section_spec(
     char *segname,
     char *sectname);
-__private_extern__ void process_section_specs(
+extern void process_section_specs(
     void);
-__private_extern__ void process_segment_specs(
+extern void process_segment_specs(
     void);
 #ifdef DEBUG
-__private_extern__ void print_segment_specs(
+extern void print_segment_specs(
     void);
-__private_extern__ void print_prot(
+extern void print_prot(
     vm_prot_t prot);
 #endif /* DEBUG */

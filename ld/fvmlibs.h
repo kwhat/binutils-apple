@@ -45,18 +45,18 @@ struct merged_fvmlib {
 };
 
 /* the pointer to the head of the load fixed VM shared library commamds */
-__private_extern__ struct merged_fvmlib *merged_fvmlibs;
+extern struct merged_fvmlib *merged_fvmlibs;
 
 /* the pointer to the head of the fixed VM shared library segments */
-__private_extern__ struct merged_segment *fvmlib_segments;
+extern struct merged_segment *fvmlib_segments;
 
-__private_extern__ void merge_fvmlibs(
+extern void merge_fvmlibs(
     void);
 
 #ifdef DEBUG
-__private_extern__ void print_load_fvmlibs_list(
+extern void print_load_fvmlibs_list(
     void);
-__private_extern__ void print_fvmlib_segments(
+extern void print_fvmlib_segments(
     void);
 #endif /* DEBUG */
 #endif /* !defined(RLD) */
