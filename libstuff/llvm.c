@@ -3,6 +3,7 @@
 #include <libc.h>
 #include <sys/file.h>
 #include <dlfcn.h>
+// Patch 12/28/2014
 #include <stdint.h>
 #include "llvm-c/Disassembler.h"
 #include "stuff/llvm.h"
@@ -14,6 +15,7 @@
  * plan to include it (along with the current libLTO APIs) in a generic
  * libLLVM.dylib.
  */
+// Patch 12/28/2014
 #define LIB_LLVM "libLTO.so"
 
 static int tried_to_load_llvm = 0;
@@ -67,6 +69,7 @@ LLVMSymbolLookupCallback SymbolLookUp)
 	    if(llvm_handle == NULL){
 		free(llvm_path);
 		llvm_path = NULL;
+		// Patch 12/28/2014
 		llvm_handle = dlopen("/usr/lib/llvm/" LIB_LLVM, RTLD_NOW);
 	    }
 	    if(llvm_handle == NULL)

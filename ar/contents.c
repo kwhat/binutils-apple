@@ -81,6 +81,11 @@ static char rcsid[] = "$OpenBSD: contents.c,v 1.2 1996/06/26 05:31:19 deraadt Ex
 #include "archive.h"
 #include "extern.h"
 
+/* Patch 12/28/2014
+ * NOTE This is defined by libstuff. 
+ * FIXME Move to libstuff header. */
+extern void strmode(/* mode_t */ int mode, char *p);
+
 /*
  * contents --
  *	Handles t[v] option - opens the archive and then reads headers,

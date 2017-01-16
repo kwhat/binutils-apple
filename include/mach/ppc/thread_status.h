@@ -70,9 +70,11 @@
 */
 
 typedef _STRUCT_PPC_THREAD_STATE	ppc_thread_state_t;
-/* #if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE) */
+/* Patch 12/28/2014
+ * #if !defined(_POSIX_C_SOURCE) || defined(_DARWIN_C_SOURCE) */
 typedef _STRUCT_PPC_THREAD_STATE64	ppc_thread_state64_t;
-/* #endif */ /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
+/* Patch 12/28/2014
+ * #endif */ /* (_POSIX_C_SOURCE && !_DARWIN_C_SOURCE) */
 typedef _STRUCT_PPC_FLOAT_STATE		ppc_float_state_t;
 typedef _STRUCT_PPC_VECTOR_STATE	ppc_vector_state_t;
 

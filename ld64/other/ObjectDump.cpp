@@ -31,6 +31,7 @@
 #include <mach-o/fat.h>
 #include <mach-o/loader.h>
 
+// Patch 12/28/2014
 #include <algorithm>
 
 #include "MachOFileAbstraction.hpp"
