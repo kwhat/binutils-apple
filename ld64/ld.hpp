@@ -30,6 +30,8 @@
 #include <math.h>
 #include <unistd.h>
 #include <assert.h>
+
+// Patch Jan 16, 2017 - Alex Barker
 #include "configure.h"
 
 #include <vector>

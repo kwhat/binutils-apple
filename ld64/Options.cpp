@@ -1658,6 +1658,7 @@ void Options::addSection(const char* segment, const char* section, const char* p
 	::close(fd);
 
 	// record section to create
+	// Patch Jan 16, 2017 - Alex Barker
 	ExtraSection info = { segment, section, path, (uint8_t*)p, (uint64_t)stat_buf.st_size };
 	fExtraSections.push_back(info);
 }

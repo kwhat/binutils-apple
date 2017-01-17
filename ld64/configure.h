@@ -1,3 +1,4 @@
+// Begin Patch Upstream Jan 16, 2017
 #ifndef _CONFIGURE_H
 #define _CONFIGURE_H
 #include <sys/param.h>
@@ -33,3 +34,5 @@
 #define ARG_MAX       131072
 
 #endif
+// End Patch Upstream Jan 16, 2017
+

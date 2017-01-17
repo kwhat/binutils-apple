@@ -49,6 +49,8 @@
 #include "Architectures.hpp"
 #include "ld.hpp"
 #include "macho_relocatable_file.h"
+
+// Patch Jan 17, 2017 - Alex Barker
 #include "qsort_r.h"
 
 
@@ -1871,6 +1873,8 @@ void Parser<A>::makeSortedSectionsArray(uint32_t array[])
 	// sort by symbol table address
 	for (uint32_t i=0; i < _machOSectionsCount; ++i)
 		array[i] = i;
+
+	// Patch Jan 17, 2017 - Alex Barker
 	::qsort_r_local(array, _machOSectionsCount, sizeof(uint32_t), this, &sectionIndexSorter);
 
 	if ( log ) {
@@ -1964,8 +1968,8 @@ void Parser<A>::makeSortedSymbolsArray(uint32_t array[], const uint32_t sectionA
 	
 	// sort by symbol table address
 	ParserAndSectionsArray extra = { this, sectionArray };
-    ::qsort_r_local(array, _symbolsInSections, sizeof(uint32_t), &extra, &symbolIndexSorter);
-
+	// Patch Jan 17, 2017 - Alex Barker
+	::qsort_r_local(array, _symbolsInSections, sizeof(uint32_t), &extra, &symbolIndexSorter);
 	
 	// look for two symbols at same address
 	_overlappingSymbols = false;
