@@ -41,9 +41,8 @@ namespace passes {
 namespace branch_island {
 
 
-
-
-struct TargetAndOffset { const ld::Atom* atom; uint32_t offset; };
+// Patch Jan 16,2017 - Alex Barker
+struct TargetAndOffset { const ld::Atom* atom; uint64_t offset; };
 class TargetAndOffsetComparor
 {
 public:

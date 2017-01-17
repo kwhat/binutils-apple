@@ -23,7 +23,8 @@
  */
  
 // start temp HACK for cross builds
-extern "C" double log2 ( double );
+// Patch Jan 16, 2017 - Alex Barker
+//extern "C" double log2 ( double );
 //#define __MATH__
 // end temp HACK for cross builds
 
