@@ -220,25 +220,25 @@ struct common_symbol {
  * count of the merged symbols.  The count of merged symbols referenced only
  * from dylibs will not be in the output file.
  */
-__private_extern__ struct merged_symbol_root *merged_symbol_root;
-__private_extern__ unsigned long nmerged_symbols;
-__private_extern__ unsigned long nmerged_private_symbols;
-__private_extern__ unsigned long nmerged_symbols_referenced_only_from_dylibs;
+extern struct merged_symbol_root *merged_symbol_root;
+extern unsigned long nmerged_symbols;
+extern unsigned long nmerged_private_symbols;
+extern unsigned long nmerged_symbols_referenced_only_from_dylibs;
 
 /*
  * nstripped_merged_symbols is set to the number of merged symbol being stripped
  * out when the strip_level is STRIP_DYNAMIC_EXECUTABLE.
  */
-__private_extern__ unsigned long nstripped_merged_symbols;
+extern unsigned long nstripped_merged_symbols;
 
 /*
  * The head of the list of the blocks that store the strings for the merged
  * symbols and the total size of all the strings.  The size of the strings for
  * the private externals is included in the the merge string size.
  */
-__private_extern__ struct string_block *merged_string_blocks;
-__private_extern__ unsigned long merged_string_size;
-__private_extern__ unsigned long merged_private_string_size;
+extern struct string_block *merged_string_blocks;
+extern unsigned long merged_string_size;
+extern unsigned long merged_private_string_size;
 
 /*
  * The head of the undefined list itself.  This is a circular list so it can be
@@ -246,26 +246,26 @@ __private_extern__ unsigned long merged_private_string_size;
  * structure never has it's merged_symbol filled in but only serves as the
  * head and tail of the list.
  */
-__private_extern__ struct undefined_list undefined_list;
+extern struct undefined_list undefined_list;
 
 /*
  * The common symbol load map.  Only allocated and filled in if load map is
  * requested.
  */
-__private_extern__ struct common_load_map common_load_map;
+extern struct common_load_map common_load_map;
 
 /*
  * The object file that is created for the common symbols to be allocated in.
  */
-__private_extern__
+extern
 struct object_file link_edit_common_object;
 
 /*
  * The number of local symbols that will appear in the output file and the
  * size of their strings.
  */
-__private_extern__ unsigned long nlocal_symbols;
-__private_extern__ unsigned long local_string_size;
+extern unsigned long nlocal_symbols;
+extern unsigned long local_string_size;
 
 /*
  * For local symbols of an object file that are not to be in the output a
@@ -316,7 +316,7 @@ struct sect_object_symbols {
     char *sectname;	 /* the section name */
     struct merged_section *ms;	/* the merged section structure */
 };
-__private_extern__ struct sect_object_symbols sect_object_symbols;
+extern struct sect_object_symbols sect_object_symbols;
 
 /*
  * The indr_symbol_pair structure is used when there are chains of N_INDR
@@ -332,14 +332,14 @@ struct indr_symbol_pair {
     struct merged_symbol *merged_symbol;
     struct merged_symbol *indr_symbol;
 };
-__private_extern__ struct indr_symbol_pair *indr_symbol_pairs;
-__private_extern__ unsigned long nindr_symbol_pairs;
+extern struct indr_symbol_pair *indr_symbol_pairs;
+extern unsigned long nindr_symbol_pairs;
 
 /*
  * merged_symbols_relocated is set when the merged symbols are relocated to
  * have addresses and section numbers as they would in the output file.
  */
-__private_extern__ enum bool merged_symbols_relocated;
+extern enum bool merged_symbols_relocated;
 
 /*
  * The strings in the string table can't start at offset 0 because a symbol with
@@ -350,117 +350,117 @@ __private_extern__ enum bool merged_symbols_relocated;
  */
 #define STRING_SIZE_OFFSET (sizeof(long))
 
-__private_extern__ void merge_symbols(
+extern void merge_symbols(
     void);
-__private_extern__ struct merged_symbol *command_line_symbol(
+extern struct merged_symbol *command_line_symbol(
     char *symbol_name);
-__private_extern__ struct merged_symbol *lookup_symbol(
+extern struct merged_symbol *lookup_symbol(
     char *symbol_name);
-__private_extern__ void command_line_indr_symbol(
+extern void command_line_indr_symbol(
     char *symbol_name,
     char *indr_symbol_name);
 #ifndef RLD
-__private_extern__ void hash_instrument(
+extern void hash_instrument(
     void);
-__private_extern__ void merge_dylib_module_symbols(
+extern void merge_dylib_module_symbols(
     struct dynamic_library *dynamic_library);
-__private_extern__ void merge_bundle_loader_symbols(
+extern void merge_bundle_loader_symbols(
     struct dynamic_library *dynamic_library);
 #endif /* !defined(RLD) */
-__private_extern__ void delete_from_undefined_list(
+extern void delete_from_undefined_list(
     struct undefined_list *undefined);
-__private_extern__ void trace_merged_symbol(
+extern void trace_merged_symbol(
     struct merged_symbol *merged_symbol);
-__private_extern__ void free_pass1_symbol_data(
+extern void free_pass1_symbol_data(
     void);
-__private_extern__ void free_undefined_list(
+extern void free_undefined_list(
     void);
-__private_extern__ void define_common_symbols(
+extern void define_common_symbols(
     void);
-__private_extern__ void define_undefined_symbols_a_way(
+extern void define_undefined_symbols_a_way(
     void);
-__private_extern__ void mark_globals_live(
+extern void mark_globals_live(
     void);
-__private_extern__ void mark_N_NO_DEAD_STRIP_local_symbols_live(
+extern void mark_N_NO_DEAD_STRIP_local_symbols_live(
     void);
-__private_extern__ void set_fine_relocs_for_merged_symbols(
+extern void set_fine_relocs_for_merged_symbols(
     void);
-__private_extern__ void count_live_symbols(
+extern void count_live_symbols(
     void);
-__private_extern__ void define_link_editor_execute_symbols(
+extern void define_link_editor_execute_symbols(
     unsigned long header_address);
-__private_extern__ void setup_link_editor_symbols(
+extern void setup_link_editor_symbols(
     void);
-__private_extern__ void define_link_editor_dylib_symbols(
+extern void define_link_editor_dylib_symbols(
     unsigned long header_address);
-__private_extern__ void define_link_editor_preload_symbols(
+extern void define_link_editor_preload_symbols(
     enum bool setup);
-__private_extern__ void reduce_indr_symbols(
+extern void reduce_indr_symbols(
     void);
-__private_extern__ void process_undefineds(
+extern void process_undefineds(
     void);
-__private_extern__ void reset_prebound_undefines(
+extern void reset_prebound_undefines(
     void);
-__private_extern__ void assign_output_symbol_indexes(
+extern void assign_output_symbol_indexes(
     void);
 #ifndef RLD
-__private_extern__ void layout_dylib_tables(
+extern void layout_dylib_tables(
     void);
-__private_extern__ void output_dylib_tables(
+extern void output_dylib_tables(
     void);
 #endif
-__private_extern__ void layout_merged_symbols(
+extern void layout_merged_symbols(
     void);
-__private_extern__ void discard_local_symbols_for_section(
+extern void discard_local_symbols_for_section(
     unsigned long nsect,
     struct nlist *object_symbols,
     char *object_strings,
     struct section *s, 
     struct section_map *section_map);
-__private_extern__ void output_local_symbols(
+extern void output_local_symbols(
     void);
-__private_extern__ unsigned long local_symbol_output_index(
+extern unsigned long local_symbol_output_index(
     struct object_file *obj,
     unsigned long index);
-__private_extern__ void set_merged_string_block_indexes(
+extern void set_merged_string_block_indexes(
     void);
-__private_extern__ void output_merged_symbols(
+extern void output_merged_symbols(
     void);
 #if defined(RLD) && !defined(SA_RLD)
-__private_extern__
+extern
 void output_rld_symfile_merged_symbols(
     void);
 #endif /* defined(RLD) && !defined(SA_RLD) */
-__private_extern__ enum bool is_output_local_symbol(
+extern enum bool is_output_local_symbol(
     unsigned char n_type,
     unsigned char n_sect,
     unsigned char n_desc,
     struct object_file *obj,
     char *symbol_name,
     unsigned long *output_strlen);
-__private_extern__ unsigned long merged_symbol_output_index(
+extern unsigned long merged_symbol_output_index(
     struct merged_symbol *merged_symbol);
-__private_extern__ void clear_read_only_reloc_flags(
+extern void clear_read_only_reloc_flags(
     void);
-__private_extern__ void flag_read_only_reloc(
+extern void flag_read_only_reloc(
     struct section *s,
     unsigned long output_index,
     enum bool *first_time);
 
 #ifdef RLD
-__private_extern__ void free_multiple_defs(
+extern void free_multiple_defs(
     void);
-__private_extern__ void remove_merged_symbols(
+extern void remove_merged_symbols(
     void);
 #endif /* RLD */
 
-__private_extern__ struct section *get_output_section(
+extern struct section *get_output_section(
     unsigned long sect);
 
 #ifdef DEBUG
-__private_extern__ void print_symbol_list(
+extern void print_symbol_list(
     char *string,
     enum bool input_based);
-__private_extern__ void print_undefined_list(
+extern void print_undefined_list(
     void);
 #endif /* DEBUG */

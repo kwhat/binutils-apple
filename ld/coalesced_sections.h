@@ -24,17 +24,17 @@
 #define __private_extern__ __declspec(private_extern)
 #endif
 
-__private_extern__ void coalesced_section_merge(
+extern void coalesced_section_merge(
     void *data, 
     struct merged_section *ms,
     struct section *s, 
     struct section_map *section_map,
     enum bool redo_live);
 
-__private_extern__ void coalesced_section_order(
+extern void coalesced_section_order(
     void *data, 
     struct merged_section *ms);
 
-__private_extern__ void coalesced_section_reset_live(
+extern void coalesced_section_reset_live(
     void *data,
     struct merged_section *ms);

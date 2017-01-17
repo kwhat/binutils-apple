@@ -22,5 +22,5 @@
  */
 #include "stuff/bool.h"
 
-__private_extern__ enum bool get_unix_standard_mode(
+extern enum bool get_unix_standard_mode(
     void);

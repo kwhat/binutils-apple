@@ -26,11 +26,11 @@
 
 #include <stdarg.h>
 
-__private_extern__ void print(
+extern void print(
     const char *format, ...)
 #ifdef __GNUC__
     __attribute__ ((format (printf, 1, 2)))
 #endif
     ;
-__private_extern__ void vprint(
+extern void vprint(
     const char *format, va_list ap);

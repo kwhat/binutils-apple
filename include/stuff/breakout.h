@@ -250,13 +250,13 @@ struct object {
     struct ofile *ld_r_ofile;
 };
 
-__private_extern__ struct ofile * breakout(
+extern struct ofile * breakout(
     char *filename,
     struct arch **archs,
     uint32_t *narchs,
     enum bool calculate_input_prebind_cksum);
 
-__private_extern__ struct ofile * breakout_mem(
+extern struct ofile * breakout_mem(
     void *membuf,
     uint32_t length,
     char *filename,
@@ -264,11 +264,11 @@ __private_extern__ struct ofile * breakout_mem(
     uint32_t *narchs,
     enum bool calculate_input_prebind_cksum);
 
-__private_extern__ void free_archs(
+extern void free_archs(
     struct arch *archs,
     uint32_t narchs);
 
-__private_extern__ void writeout(
+extern void writeout(
     struct arch *archs,
     uint32_t narchs,
     char *output,
@@ -278,7 +278,7 @@ __private_extern__ void writeout(
     enum bool library_warnings,
     uint32_t *throttle);
 
-__private_extern__ void writeout_to_mem(
+extern void writeout_to_mem(
     struct arch *archs,
     uint32_t narchs,
     char *filename,
@@ -289,7 +289,7 @@ __private_extern__ void writeout_to_mem(
     enum bool library_warning,
     enum bool *seen_archive);
 
-__private_extern__ void checkout(
+extern void checkout(
     struct arch *archs,
     uint32_t narchs);
 

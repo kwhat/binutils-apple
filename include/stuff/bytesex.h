@@ -77,357 +77,357 @@ enum byte_sex {
 	((unsigned long)(a) >> 24) )
 #endif
 
-__private_extern__ long long SWAP_LONG_LONG(
+extern long long SWAP_LONG_LONG(
     long long ll);
 
-__private_extern__ float SWAP_FLOAT(
+extern float SWAP_FLOAT(
     float f);
 
-__private_extern__ double SWAP_DOUBLE(
+extern double SWAP_DOUBLE(
     double d);
 
-__private_extern__ enum byte_sex get_host_byte_sex(
+extern enum byte_sex get_host_byte_sex(
     void);
 
-__private_extern__ void swap_fat_header(
+extern void swap_fat_header(
     struct fat_header *fat_header,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_fat_arch(
+extern void swap_fat_arch(
     struct fat_arch *fat_archs,
     uint32_t nfat_arch,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_mach_header(
+extern void swap_mach_header(
     struct mach_header *mh,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_mach_header_64(
+extern void swap_mach_header_64(
     struct mach_header_64 *mh,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_load_command(
+extern void swap_load_command(
     struct load_command *lc,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_segment_command(
+extern void swap_segment_command(
     struct segment_command *sg,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_segment_command_64(
+extern void swap_segment_command_64(
     struct segment_command_64 *sg,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_section(
+extern void swap_section(
     struct section *s,
     uint32_t nsects,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_section_64(
+extern void swap_section_64(
     struct section_64 *s,
     uint32_t nsects,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_symtab_command(
+extern void swap_symtab_command(
     struct symtab_command *st,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dysymtab_command(
+extern void swap_dysymtab_command(
     struct dysymtab_command *dyst,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_symseg_command(
+extern void swap_symseg_command(
     struct symseg_command *ss,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_fvmlib_command(
+extern void swap_fvmlib_command(
     struct fvmlib_command *fl,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dylib_command(
+extern void swap_dylib_command(
     struct dylib_command *dl,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_sub_framework_command(
+extern void swap_sub_framework_command(
     struct sub_framework_command *sub,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_sub_umbrella_command(
+extern void swap_sub_umbrella_command(
     struct sub_umbrella_command *usub,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_sub_library_command(
+extern void swap_sub_library_command(
     struct sub_library_command *lsub,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_sub_client_command(
+extern void swap_sub_client_command(
     struct sub_client_command *csub,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_prebound_dylib_command(
+extern void swap_prebound_dylib_command(
     struct prebound_dylib_command *pbdylib,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dylinker_command(
+extern void swap_dylinker_command(
     struct dylinker_command *dyld,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_fvmfile_command(
+extern void swap_fvmfile_command(
     struct fvmfile_command *ff,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_thread_command(
+extern void swap_thread_command(
     struct thread_command *ut,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_m68k_thread_state_regs(
+extern void swap_m68k_thread_state_regs(
     struct m68k_thread_state_regs *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_m68k_thread_state_68882(
+extern void swap_m68k_thread_state_68882(
     struct m68k_thread_state_68882 *fpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_m68k_thread_state_user_reg(
+extern void swap_m68k_thread_state_user_reg(
     struct m68k_thread_state_user_reg *user_reg,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_ppc_thread_state_t(
+extern void swap_ppc_thread_state_t(
     ppc_thread_state_t *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_ppc_thread_state64_t(
+extern void swap_ppc_thread_state64_t(
     ppc_thread_state64_t *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_ppc_float_state_t(
+extern void swap_ppc_float_state_t(
     ppc_float_state_t *fpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_ppc_exception_state_t(
+extern void swap_ppc_exception_state_t(
     ppc_exception_state_t *state,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_m88k_thread_state_grf_t(
+extern void swap_m88k_thread_state_grf_t(
     m88k_thread_state_grf_t *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_m88k_thread_state_xrf_t(
+extern void swap_m88k_thread_state_xrf_t(
     m88k_thread_state_xrf_t *fpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_m88k_thread_state_user_t(
+extern void swap_m88k_thread_state_user_t(
     m88k_thread_state_user_t *user,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_m88110_thread_state_impl_t(
+extern void swap_m88110_thread_state_impl_t(
     m88110_thread_state_impl_t *spu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_i860_thread_state_regs(
+extern void swap_i860_thread_state_regs(
     struct i860_thread_state_regs *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_i386_thread_state(
+extern void swap_i386_thread_state(
     i386_thread_state_t *cpu,
     enum byte_sex target_byte_sex);
 
 /* current i386 thread states */
 #if i386_THREAD_STATE == 1
-__private_extern__ void swap_i386_float_state(
+extern void swap_i386_float_state(
     struct __darwin_i386_float_state *fpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_i386_exception_state(
+extern void swap_i386_exception_state(
     i386_exception_state_t *exc,
     enum byte_sex target_byte_sex);
 #endif /* i386_THREAD_STATE == 1 */
 
 /* i386 thread states on older releases */
 #if i386_THREAD_STATE == -1
-__private_extern__ void swap_i386_thread_fpstate(
+extern void swap_i386_thread_fpstate(
     i386_thread_fpstate_t *fpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_i386_thread_exceptstate(
+extern void swap_i386_thread_exceptstate(
     i386_thread_exceptstate_t *exc,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_i386_thread_cthreadstate(
+extern void swap_i386_thread_cthreadstate(
     i386_thread_cthreadstate_t *user,
     enum byte_sex target_byte_sex);
 #endif /* i386_THREAD_STATE == -1 */
 
 #ifdef x86_THREAD_STATE64
-__private_extern__ void swap_x86_thread_state64(
+extern void swap_x86_thread_state64(
     x86_thread_state64_t *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_x86_float_state64(
+extern void swap_x86_float_state64(
     x86_float_state64_t *fpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_x86_state_hdr(
+extern void swap_x86_state_hdr(
     struct x86_state_hdr *hdr,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_x86_exception_state64(
+extern void swap_x86_exception_state64(
     x86_exception_state64_t *exc,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_x86_debug_state32(
+extern void swap_x86_debug_state32(
     x86_debug_state32_t *debug,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_x86_debug_state64(
+extern void swap_x86_debug_state64(
     x86_debug_state64_t *debug,
     enum byte_sex target_byte_sex);
 #endif /* x86_THREAD_STATE64 */
 
-__private_extern__ void swap_hppa_integer_thread_state(
+extern void swap_hppa_integer_thread_state(
     struct hp_pa_integer_thread_state *regs,
     enum byte_sex target_byte_order);
 
-__private_extern__ void swap_hppa_frame_thread_state(
+extern void swap_hppa_frame_thread_state(
   struct hp_pa_frame_thread_state *frame,
   enum byte_sex target_byte_order);
 
-__private_extern__ void swap_hppa_fp_thread_state(
+extern void swap_hppa_fp_thread_state(
   struct hp_pa_fp_thread_state *fp,
   enum byte_sex target_byte_order);
 
-__private_extern__ void swap_sparc_thread_state_regs(
+extern void swap_sparc_thread_state_regs(
   struct sparc_thread_state_regs *cpu,
   enum byte_sex target_byte_order);
 
-__private_extern__ void swap_sparc_thread_state_fpu(
+extern void swap_sparc_thread_state_fpu(
   struct sparc_thread_state_fpu *fpu,
   enum byte_sex target_byte_order);
 
-__private_extern__ void swap_arm_thread_state_t(
+extern void swap_arm_thread_state_t(
     arm_thread_state_t *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_arm_thread_state64_t(
+extern void swap_arm_thread_state64_t(
     arm_thread_state64_t *cpu,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_ident_command(
+extern void swap_ident_command(
     struct ident_command *id_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_routines_command(
+extern void swap_routines_command(
     struct routines_command *r_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_routines_command_64(
+extern void swap_routines_command_64(
     struct routines_command_64 *r_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_twolevel_hints_command(
+extern void swap_twolevel_hints_command(
     struct twolevel_hints_command *hints_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_prebind_cksum_command(
+extern void swap_prebind_cksum_command(
     struct prebind_cksum_command *cksum_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_uuid_command(
+extern void swap_uuid_command(
     struct uuid_command *uuid_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_linkedit_data_command(
+extern void swap_linkedit_data_command(
     struct linkedit_data_command *ld,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_version_min_command(
+extern void swap_version_min_command(
     struct version_min_command *ver_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_rpath_command(
+extern void swap_rpath_command(
     struct rpath_command *rpath_cmd,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_encryption_command(
+extern void swap_encryption_command(
     struct encryption_info_command *ec,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_encryption_command_64(
+extern void swap_encryption_command_64(
     struct encryption_info_command_64 *ec,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_linker_option_command(
+extern void swap_linker_option_command(
     struct linker_option_command *lo,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dyld_info_command(
+extern void swap_dyld_info_command(
     struct dyld_info_command *dc, 
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_entry_point_command(
+extern void swap_entry_point_command(
     struct entry_point_command *ep,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_source_version_command(
+extern void swap_source_version_command(
     struct source_version_command *sv,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_nlist(
+extern void swap_nlist(
     struct nlist *symbols,
     uint32_t nsymbols,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_nlist_64(
+extern void swap_nlist_64(
     struct nlist_64 *symbols,
     uint32_t nsymbols,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_ranlib(
+extern void swap_ranlib(
     struct ranlib *ranlibs,
     uint32_t nranlibs,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_relocation_info(
+extern void swap_relocation_info(
     struct relocation_info *relocs,
     uint32_t nrelocs,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_indirect_symbols(
+extern void swap_indirect_symbols(
     uint32_t *indirect_symbols,
     uint32_t nindirect_symbols,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dylib_reference(
+extern void swap_dylib_reference(
     struct dylib_reference *refs,
     uint32_t nrefs,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dylib_module(
+extern void swap_dylib_module(
     struct dylib_module *mods,
     uint32_t nmods,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dylib_module_64(
+extern void swap_dylib_module_64(
     struct dylib_module_64 *mods,
     uint32_t nmods,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_dylib_table_of_contents(
+extern void swap_dylib_table_of_contents(
     struct dylib_table_of_contents *tocs,
     uint32_t ntocs,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_twolevel_hint(
+extern void swap_twolevel_hint(
     struct twolevel_hint *hints,
     uint32_t nhints,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_data_in_code_entry(
+extern void swap_data_in_code_entry(
     struct data_in_code_entry *dices,
     uint32_t ndices,
     enum byte_sex target_byte_sex);
 
-__private_extern__ void swap_xar_header(
+extern void swap_xar_header(
     struct xar_header *xar,
     enum byte_sex target_byte_sex);
 
@@ -437,7 +437,7 @@ __private_extern__ void swap_xar_header(
  * headers else returns FALSE and does not touch the headers and prints an error
  * using the error() routine.
  */
-__private_extern__ enum bool swap_object_headers(
+extern enum bool swap_object_headers(
     void *mach_header, /* either a mach_header or a mach_header_64 */
     struct load_command *load_commands);
 
@@ -447,7 +447,7 @@ __private_extern__ enum bool swap_object_headers(
  * object file's bytesex.  If it can't figure it out, because the library has
  * no object file members or is malformed it will return UNKNOWN_BYTE_SEX.
  */
-__private_extern__ enum byte_sex get_toc_byte_sex(
+extern enum byte_sex get_toc_byte_sex(
     char *addr,
     uint32_t size);
 

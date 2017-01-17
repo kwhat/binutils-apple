@@ -20,7 +20,7 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-__private_extern__ enum bool get_version_number(
+extern enum bool get_version_number(
     char *flag,
     char *argument,
     uint32_t *value);
