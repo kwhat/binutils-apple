@@ -31,7 +31,7 @@
  * allocate() is just a wrapper around malloc that prints an error message and
  * exits if the malloc fails.
  */
-__private_extern__
+extern
 void *
 allocate(
 size_t size)
@@ -49,7 +49,7 @@ size_t size)
  * reallocate() is just a wrapper around realloc that prints and error message
  * and exits if the realloc fails.
  */
-__private_extern__
+extern
 void *
 reallocate(
 void *p,
@@ -66,7 +66,7 @@ size_t size)
  * savestr() malloc's space for the string passed to it, copys the string into
  * the space and returns a pointer to that space.
  */
-__private_extern__
+extern
 char *
 savestr(
 const char *s)
@@ -86,7 +86,7 @@ const char *s)
  * pointer is NULL.  It returns the pointer to the string it created.  The
  * storage for the string is malloc()'ed can be free()'ed when nolonger needed.
  */
-__private_extern__
+extern
 char *
 makestr(
 const char *args,

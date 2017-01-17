@@ -31,7 +31,7 @@
  * the routines in "allocate.h" and errors are handled by the routines in
  * "error.h".
  */
-__private_extern__
+extern
 void
 set_arch_flag_name(
 struct arch_flag *p)

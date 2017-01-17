@@ -47,8 +47,8 @@
 #include "sections.h"
 
 /* The structures to hold the information specified about segments */
-__private_extern__ struct segment_spec *segment_specs = NULL;
-__private_extern__ unsigned long nsegment_specs = 0;
+extern struct segment_spec *segment_specs = NULL;
+extern unsigned long nsegment_specs = 0;
 
 /*
  * create_segment_spec() looks through the segment_specs and returns a pointer
@@ -56,7 +56,7 @@ __private_extern__ unsigned long nsegment_specs = 0;
  * is created for this segname, the segname is set, it is initialized to zero
  * and a pointer to it is returned.
  */ 
-__private_extern__
+extern
 struct segment_spec *
 create_segment_spec(
 char *segname)
@@ -81,7 +81,7 @@ char *segname)
  * section name.  If none exist then one is created for this sectname, the
  * sectname is set, it is initialized to zero and a pointer to it is returned.
  */ 
-__private_extern__
+extern
 struct section_spec *
 create_section_spec(
 struct segment_spec *seg_spec,
@@ -106,7 +106,7 @@ char *sectname)
  * lookup_segment_spec() returns a pointer to the segment_spec for the specified
  * segment name.  NULL is returned if none exists.
  */
-__private_extern__
+extern
 struct segment_spec *
 lookup_segment_spec(
 char *segname)
@@ -124,7 +124,7 @@ char *segname)
  * lookup_section_spec() returns a pointer to the section_spec for the specified
  * section name (segname,sectname).  NULL is returned if none exists.
  */
-__private_extern__
+extern
 struct section_spec *
 lookup_section_spec(
 char *segname,
@@ -155,7 +155,7 @@ char *sectname)
  * specified for regular sections (non-zero fill, non-literal, not created from
  * a file, etc).
  */
-__private_extern__
+extern
 void
 process_section_specs(void)
 {
@@ -326,7 +326,7 @@ process_section_specs(void)
  * issued.  If the address is not a multiple of the segment alignment it is an
  * error.
  */
-__private_extern__
+extern
 void
 process_segment_specs(void)
 {
@@ -391,7 +391,7 @@ process_segment_specs(void)
 /*
  * print_segment_specs() prints the segment specs.  Used for debugging.
  */
-__private_extern__
+extern
 void
 print_segment_specs(void)
 {
@@ -449,7 +449,7 @@ print_segment_specs(void)
 }
 #endif /* !defined(RLD) */
 
-__private_extern__
+extern
 void
 print_prot(
 vm_prot_t prot)

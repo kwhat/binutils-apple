@@ -75,7 +75,7 @@
  * When redo_live is TRUE it re-merges only the live items from a coalesced
  * section from the specified section in the current object file (cur_obj).
  */
-__private_extern__
+extern
 void
 coalesced_section_merge(
 void *data,
@@ -761,7 +761,7 @@ deal_with_contents:
 	}
 }
 
-__private_extern__
+extern
 void
 coalesced_section_order(
 void *data,
@@ -807,7 +807,7 @@ struct merged_section *ms)
  * coalesced items can be re-merged (by later calling coalesced_section_merge()
  * with redo_live == TRUE.
  */
-__private_extern__
+extern
 void
 coalesced_section_reset_live(
 void *data,

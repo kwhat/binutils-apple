@@ -83,21 +83,28 @@ static char *mkstr(
 #include "pass2.h"
 
 /* name of this program as executed (argv[0]) */
-__private_extern__ char *progname = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *progname = NULL;
 /* indication of an error set in error(), for processing a number of errors
    and then exiting */
-__private_extern__ unsigned long errors = 0;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long errors = 0;
 /* the pagesize of the machine this program is running on, getpagesize() value*/
-__private_extern__ unsigned long host_pagesize = 0;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long host_pagesize = 0;
 /* the byte sex of the machine this program is running on */
-__private_extern__ enum byte_sex host_byte_sex = UNKNOWN_BYTE_SEX;
+// Patch Jan 17, 2017 - Alex Barker
+enum byte_sex host_byte_sex = UNKNOWN_BYTE_SEX;
 
 /* name of output file */
-__private_extern__ char *outputfile = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *outputfile = NULL;
 /* type of output file */
-__private_extern__ unsigned long filetype = MH_EXECUTE;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long filetype = MH_EXECUTE;
 /* multi or single module dylib output */
-__private_extern__ enum bool multi_module_dylib = TRUE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool multi_module_dylib = TRUE;
 #ifndef RLD
 static enum bool filetype_specified = FALSE;
 static enum bool moduletype_specified = FALSE;
@@ -110,7 +117,8 @@ static enum bool Aflag_specified = FALSE;
  * cputype and cpusubtype.  specific_arch_flag is true if an -arch flag is
  * specified and the flag for a specific implementation of an architecture.
  */
-__private_extern__ struct arch_flag arch_flag =
+// Patch Jan 17, 2017 - Alex Barker
+struct arch_flag arch_flag =
 #if defined(KLD) && defined(__STATIC__)
 
 #ifdef __ppc__
@@ -126,71 +134,74 @@ __private_extern__ struct arch_flag arch_flag =
 #else /* !(defined(KLD) && defined(__STATIC__)) */
     { 0 };
 #endif /* defined(KLD) && defined(__STATIC__) */
-__private_extern__ enum bool specific_arch_flag = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool specific_arch_flag = FALSE;
 
 /*
  * The -force_cpusubtype_ALL flag.
  */
-__private_extern__ enum bool force_cpusubtype_ALL = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool force_cpusubtype_ALL = FALSE;
 
 /* the byte sex of the output file */
-__private_extern__ enum byte_sex target_byte_sex = UNKNOWN_BYTE_SEX;
+// Patch Jan 17, 2017 - Alex Barker
+enum byte_sex target_byte_sex = UNKNOWN_BYTE_SEX;
 static enum bool arch_multiple = FALSE;	/* print one arch message before error*/
 
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool trace = FALSE;		/* print stages of link-editing */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool save_reloc = FALSE;		/* save relocation information */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool output_for_dyld = FALSE;	/* produce output for use with dyld */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool bind_at_load = FALSE;		/* mark the output for dyld to be bound
 					   when loaded */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool no_fix_prebinding = FALSE;	/* mark the output for dyld to never
 					   run fix_prebinding */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool load_map = FALSE;		/* print a load map */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool define_comldsyms = TRUE;	/* define common and link-editor defined
 					   symbol reguardless of file type */
 #ifndef RLD
 static enum bool
     dflag_specified = FALSE;		/* the -d flag has been specified */
 #endif /* !defined(RLD) */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool seglinkedit = FALSE;		/* create the link edit segment */
 #ifndef RLD
 static enum bool
     seglinkedit_specified = FALSE;	/* if either -seglinkedit or */
 					/*  -noseglinkedit was specified */
 #endif /* !defined(RLD) */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool whyload = FALSE;		/* print why archive members are
 					   loaded */
 #ifndef RLD
 static enum bool whatsloaded = FALSE;	/* print which object files are loaded*/
 #endif /* !defined(RLD) */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool flush = TRUE;			/* Use the output_flush routine to flush
 					   output file by pages */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool sectorder_detail = FALSE;	/* print sectorder warnings in detail */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool nowarnings = FALSE;		/* suppress warnings */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool no_arch_warnings = FALSE;	/* suppress wrong arch warnings */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool arch_errors_fatal = FALSE;	/* cause wrong arch errors to be fatal*/
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool archive_ObjC = FALSE;		/* objective-C archive semantics */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool archive_all = FALSE;		/* always load everything in archives */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool keep_private_externs = FALSE;	/* don't turn private externs into
 					   non-external symbols */
 /* TRUE if -dynamic is specified, FALSE if -static is specified */
-__private_extern__
+// Patch Jan 17, 2017 - Alex Barker
 enum bool dynamic = TRUE;
 #ifndef RLD
 static enum bool dynamic_specified = FALSE;
@@ -198,16 +209,21 @@ static enum bool static_specified = FALSE;
 #endif
 
 /* The level of symbol table stripping */
-__private_extern__ enum strip_levels strip_level = STRIP_DUP_INCLS;
+// Patch Jan 17, 2017 - Alex Barker
+enum strip_levels strip_level = STRIP_DUP_INCLS;
 /* Strip the base file symbols (the -A argument's symbols) */
-__private_extern__ enum bool strip_base_symbols = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool strip_base_symbols = FALSE;
 
 /* strip dead blocks */
-__private_extern__ enum bool dead_strip = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool dead_strip = FALSE;
 /* don't strip module init and term sections */
-__private_extern__ enum bool no_dead_strip_inits_and_terms = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool no_dead_strip_inits_and_terms = FALSE;
 /* print timings for dead striping code */
-__private_extern__ enum bool dead_strip_times = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool dead_strip_times = FALSE;
 
 #ifndef RLD
 /*
@@ -215,75 +231,98 @@ __private_extern__ enum bool dead_strip_times = FALSE;
  * save_symbols is the names of the symbols from -exported_symbols_list
  * remove_symbols is the names of the symbols from -unexported_symbols_list
  */
-__private_extern__ struct symbol_list *save_symbols = NULL;
-__private_extern__ uint32_t nsave_symbols = 0;
-__private_extern__ struct symbol_list *remove_symbols = NULL;
-__private_extern__ uint32_t nremove_symbols = 0;
+// Patch Jan 17, 2017 - Alex Barker
+struct symbol_list *save_symbols = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+uint32_t nsave_symbols = 0;
+// Patch Jan 17, 2017 - Alex Barker
+struct symbol_list *remove_symbols = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+uint32_t nremove_symbols = 0;
 
 /*
  * -executable_path option's argument, executable_path is used to replace
  * @executable_path for dependent libraries.
  */
-__private_extern__ char *executable_path = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *executable_path = NULL;
 #endif /* RLD */
 
 
 /* The list of symbols to be traced */
-__private_extern__ char **trace_syms = NULL;
-__private_extern__ unsigned long ntrace_syms = 0;
+// Patch Jan 17, 2017 - Alex Barker
+char **trace_syms = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long ntrace_syms = 0;
 
 /* The number of references of undefined symbols to print */
-__private_extern__ unsigned long Yflag = 0;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long Yflag = 0;
 
 /* The list of allowed undefined symbols */
-__private_extern__ char **undef_syms = NULL;
-__private_extern__ unsigned long nundef_syms = 0;
+// Patch Jan 17, 2017 - Alex Barker
+char **undef_syms = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long nundef_syms = 0;
 
 /* The list of -dylib_file arguments */
-__private_extern__ char **dylib_files = NULL;
-__private_extern__ unsigned long ndylib_files = 0;
+// Patch Jan 17, 2017 - Alex Barker
+char **dylib_files = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long ndylib_files = 0;
 
 /* The checking for undefined symbols */
-__private_extern__ enum undefined_check_level undefined_flag = UNDEFINED_ERROR;
+// Patch Jan 17, 2017 - Alex Barker
+enum undefined_check_level undefined_flag = UNDEFINED_ERROR;
 #ifndef RLD
 static enum bool undefined_flag_specified = FALSE;
 #endif
 
 /* The checking for (twolevel namespace) multiply defined symbols */
-__private_extern__ enum multiply_defined_check_level
+// Patch Jan 17, 2017 - Alex Barker
+enum multiply_defined_check_level
     multiply_defined_flag = MULTIPLY_DEFINED_WARNING;
-__private_extern__ enum multiply_defined_check_level
+// Patch Jan 17, 2017 - Alex Barker
+enum multiply_defined_check_level
     multiply_defined_unused_flag = MULTIPLY_DEFINED_SUPPRESS;
 /* the -nomultidefs option */
-__private_extern__ enum bool nomultidefs = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool nomultidefs = FALSE;
 #ifndef RLD
 static enum bool multiply_defined_flag_specified = FALSE;
 static enum bool multiply_defined_unused_flag_specified = FALSE;
 #endif
 
 /* The checking for read only relocs */
-__private_extern__ enum read_only_reloc_check_level
+// Patch Jan 17, 2017 - Alex Barker
+enum read_only_reloc_check_level
     read_only_reloc_flag = READ_ONLY_RELOC_ERROR;
 
 /* The checking for section difference relocs */
-__private_extern__ enum sect_diff_reloc_check_level
+// Patch Jan 17, 2017 - Alex Barker
+enum sect_diff_reloc_check_level
     sect_diff_reloc_flag = SECT_DIFF_RELOC_SUPPRESS;
 
 /* The handling for weak reference mismatches */
-__private_extern__ enum weak_reference_mismatches_handling
+// Patch Jan 17, 2017 - Alex Barker
+enum weak_reference_mismatches_handling
     weak_reference_mismatches = WEAK_REFS_MISMATCH_ERROR;
 
 /* The Mac OS X deployment target */
-__private_extern__ struct macosx_deployment_target
+// Patch Jan 17, 2017 - Alex Barker
+struct macosx_deployment_target
 	macosx_deployment_target = { 0 };
 
 /* The prebinding optimization */
 #ifndef RLD
 static enum bool prebinding_flag_specified = FALSE;
 #endif
-__private_extern__ enum bool prebinding = FALSE;
-__private_extern__ enum bool prebind_allow_overlap = FALSE;
-__private_extern__ enum bool prebind_all_twolevel_modules = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool prebinding = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool prebind_allow_overlap = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool prebind_all_twolevel_modules = FALSE;
 #ifndef RLD
 static enum bool read_only_reloc_flag_specified = FALSE;
 static enum bool sect_diff_reloc_flag_specified = FALSE;
@@ -295,29 +334,40 @@ static enum bool unprebound_library(
 #endif
 
 /* True if -m is specified to allow multiply symbols, as a warning */
-__private_extern__ enum bool allow_multiply_defined_symbols = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool allow_multiply_defined_symbols = FALSE;
 
 /* The segment alignment and pagezero_size, note the segalign is reset in
  * layout() by get_segalign_from_flag() based on the target architecture.
  */
-__private_extern__ unsigned long segalign = 0x2000;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long segalign = 0x2000;
 #ifndef RLD
-__private_extern__ enum bool segalign_specified = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool segalign_specified = FALSE;
 #endif /* !defined(RLD) */
-__private_extern__ unsigned long pagezero_size = 0;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long pagezero_size = 0;
 
 /* The default section alignment */
-__private_extern__ unsigned long defaultsectalign = DEFAULTSECTALIGN;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long defaultsectalign = DEFAULTSECTALIGN;
 
 /* The first segment address */
-__private_extern__ unsigned long seg1addr = 0;
-__private_extern__ enum bool seg1addr_specified = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long seg1addr = 0;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool seg1addr_specified = FALSE;
 
 /* read-only and read-write segment addresses */
-__private_extern__ unsigned long segs_read_only_addr = 0;
-__private_extern__ enum bool segs_read_only_addr_specified = FALSE;
-__private_extern__ unsigned long segs_read_write_addr = 0;
-__private_extern__ enum bool segs_read_write_addr_specified = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long segs_read_only_addr = 0;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool segs_read_only_addr_specified = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long segs_read_write_addr = 0;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool segs_read_write_addr_specified = FALSE;
 
 #ifndef RLD
 /* file name of the segment address table */
@@ -327,13 +377,18 @@ static char *seg_addr_table_filename = NULL;
 #endif /* !defined(RLD) */
 
 /* The stack address and size */
-__private_extern__ unsigned long stack_addr = 0;
-__private_extern__ enum bool stack_addr_specified = FALSE;
-__private_extern__ unsigned long stack_size = 0;
-__private_extern__ enum bool stack_size_specified = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long stack_addr = 0;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool stack_addr_specified = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long stack_size = 0;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool stack_size_specified = FALSE;
 
 /* TRUE if -allow_stack_execute is specified */
-__private_extern__ enum bool allow_stack_execute = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool allow_stack_execute = FALSE;
 
 #ifndef RLD
 /* A -segaddr option was specified */
@@ -345,7 +400,8 @@ static enum bool segaddr_specified = FALSE;
  * that if /bin/objcunique is run on the result and up to two sections can be
  * added.
  */
-__private_extern__ unsigned long headerpad = sizeof(struct section) * 2;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long headerpad = sizeof(struct section) * 2;
 #ifndef RLD
 static enum bool headerpad_specified = FALSE;
 #endif /* !defined(RLD) */
@@ -353,38 +409,56 @@ static enum bool headerpad_specified = FALSE;
  * If specified makes sure the header pad is big enough to change all the
  * install name of the dylibs in the output to MAXPATHLEN.
  */
-__private_extern__ enum bool headerpad_max_install_names = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool headerpad_max_install_names = FALSE;
 
 /* The name of the specified entry point */
-__private_extern__ char *entry_point_name = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *entry_point_name = NULL;
 
 /* The name of the specified library initialization routine */
-__private_extern__ char *init_name = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *init_name = NULL;
 
 /* The dylib information */
-__private_extern__ char *dylib_install_name = NULL;
-__private_extern__ uint32_t dylib_current_version = 0;
-__private_extern__ uint32_t dylib_compatibility_version = 0;
+// Patch Jan 17, 2017 - Alex Barker
+char *dylib_install_name = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+uint32_t dylib_current_version = 0;
+// Patch Jan 17, 2017 - Alex Barker
+uint32_t dylib_compatibility_version = 0;
 
 /* the umbrella/sub/client framework information */
-__private_extern__ enum bool sub_framework = FALSE;
-__private_extern__ enum bool umbrella_framework = FALSE;
-__private_extern__ char *sub_framework_name = NULL;
-__private_extern__ char *umbrella_framework_name = NULL;
-__private_extern__ char *client_name = NULL;
-__private_extern__ char **allowable_clients = NULL;
-__private_extern__ unsigned long nallowable_clients = 0;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool sub_framework = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool umbrella_framework = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+char *sub_framework_name = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *umbrella_framework_name = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *client_name = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char **allowable_clients = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long nallowable_clients = 0;
 
 /* The list of sub_umbrella frameworks */
-__private_extern__ char **sub_umbrellas = NULL;
-__private_extern__ unsigned long nsub_umbrellas = 0;
+// Patch Jan 17, 2017 - Alex Barker
+char **sub_umbrellas = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long nsub_umbrellas = 0;
 
 /* The list of sub_library dynamic libraries */
-__private_extern__ char **sub_librarys = NULL;
-__private_extern__ unsigned long nsub_librarys = 0;
+// Patch Jan 17, 2017 - Alex Barker
+char **sub_librarys = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long nsub_librarys = 0;
 
 /* The dylinker information */
-__private_extern__ char *dylinker_install_name = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *dylinker_install_name = NULL;
 
 #ifndef RLD
 /* set to the -bundle_loader argument if specified */
@@ -392,25 +466,30 @@ static char *bundle_loader = NULL;
 #endif
 
 /* set to TRUE if -private_bundle is specified */
-__private_extern__ enum bool private_bundle = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool private_bundle = FALSE;
 
 /* The value of the environment variable NEXT_ROOT or the -syslibroot argument*/
-__private_extern__ char *next_root = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *next_root = NULL;
 #ifndef RLD
 static enum bool syslibroot_specified = FALSE;
 #endif
 
 /* TRUE if the environment variable LD_TRACE_ARCHIVES
    (or temporarily RC_TRACE_ARCHIVES) is set */
-__private_extern__ enum bool ld_trace_archives = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool ld_trace_archives = FALSE;
 
 /* TRUE if the environment variable LD_TRACE_DYLIBS
    (or temporarily RC_TRACE_DYLIBS) is set */
-__private_extern__ enum bool ld_trace_dylibs = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool ld_trace_dylibs = FALSE;
 
 /* TRUE if the environment variable LD_TRACE_PREBINDING_DISABLED
    (or temporarily LD_TRACE_PREBINDING_DISABLED) is set */
-__private_extern__ enum bool ld_trace_prebinding_disabled = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool ld_trace_prebinding_disabled = FALSE;
 
 #ifndef KLD
 /* The file LD_TRACE_FILE references, or NULL if none is set */
@@ -418,12 +497,16 @@ static const char *trace_file_path = NULL;
 #endif
 
 /* the argument to -final_output if any */
-__private_extern__ char *final_output = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+char *final_output = NULL;
 
 /* The variables to support namespace options */
-__private_extern__ enum bool namespace_specified = FALSE;
-__private_extern__ enum bool twolevel_namespace = TRUE;
-__private_extern__ enum bool force_flat_namespace = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool namespace_specified = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool twolevel_namespace = TRUE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool force_flat_namespace = FALSE;
 
 #ifndef RLD
 /* Variable to support options logging.  */
@@ -441,15 +524,17 @@ static enum bool ld_print_options = FALSE;
 #ifndef RLD
 static enum bool twolevel_namespace_hints_specified = FALSE;
 #endif
-__private_extern__ enum bool twolevel_namespace_hints = TRUE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool twolevel_namespace_hints = TRUE;
 
 #ifdef DEBUG
-__private_extern__ unsigned long debug = 0;	/* link-editor debugging */
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long debug = 0;	/* link-editor debugging */
 #endif /* DEBUG */
 
 #ifdef RLD
 /* the cleanup routine for fatal errors to remove the output file */
-__private_extern__ void cleanup(void);
+extern void cleanup(void);
 #else /* !defined(RLD) */
 static void cleanup(void);
 static void ld_exit(int exit_value);
@@ -3359,7 +3444,7 @@ int sig)
  * allocate() is just a wrapper around malloc that prints and error message and
  * exits if the malloc fails.
  */
-__private_extern__
+extern
 void *
 allocate(
 unsigned long size)
@@ -3377,7 +3462,7 @@ unsigned long size)
  * reallocate() is just a wrapper around realloc that prints and error message
  * and exits if the realloc fails.
  */
-__private_extern__
+extern
 void *
 reallocate(
 void *p,
@@ -3394,7 +3479,7 @@ unsigned long size)
  * savestr() malloc's space for the string passed to it, copys the string into
  * the space and returns a pointer to that space.
  */
-__private_extern__
+extern
 char *
 savestr(
 const char *s)
@@ -3454,7 +3539,7 @@ const char *args,
 /*
  * rnd() rounds v to a multiple of r.
  */
-__private_extern__
+extern
 unsigned long
 rnd(
 unsigned long v,
@@ -3471,7 +3556,7 @@ unsigned long r)
 /*
  * All printing of all messages goes through this function.
  */
-__private_extern__
+extern
 void
 vprint(
 const char *format,
@@ -3487,7 +3572,7 @@ va_list ap)
 /*
  * The print function that just calls the above vprint() function.
  */
-__private_extern__
+extern
 void
 print(
 const char *format,
@@ -3503,7 +3588,7 @@ const char *format,
 /*
  * The ld_trace function that logs things for B&I.
  */
-__private_extern__
+extern
 void
 ld_trace(
 const char *format,
@@ -3564,7 +3649,7 @@ print_architecture_banner(void)
 /*
  * Print the warning message.  This is non-fatal and does not set 'errors'.
  */
-__private_extern__
+extern
 void
 warning(
 const char *format,
@@ -3586,7 +3671,7 @@ const char *format,
 /*
  * Print the error message and set the 'error' indication.
  */
-__private_extern__
+extern
 void
 error(
 const char *format,
@@ -3607,7 +3692,7 @@ const char *format,
 /*
  * Print the fatal error message, and exit non-zero.
  */
-__private_extern__
+extern
 void
 fatal(
 const char *format,
@@ -3628,7 +3713,7 @@ const char *format,
 /*
  * Print the current object file name and warning message.
  */
-__private_extern__
+extern
 void
 warning_with_cur_obj(
 const char *format,
@@ -3652,7 +3737,7 @@ const char *format,
  * Print the current object file name and error message, set the non-fatal
  * error indication.
  */
-__private_extern__
+extern
 void
 error_with_cur_obj(
 const char *format,
@@ -3675,7 +3760,7 @@ const char *format,
 /*
  * Print the warning message along with the system error message.
  */
-__private_extern__
+extern
 void
 system_warning(
 const char *format,
@@ -3698,7 +3783,7 @@ const char *format,
  * Print the error message along with the system error message, set the
  * non-fatal error indication.
  */
-__private_extern__
+extern
 void
 system_error(
 const char *format,
@@ -3722,7 +3807,7 @@ const char *format,
  * Print the fatal message along with the system error message, and exit
  * non-zero.
  */
-__private_extern__
+extern
 void
 system_fatal(
 const char *format,
@@ -3747,7 +3832,7 @@ const char *format,
  * Print the fatal error message along with the mach error string, and exit
  * non-zero.
  */
-__private_extern__
+extern
 void
 mach_fatal(
 kern_return_t r,

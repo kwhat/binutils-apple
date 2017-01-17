@@ -1,1 +1,1 @@
-#define __private_extern__ __attribute__((visibility("hidden")))
+#define extern __attribute__((visibility("hidden")))

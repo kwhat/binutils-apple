@@ -30,7 +30,7 @@
  * get_unix_standard_mode() returns TRUE if we are running in UNIX standard
  * command mode (the default).
  */
-__private_extern__
+extern
 enum bool
 get_unix_standard_mode(
 void)

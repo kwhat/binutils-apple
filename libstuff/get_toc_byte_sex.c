@@ -36,7 +36,7 @@
  * object file's bytesex.  If it can't figure it out, because the library has
  * no object file members or is malformed it will return UNKNOWN_BYTE_SEX.
  */
-__private_extern__
+extern
 enum byte_sex
 get_toc_byte_sex(
 char *addr,

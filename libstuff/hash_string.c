@@ -27,7 +27,7 @@
  * then usually mod'ed with the hash table size to get an index into the hash
  * table.
  */
-__private_extern__
+extern
 int32_t
 hash_string(
 char *key)

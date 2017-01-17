@@ -51,7 +51,7 @@
  * headers else returns FALSE and does not touch the headers and prints an error
  * using the error() routine.
  */
-__private_extern__
+extern
 enum bool
 swap_object_headers(
 void *mach_header,

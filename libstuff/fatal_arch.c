@@ -30,7 +30,7 @@
 /*
  * Print the warning message and the input file.
  */
-__private_extern__
+extern
 void
 warning_arch(
 struct arch *arch,
@@ -60,7 +60,7 @@ char *format,
 /*
  * Print the error message the input file and increment the error count
  */
-__private_extern__
+extern
 void
 error_arch(
 struct arch *arch,
@@ -91,7 +91,7 @@ char *format,
 /*
  * Print the fatal error message the input file and exit non-zero.
  */
-__private_extern__
+extern
 void
 fatal_arch(
 struct arch *arch,

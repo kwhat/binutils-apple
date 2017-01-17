@@ -42,30 +42,30 @@
 #include "pass1.h"
 #include "sections.h"
 
-__private_extern__ enum bool has_dynamic_linker_command = FALSE;
+extern enum bool has_dynamic_linker_command = FALSE;
 
 #ifndef RLD
 
 /* the pointer to the head of the dynamicly linked shared library commands */
-__private_extern__ struct merged_dylib *merged_dylibs = NULL;
+extern struct merged_dylib *merged_dylibs = NULL;
 
 /* the pointer to the merged the dynamic linker command if any */
-__private_extern__ struct merged_dylinker *merged_dylinker = NULL;
+extern struct merged_dylinker *merged_dylinker = NULL;
 
 /* the pointer to the merged sub_framework command if any */
-__private_extern__ struct merged_sub_frameworks *merged_sub_framework = NULL;
+extern struct merged_sub_frameworks *merged_sub_framework = NULL;
 
 /* the pointer to the head of the dynamicly linked shared library segments */
-__private_extern__ struct merged_segment *dylib_segments = NULL;
+extern struct merged_segment *dylib_segments = NULL;
 
 /* the pointer to the merged sub_umbrella commands if any */
-__private_extern__ struct merged_sub_umbrella *merged_sub_umbrellas = NULL;
+extern struct merged_sub_umbrella *merged_sub_umbrellas = NULL;
 
 /* the pointer to the merged sub_library commands if any */
-__private_extern__ struct merged_sub_library *merged_sub_librarys = NULL;
+extern struct merged_sub_library *merged_sub_librarys = NULL;
 
 /* the pointer to the merged sub_client commands if any */
-__private_extern__ struct merged_sub_client *merged_sub_clients = NULL;
+extern struct merged_sub_client *merged_sub_clients = NULL;
 
 static struct merged_dylib *lookup_merged_dylib(
     struct dylib_command *dl);
@@ -75,7 +75,7 @@ static struct merged_dylib *lookup_merged_dylib(
  * command line argument values.  It is called from layout() when the output
  * filetype is MH_DYLIB.
  */
-__private_extern__
+extern
 void
 create_dylib_id_command(
 void)
@@ -114,7 +114,7 @@ void)
 /*
  * merge_dylibs() merges in the dylib commands from the current object.
  */
-__private_extern__
+extern
 void
 merge_dylibs(
 enum bool force_weak)
@@ -255,7 +255,7 @@ struct dylib_command *dl)
  * command line argument values.  It is called from layout() when the output
  * filetype is MH_DYLINKER.
  */
-__private_extern__
+extern
 void
 create_dylinker_id_command(
 void)
@@ -291,7 +291,7 @@ void)
  * the command line argument values.  It is called from layout() when the output
  * filetype is MH_DYLIB and -sub_framework was specified.
  */
-__private_extern__
+extern
 void
 create_sub_framework_command(
 void)
@@ -325,7 +325,7 @@ void)
  * filetype is MH_DYLIB and one or more -sub_umbrella flags were specified.
  * It returns the total size of the load commands it creates.
  */
-__private_extern__
+extern
 unsigned long
 create_sub_umbrella_commands(
 void)
@@ -382,7 +382,7 @@ void)
  * filetype is MH_DYLIB and one or more -sub_library flags were specified.
  * It returns the total size of the load commands it creates.
  */
-__private_extern__
+extern
 unsigned long
 create_sub_library_commands(
 void)
@@ -439,7 +439,7 @@ void)
  * filetype is MH_DYLIB and one or more -allowable_client flags were specified.
  * It returns the total size of the load commands it creates.
  */
-__private_extern__
+extern
 unsigned long
 create_sub_client_commands(
 void)
@@ -473,7 +473,7 @@ void)
  * add_dylib_segment() adds the specified segment to the list of
  * dylib_segments as comming from the specified dylib_name.
  */
-__private_extern__
+extern
 void
 add_dylib_segment(
 struct segment_command *sg,

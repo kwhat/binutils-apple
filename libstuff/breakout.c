@@ -53,7 +53,7 @@ static struct arch *new_arch(
 static struct member *new_member(
     struct arch *arch);
 
-__private_extern__
+extern
 struct ofile *
 breakout_mem(
 void *membuf,
@@ -98,7 +98,7 @@ enum bool calculate_input_prebind_cksum)
 	return(ofile);
 }
 
-__private_extern__
+extern
 struct ofile *
 breakout(
 char *filename,
@@ -448,7 +448,7 @@ enum bool calculate_input_prebind_cksum)
 	}
 }
 
-__private_extern__
+extern
 void
 free_archs(
 struct arch *archs,

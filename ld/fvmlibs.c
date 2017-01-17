@@ -44,10 +44,12 @@
 #include "fvmlibs.h"
 
 /* the pointer to the head of the load fixed VM shared library commamds */
-__private_extern__ struct merged_fvmlib *merged_fvmlibs = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+struct merged_fvmlib *merged_fvmlibs = NULL;
 
 /* the pointer to the head of the fixed VM shared library segments */
-__private_extern__ struct merged_segment *fvmlib_segments = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+struct merged_segment *fvmlib_segments = NULL;
 
 static struct merged_fvmlib *lookup_merged_fvmlib(struct fvmlib_command *fl);
 static void add_fvmlib_segment(struct segment_command *sg, char *fvmlib_name);
@@ -63,7 +65,7 @@ static void add_fvmlib_segment(struct segment_command *sg, char *fvmlib_name);
  * LC_LOADFVMLIB command for the library those segments are in.  So this routine
  * also collects a list of these segments so the overlap checking can be done.
  */
-__private_extern__
+extern
 void
 merge_fvmlibs(void)
 {
@@ -240,7 +242,7 @@ char *fvmlib_name)
 /*
  * print_load_fvmlibs_list() prints the fvmlib segments table.  For debugging.
  */
-__private_extern__
+extern
 void
 print_load_fvmlibs_list(void)
 {
@@ -277,7 +279,7 @@ print_load_fvmlibs_list(void)
 /*
  * print_fvmlib_segments() prints the fvmlib segments table.  For debugging.
  */
-__private_extern__
+extern
 void
 print_fvmlib_segments(void)
 {

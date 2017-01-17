@@ -29,7 +29,7 @@
 #include "stuff/allocate.h"
 
 /* name of the program for error messages (argv[0]) */
-__private_extern__ char *progname = NULL;
+extern char *progname = NULL;
 
 /* The filenames of the old and new dylib */
 static char *old_dylib = NULL;

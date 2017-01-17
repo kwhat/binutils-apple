@@ -65,7 +65,7 @@
  * in when nfine_relocs != 0). When refs is not NULL, only refs is filled in
  * and returned and the contents are not relocated.
  */
-__private_extern__
+extern
 void
 generic_reloc(
 char *contents,
@@ -1056,7 +1056,7 @@ update_reloc:
 	}
 }
 
-__private_extern__
+extern
 int
 undef_bsearch(
 const unsigned long *index,

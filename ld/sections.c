@@ -77,7 +77,8 @@
 #include "dylibs.h"
 
 /* the pointer to the head of the output file's section list */
-__private_extern__ struct merged_segment *merged_segments = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+struct merged_segment *merged_segments = NULL;
 #ifdef RLD
 /*
  * The pointer to the head of the output file's section list before they are
@@ -85,7 +86,8 @@ __private_extern__ struct merged_segment *merged_segments = NULL;
  * used in reset_merged_sections() to put the list back with it's original
  * segments.
  */
-__private_extern__ struct merged_segment *original_merged_segments = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+struct merged_segment *original_merged_segments = NULL;
 #endif /* RLD */
 
 /*
@@ -94,19 +96,22 @@ __private_extern__ struct merged_segment *original_merged_segments = NULL;
  * the output file so before the segments are layed out they are removed from
  * the list by remove_debug_segments() and placed on this list.
  */
-__private_extern__ struct merged_segment *debug_merged_segments = NULL;
+// Patch Jan 17, 2017 - Alex Barker
+struct merged_segment *debug_merged_segments = NULL;
 
 /*
  * The total number relocation entries, used only in layout() to help
  * calculate the size of the link edit segment.
  */
-__private_extern__ unsigned long nreloc = 0;
+// Patch Jan 17, 2017 - Alex Barker
+unsigned long nreloc = 0;
 
 /*
  * This is set to TRUE if any of the input objects do not have the
  * MH_SUBSECTIONS_VIA_SYMBOLS bit set in the mach_header flags field.
  */
-__private_extern__ enum bool some_non_subsection_via_symbols_objects = FALSE;
+// Patch Jan 17, 2017 - Alex Barker
+enum bool some_non_subsection_via_symbols_objects = FALSE;
 
 /* table for S_* flags (section types) for error messages */
 static const char *
@@ -343,7 +348,7 @@ static void print_load_symbol_hash_table(
  * start in the output file.  It also accumulates the size of each merged
  * section, the number of relocation entries in it and the maximum alignment.
  */
-__private_extern__
+extern
 void
 merge_sections(void)
 {
@@ -480,7 +485,7 @@ merge_sections(void)
  * section structure is found then one is created and added to the end of the
  * list and a pointer to it is returned.
  */
-__private_extern__
+extern
 struct merged_section *
 create_merged_section(
 struct section *s)
@@ -785,7 +790,7 @@ struct section *s)
  * in the merged segment list and returns a pointer to the
  * merged segment if it exist.  It returns NULL if it doesn't exist.
  */
-__private_extern__
+extern
 struct merged_segment *
 lookup_merged_segment(
 char *segname)
@@ -807,7 +812,7 @@ char *segname)
  * (segname,sectname) in the merged section list and returns a pointer to the
  * merged section if it exist.  It returns NULL if it doesn't exist.
  */
-__private_extern__
+extern
 struct merged_section *
 lookup_merged_section(
 char *segname,
@@ -855,7 +860,7 @@ char *sectname)
  * object's section map for a matching output section number it is never
  * matched.
  */
-__private_extern__
+extern
 void
 remove_debug_segments(
 void)
@@ -918,7 +923,7 @@ void)
  * redo_live == TRUE.  In this case it is used to drive re-merging of only live
  * literals.
  */
-__private_extern__
+extern
 void
 merge_literal_sections(
 enum bool redo_live)
@@ -1074,7 +1079,7 @@ enum bool redo_live)
  * that has an order file specified with -sectorder, or if -dead_strip is
  * specified.
  */
-__private_extern__
+extern
 void
 layout_ordered_sections(void)
 {
@@ -2015,7 +2020,7 @@ struct merged_section *ms)
  * next output_offset aligned to the passed input offset modulus the passed
  * power of 2 alignment.
  */
-__private_extern__
+extern
 unsigned long
 align_to_input_mod(
 unsigned long output_offset,
@@ -2039,7 +2044,7 @@ unsigned long align)
  * is live.  This is only used literal sections that have order files and when
  * -dead_strip is specified.  It is very brute force and not fast.
  */
-__private_extern__
+extern
 enum bool
 is_literal_output_offset_live(
 struct merged_section *ms,
@@ -2096,7 +2101,7 @@ unsigned long output_offset)
  * not present it is set to point at "" and if the symbol name is not present it
  * is set to "".
  */
-__private_extern__
+extern
 void
 parse_order_line(
 char *line,
@@ -2908,7 +2913,7 @@ char *object_name)
 /*
  * Function for qsort to sort load_order structs by their value
  */
-__private_extern__
+extern
 int
 qsort_load_order_values(
 const struct load_order *load_order1,
@@ -3177,7 +3182,7 @@ unsigned long value)
  * resize_live_sections() resizes the regular and zerofill sections using the
  * live file_reloc sizes.
  */
-__private_extern__
+extern
 void
 resize_live_sections(
 void)
@@ -3273,7 +3278,7 @@ struct merged_section *ms)
  * entries that will be in the output file when output_for_dyld is TRUE or
  * -dead_strip is specified.
  */
-__private_extern__
+extern
 void
 relayout_relocs(
 void)
@@ -3800,7 +3805,7 @@ unsigned long *nextrel)
  * output_literal_sections() causes each merged literal section to be copied
  * to the output file.  It is called from pass2().
  */
-__private_extern__
+extern
 void
 output_literal_sections(void)
 {
@@ -3829,7 +3834,7 @@ output_literal_sections(void)
  * output_sections_from_files() causes each section created from a file to be
  * copied to the output file.  It is called from pass2().
  */
-__private_extern__
+extern
 void
 output_sections_from_files(void)
 {
@@ -3877,7 +3882,7 @@ output_sections_from_files(void)
  * calls the appropriate routine specific to the target machine to relocate the
  * section and update the relocation entries (if saving relocation entries).
  */
-__private_extern__
+extern
 void
 output_section(
 struct section_map *map)
@@ -4221,7 +4226,7 @@ struct merged_symbol *merged_symbol)
  * symbols being discarded for some other symbol to figure out what section is
  * being referenced in the output.
  */
-__private_extern__
+extern
 unsigned long
 pass2_nsect_merged_symbol_section_type(
 struct merged_symbol *merged_symbol)
@@ -4935,7 +4940,7 @@ struct merged_section *key)
  * find which section this is.  This routine returns TRUE if the symbol is in
  * a coalesced section.
  */
-__private_extern__
+extern
 enum bool
 is_merged_symbol_coalesced(
 struct merged_symbol *merged_symbol)
@@ -5029,7 +5034,7 @@ struct relocation_info *output_relocs)
  * instructions sections with nop's (opcode 0x90) to make disassembly cleaner
  * between scatter loaded symbols.
  */
-__private_extern__
+extern
 void
 nop_pure_instruction_scattered_sections(void)
 {
@@ -5066,7 +5071,7 @@ nop_pure_instruction_scattered_sections(void)
  * for each merged regular (non-literal) content section that has a load order
  * (and indirect sections).
  */
-__private_extern__
+extern
 void
 flush_scatter_copied_sections(void)
 {
@@ -5104,7 +5109,7 @@ flush_scatter_copied_sections(void)
  * fine_relocs of the sections and symbols live if they can be reached by the
  * exported symbols or other live blocks.
  */
-__private_extern__
+extern
 void
 live_marking(void)
 {
@@ -5786,7 +5791,7 @@ struct fine_reloc *self_fine_reloc)
  * specified merged_symbol (if any) and returns it or NULL.  It also returns
  * the section map for the symbol if local_map is not NULL.
  */
-__private_extern__
+extern
 struct fine_reloc *
 get_fine_reloc_for_merged_symbol(
 struct merged_symbol *merged_symbol,
@@ -6298,7 +6303,7 @@ struct object_file *obj)
  * specified r_value in the specified object_file.  If the r_value is not in
  * any section then 0 (NO_SECT) is returned.
  */
-__private_extern__
+extern
 unsigned long
 r_symbolnum_from_r_value(
 unsigned long r_value,
@@ -6340,7 +6345,7 @@ struct object_file *obj)
  * object_segment for the MH_OBJECT filetype) and it zeros the size of each the
  * merged section so it can be accumulated for the next rld_load().
  */
-__private_extern__
+extern
 void
 reset_merged_sections(void)
 {
@@ -6418,7 +6423,7 @@ reset_merged_sections(void)
  * data for any literal sections.  Also the alignment of the existing sections
  * is reset to zero.
  */
-__private_extern__
+extern
 void
 zero_merged_sections_sizes(void)
 {
@@ -6456,7 +6461,7 @@ zero_merged_sections_sizes(void)
  * current set from the merged section list.  The order that sections are
  * merged on to the lists is taken advantaged of here.
  */
-__private_extern__
+extern
 void
 remove_merged_sections(void)
 {
@@ -6561,7 +6566,7 @@ remove_merged_sections(void)
 /*
  * print_merged_sections() prints the merged section table.  For debugging.
  */
-__private_extern__
+extern
 void
 print_merged_sections(
 char *string)
@@ -6660,7 +6665,7 @@ char *string)
  * print_merged_section_stats() prints the stats for the merged sections.
  * For tuning..
  */
-__private_extern__
+extern
 void
 print_merged_section_stats(void)
 {
@@ -6685,7 +6690,7 @@ print_merged_section_stats(void)
  * print_load_order() prints the load_order array passed to it.
  * For debugging.
  */
-__private_extern__
+extern
 void
 print_load_order(
 struct load_order *load_order,
@@ -6717,7 +6722,7 @@ char *string)
  * print_name_arrays() prints the sorted arrays of archive and object names.
  * For debugging.
  */
-__private_extern__
+extern
 void
 print_name_arrays(void)
 {

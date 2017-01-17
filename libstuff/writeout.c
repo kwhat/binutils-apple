@@ -102,7 +102,7 @@ static void warn_member(
  * TRUE.  The normal use will have sort_toc == TRUE and commons_in_toc == FALSE.
  * If warnings about unusual libraries are printed if library_warnings == TRUE.
  */
-__private_extern__
+extern
 void
 writeout(
 struct arch *archs,
@@ -285,7 +285,7 @@ cleanup:
  * commons_in_toc == FALSE.  If warnings about unusual libraries are printed if 
  * library_warnings == TRUE.
  */
-__private_extern__
+extern
 void
 writeout_to_mem(
 struct arch *archs,

@@ -94,48 +94,48 @@
 #include "uuid.h"
 
 #ifdef RLD
-__private_extern__ long RLD_DEBUG_OUTPUT_FILENAME_flag;
+extern long RLD_DEBUG_OUTPUT_FILENAME_flag;
 #endif
 
 /* The output file's mach header */
-__private_extern__ struct mach_header output_mach_header = { 0 };
+extern struct mach_header output_mach_header = { 0 };
 
 /*
  * The output file's symbol table load command and the offsets used in the
  * second pass to output the symbol table and string table.
  */
-__private_extern__ struct symtab_info output_symtab_info = { {0} };
+extern struct symtab_info output_symtab_info = { {0} };
 
 /*
  * The output file's dynamic symbol table load command.
  */
-__private_extern__ struct dysymtab_info output_dysymtab_info = { {0} };
+extern struct dysymtab_info output_dysymtab_info = { {0} };
 
 /*
  * The output file's two level hints load command.
  */
-__private_extern__ struct hints_info output_hints_info = { { 0 } };
+extern struct hints_info output_hints_info = { { 0 } };
 
 /*
  * The output file's prebind_cksum load command.
  */
-__private_extern__ struct cksum_info output_cksum_info = { { 0 } };
+extern struct cksum_info output_cksum_info = { { 0 } };
 
 /*
  * The output file's UUID load command.
  */
-__private_extern__ struct uuid_info output_uuid_info = { 0 };
+extern struct uuid_info output_uuid_info = { 0 };
 
 /*
  * The output file's thread load command and the machine specific information
  * for it.
  */
-__private_extern__ struct thread_info output_thread_info = { {0} };
+extern struct thread_info output_thread_info = { {0} };
 
 /*
  * The output file's routines load command and the specific information for it.
  */
-__private_extern__ struct routines_info output_routines_info = { {0} };
+extern struct routines_info output_routines_info = { {0} };
 
 /*
  * The thread states that are currently known by this link editor.
@@ -183,7 +183,7 @@ static void print_load_map_for_objects(struct merged_section *ms);
 /*
  * layout() is called from main() and lays out the output file.
  */
-__private_extern__
+extern
 void
 layout(void)
 {
@@ -411,7 +411,7 @@ layout(void)
  * output file.  This contains only a mach_header, a symtab load command the
  * symbol and string table for the current set of merged symbols.
  */
-__private_extern__
+extern
 void
 layout_rld_symfile(void)
 {
@@ -2503,7 +2503,7 @@ struct merged_section *ms)
 /*
  * print_mach_header() prints the output file's mach header.  For debugging.
  */
-__private_extern__
+extern
 void
 print_mach_header(void)
 {
@@ -2521,7 +2521,7 @@ print_mach_header(void)
  * print_symtab_info() prints the output file's symtab command.  For
  * debugging.
  */
-__private_extern__
+extern
 void
 print_symtab_info(void)
 {
@@ -2538,7 +2538,7 @@ print_symtab_info(void)
  * print_thread_info() prints the output file's thread information.  For
  * debugging.
  */
-__private_extern__
+extern
 void
 print_thread_info(void)
 {

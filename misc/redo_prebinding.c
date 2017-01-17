@@ -114,7 +114,7 @@
 #define U_ABS(l) (((int32_t)(l))<0 ? (uint32_t)(-(l)) : (l))
 
 /* name of the program for error messages (argv[0]) */
-__private_extern__ char *progname = NULL;
+extern char *progname = NULL;
 
 /* -c option, only check and return status */
 static enum bool check_only = FALSE;
@@ -9324,7 +9324,7 @@ uint32_t vmslide)
 /*
  * Print the warning message and the input file.
  */
-__private_extern__
+extern
 void
 warning_arch(
 struct arch *arch,
@@ -9354,7 +9354,7 @@ char *format,
 /*
  * Print the error message the input file and increment the error count
  */
-__private_extern__
+extern
 void
 error_arch(
 struct arch *arch,
@@ -9385,7 +9385,7 @@ char *format,
 /*
  * Print the fatal error message the input file and exit non-zero.
  */
-__private_extern__
+extern
 void
 fatal_arch(
 struct arch *arch,
@@ -9520,7 +9520,7 @@ va_list ap)
 /*
  * Put the warning message and the input file into the error message buffer.
  */
-__private_extern__
+extern
 void
 warning_arch(
 struct arch *arch,
@@ -9539,7 +9539,7 @@ char *format,
  * Put the error message and the input file into the error message buffer
  * and increment the error count
  */
-__private_extern__
+extern
 void
 error_arch(
 struct arch *arch,
@@ -9559,7 +9559,7 @@ char *format,
  * Put the warning message and the input file into the error message buffer and
  * then longjmp back to the library api so it can return unsuccessfully.
  */
-__private_extern__
+extern
 void
 fatal_arch(
 struct arch *arch,
@@ -9577,12 +9577,12 @@ char *format,
 	longjmp(library_env, 1);
 }
 
-__private_extern__ uint32_t errors = 0;	/* number of calls to error() */
+extern uint32_t errors = 0;	/* number of calls to error() */
 
 /*
  * Just put the message into the error message buffer without setting errors.
  */
-__private_extern__
+extern
 void
 warning(
 const char *format,
@@ -9599,7 +9599,7 @@ const char *format,
  * Put the message into the error message buffer and return to the caller
  * after setting the error indication.
  */
-__private_extern__
+extern
 void
 error(
 const char *format,
@@ -9617,7 +9617,7 @@ const char *format,
  * Put the message into the error message buffer and the architecture if not
  * NULL and return to the caller after setting the error indication.
  */
-__private_extern__
+extern
 void
 error_with_arch(
 const char *arch_name,
@@ -9638,7 +9638,7 @@ const char *format,
  * Put the message into the error message buffer along with the system error
  * message and return to the caller after setting the error indication.
  */
-__private_extern__
+extern
 void
 system_error(
 const char *format,
@@ -9657,7 +9657,7 @@ const char *format,
  * Put the message into the error message buffer along with the mach error
  * string and return to the caller after setting the error indication.
  */
-__private_extern__
+extern
 void
 my_mach_error(
 kern_return_t r,
@@ -9677,7 +9677,7 @@ char *format,
  * allocate() is used to allocate temporary memory for the library api and is
  * allocated in the library zone.  If the allocation fails it is a fatal error.
  */
-__private_extern__
+extern
 void *
 allocate(
 size_t size)
@@ -9703,7 +9703,7 @@ size_t size)
  * is allocated in the library zone.  If the allocation fails it is a fatal
  * error.
  */
-__private_extern__
+extern
 void *
 reallocate(
 void *p,
@@ -9727,7 +9727,7 @@ size_t size)
  * savestr() allocate space for the string passed to it, copys the string into
  * the space and returns a pointer to that space.
  */
-__private_extern__
+extern
 char *
 savestr(
 const char *s)
@@ -9748,7 +9748,7 @@ const char *s)
  * storage for the string is allocated()'ed can be free()'ed when nolonger
  * needed.
  */
-__private_extern__
+extern
 char *
 makestr(
 const char *args,
@@ -9784,7 +9784,7 @@ const char *args,
 	return(s);
 }
 
-__private_extern__
+extern
 void
 archive_error(
 struct ofile *ofile,
@@ -9806,7 +9806,7 @@ const char *format, ...)
 	errors++;
 }
 
-__private_extern__
+extern
 void
 archive_member_error(
 struct ofile *ofile,
@@ -9830,7 +9830,7 @@ const char *format, ...)
 	errors++;
 }
 
-__private_extern__
+extern
 void
 Mach_O_error(
 struct ofile *ofile,

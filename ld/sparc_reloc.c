@@ -62,7 +62,7 @@
  * sparc_reloc() relocates the contents of the specified section for the 
  * relocation entries using the section map from the current object (cur_obj).
  */
-__private_extern__
+extern
 void
 sparc_reloc(
 char *contents,

@@ -57,7 +57,7 @@
 /*
  * A pointer to the array of sets
  */
-__private_extern__ struct set *sets = NULL;
+extern struct set *sets = NULL;
 /*
  * The number of set structures allocated in the above array.
  */
@@ -65,13 +65,13 @@ static long nsets = 0;
 /*
  * The index into the sets array for the current set.
  */
-__private_extern__ long cur_set = -1;
+extern long cur_set = -1;
 
 /*
  * new_set() allocates another structure for a new set in the sets array and
  * increments the cur_set to index into the sets array for the new set.
  */
-__private_extern__
+extern
 void
 new_set(void)
 {
@@ -105,7 +105,7 @@ new_set(void)
  * the archives and fat files that are mapped so clean_archives_and_fats() can
  * deallocate their memory.
  */
-__private_extern__
+extern
 void
 new_archive_or_fat(
 char *file_name,
@@ -129,7 +129,7 @@ unsigned long file_size)
  * clean_archives_and_fats() deallocates any archives and fat files that were
  * loaded in the current set.
  */
-__private_extern__
+extern
 void
 clean_archives_and_fats(void)
 {
@@ -166,7 +166,7 @@ clean_archives_and_fats(void)
 /*
  * remove_set deallocates the current set structure from the sets array.
  */
-__private_extern__
+extern
 void
 remove_set(void)
 {
@@ -187,7 +187,7 @@ remove_set(void)
  * free_sets frees all storage for the sets and resets everything back to the
  * initial state.
  */
-__private_extern__
+extern
 void
 free_sets(void)
 {

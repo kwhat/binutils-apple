@@ -56,8 +56,8 @@
  */
 static struct merged_section *dylib_ms_init = NULL;
 static struct merged_section *dylib_ms_term = NULL;
-__private_extern__ unsigned long ninit = 0;
-__private_extern__ unsigned long nterm = 0;
+extern unsigned long ninit = 0;
+extern unsigned long nterm = 0;
 #endif /* !defined(RLD) */
 
 /*
@@ -67,7 +67,7 @@ __private_extern__ unsigned long nterm = 0;
  * output.  When redo_live is TRUE it re-merges only the live pointers based on
  * the live bit in the previouly allocated fine_relocs.
  */
-__private_extern__
+extern
 void
 mod_section_merge(
 struct mod_term_data *data,
@@ -303,7 +303,7 @@ cur_obj->file_name, ms->s.segname, ms->s.sectname, (unsigned int)r_address);
  * are called in the order they appear the pointers appear in the section and
  * that order is guaranteed the section can't be order differently.
  */
-__private_extern__
+extern
 void
 mod_section_order(
 struct mod_term_data *data, 
@@ -341,7 +341,7 @@ struct merged_section *ms)
  * can be re-merged (by later calling mod_section_merge() with redo_live ==
  * TRUE.
  */
-__private_extern__
+extern
 void
 mod_section_reset_live(
 struct mod_term_data *data, 
@@ -367,7 +367,7 @@ struct merged_section *ms)
 /*
  * mod_section_free() resets the output_offset in the data block.
  */
-__private_extern__
+extern
 void
 mod_section_free(
 struct mod_term_data *data)

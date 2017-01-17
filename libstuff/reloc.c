@@ -37,7 +37,7 @@
  * reloc_pair_r_type() returns the PAIR constant for the specific cputype for
  * a paired relocation entry.
  */
-__private_extern__
+extern
 uint32_t
 reloc_pair_r_type(
 cpu_type_t cputype)
@@ -90,7 +90,7 @@ cpu_type_t cputype)
  * reloc_has_pair() returns TRUE if the specified r_type for the specified
  * cputype for has a paired relocation entry.
  */
-__private_extern__
+extern
 enum bool
 reloc_has_pair(
 cpu_type_t cputype,
@@ -172,7 +172,7 @@ uint32_t r_type)
  * reloc_is_sectdiff() returns TRUE if the specified r_type for the specified
  * cputype is a section difference relocation type.
  */
-__private_extern__
+extern
 enum bool
 reloc_is_sectdiff(
 cpu_type_t cputype,

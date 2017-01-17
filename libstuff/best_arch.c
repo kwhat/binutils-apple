@@ -38,7 +38,7 @@
  * routine is used.  But if there is an exact match between the cputype and
  * cpusubtype and one of the fat_arch structs this routine will always succeed.
  */
-__private_extern__
+extern
 struct fat_arch *
 cpusubtype_findbestarch(
 cpu_type_t cputype,
@@ -537,7 +537,7 @@ uint32_t nfat_archs)
  * this routine is used.  But if the cpusubtypes are the same they can always
  * be combined and this routine will return the cpusubtype pass in.
  */
-__private_extern__
+extern
 cpu_subtype_t
 cpusubtype_combine(
 cpu_type_t cputype,
@@ -792,7 +792,7 @@ cpu_subtype_t cpusubtype2)
  * and this routine will return TRUE.  And ALL subtypes are always allowed to be
  * executed on unknown host_cpusubtype's.
  */
-__private_extern__
+extern
 enum bool
 cpusubtype_execute(
 cpu_type_t host_cputype,

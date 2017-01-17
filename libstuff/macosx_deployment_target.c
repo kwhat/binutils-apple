@@ -42,7 +42,7 @@ static char *command_line_macosx_deployment_target = NULL;
  * string passed is not copied. If NULL is passed, it removes any previous
  * setting.
  */
-__private_extern__
+extern
 void
 put_macosx_deployment_target(
 char *target)
@@ -59,7 +59,7 @@ char *target)
  * always pointing to memory allocated here so it can be free()'ed when no
  * longer needed.
  */
-__private_extern__
+extern
 void
 get_macosx_deployment_target(
 struct macosx_deployment_target *value)

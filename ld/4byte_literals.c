@@ -58,7 +58,7 @@
  * well as the count).  When redo_live is TRUE it re-merges only the live
  * cstrings based on the live bit in the previouly allocated fine_relocs.
  */
-__private_extern__
+extern
 void
 literal4_merge(
 struct literal4_data *data,
@@ -146,7 +146,7 @@ enum bool redo_live)
  * and it enters the literals in the order of the file it causes the section
  * to be ordered.
  */
-__private_extern__
+extern
 void
 literal4_order(
 struct literal4_data *data,
@@ -219,7 +219,7 @@ struct merged_section *ms)
  * redo_live == TRUE.  In here we first merge in the live literals from the
  * order file if any. 
  */
-__private_extern__
+extern
 void
 literal4_reset_live(
 struct literal4_data *data,
@@ -283,7 +283,7 @@ struct merged_section *ms)
  * literal section.  The literal is aligned to the alignment in the merged
  * section (ms->s.align).
  */
-__private_extern__
+extern
 unsigned long
 lookup_literal4(
 struct literal4 literal4,
@@ -329,7 +329,7 @@ struct merged_section *ms)
  * calls literal4_free to free() up all space used by the data block except the
  * data block itself.
  */
-__private_extern__
+extern
 void
 literal4_output(
 struct literal4_data *data,
@@ -365,7 +365,7 @@ struct merged_section *ms)
  * literal4_free() free()'s up all space used by the data block except the
  * data block itself.
  */
-__private_extern__
+extern
 void
 literal4_free(
 struct literal4_data *data)
@@ -387,7 +387,7 @@ struct literal4_data *data)
 /*
  * print_literal4_data() prints a literal4_data.  Used for debugging.
  */
-__private_extern__
+extern
 void
 print_literal4_data(
 struct literal4_data *data,
@@ -417,7 +417,7 @@ char *indent)
 /*
  * literal4_data_stats() prints the literal4_data stats.  Used for tuning.
  */
-__private_extern__
+extern
 void
 literal4_data_stats(
 struct literal4_data *data,

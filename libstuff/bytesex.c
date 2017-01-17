@@ -208,7 +208,7 @@
 #include "stuff/bool.h"
 #include "stuff/bytesex.h"
 
-__private_extern__
+extern
 long long
 SWAP_LONG_LONG(
 long long ll)
@@ -229,7 +229,7 @@ long long ll)
 	return(out.ll);
 }
 
-__private_extern__
+extern
 double
 SWAP_DOUBLE(
 double d)
@@ -250,7 +250,7 @@ double d)
 	return(out.d);
 }
 
-__private_extern__
+extern
 float
 SWAP_FLOAT(
 float f)
@@ -271,7 +271,7 @@ float f)
  * get_host_byte_sex() returns the enum constant for the byte sex of the host
  * it is running on.
  */
-__private_extern__
+extern
 enum byte_sex
 get_host_byte_sex(
 void)
@@ -282,7 +282,7 @@ void)
 	return((enum byte_sex)*((char *)&s));
 }
 
-__private_extern__
+extern
 void
 swap_fat_header(
 struct fat_header *fat_header,
@@ -297,7 +297,7 @@ enum byte_sex target_byte_sex)
 	fat_header->nfat_arch = SWAP_INT(fat_header->nfat_arch);
 }
 
-__private_extern__
+extern
 void
 swap_fat_arch(
 struct fat_arch *fat_archs,
@@ -319,7 +319,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_mach_header(
 struct mach_header *mh,
@@ -338,7 +338,7 @@ enum byte_sex target_byte_sex)
 	mh->flags = SWAP_INT(mh->flags);
 }
 
-__private_extern__
+extern
 void
 swap_mach_header_64(
 struct mach_header_64 *mh,
@@ -358,7 +358,7 @@ enum byte_sex target_byte_sex)
 	mh->reserved = SWAP_INT(mh->reserved);
 }
 
-__private_extern__
+extern
 void
 swap_load_command(
 struct load_command *lc,
@@ -372,7 +372,7 @@ enum byte_sex target_byte_sex)
 	lc->cmdsize = SWAP_INT(lc->cmdsize);
 }
 
-__private_extern__
+extern
 void
 swap_segment_command(
 struct segment_command *sg,
@@ -395,7 +395,7 @@ enum byte_sex target_byte_sex)
 	sg->flags = SWAP_INT(sg->flags);
 }
 
-__private_extern__
+extern
 void
 swap_segment_command_64(
 struct segment_command_64 *sg,
@@ -418,7 +418,7 @@ enum byte_sex target_byte_sex)
 	sg->flags = SWAP_INT(sg->flags);
 }
 
-__private_extern__
+extern
 void
 swap_section(
 struct section *s,
@@ -446,7 +446,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_section_64(
 struct section_64 *s,
@@ -474,7 +474,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_symtab_command(
 struct symtab_command *st,
@@ -492,7 +492,7 @@ enum byte_sex target_byte_sex)
 	st->strsize = SWAP_INT(st->strsize);
 }
 
-__private_extern__
+extern
 void
 swap_dysymtab_command(
 struct dysymtab_command *dyst,
@@ -524,7 +524,7 @@ enum byte_sex target_byte_sex)
 	dyst->nlocrel = SWAP_INT(dyst->nlocrel);
 }
 
-__private_extern__
+extern
 void
 swap_symseg_command(
 struct symseg_command *ss,
@@ -540,7 +540,7 @@ enum byte_sex target_byte_sex)
 	ss->size = SWAP_INT(ss->size);
 }
 
-__private_extern__
+extern
 void
 swap_fvmlib_command(
 struct fvmlib_command *fl,
@@ -557,7 +557,7 @@ enum byte_sex target_byte_sex)
 	fl->fvmlib.header_addr = SWAP_INT(fl->fvmlib.header_addr);
 }
 
-__private_extern__
+extern
 void
 swap_dylib_command(
 struct dylib_command *dl,
@@ -576,7 +576,7 @@ enum byte_sex target_byte_sex)
 				SWAP_INT(dl->dylib.compatibility_version);
 }
 
-__private_extern__
+extern
 void
 swap_sub_framework_command(
 struct sub_framework_command *sub,
@@ -591,7 +591,7 @@ enum byte_sex target_byte_sex)
 	sub->umbrella.offset = SWAP_INT(sub->umbrella.offset);
 }
 
-__private_extern__
+extern
 void
 swap_sub_umbrella_command(
 struct sub_umbrella_command *usub,
@@ -606,7 +606,7 @@ enum byte_sex target_byte_sex)
 	usub->sub_umbrella.offset = SWAP_INT(usub->sub_umbrella.offset);
 }
 
-__private_extern__
+extern
 void
 swap_sub_library_command(
 struct sub_library_command *lsub,
@@ -621,7 +621,7 @@ enum byte_sex target_byte_sex)
 	lsub->sub_library.offset = SWAP_INT(lsub->sub_library.offset);
 }
 
-__private_extern__
+extern
 void
 swap_sub_client_command(
 struct sub_client_command *csub,
@@ -636,7 +636,7 @@ enum byte_sex target_byte_sex)
 	csub->client.offset = SWAP_INT(csub->client.offset);
 }
 
-__private_extern__
+extern
 void
 swap_prebound_dylib_command(
 struct prebound_dylib_command *pbdylib,
@@ -654,7 +654,7 @@ enum byte_sex target_byte_sex)
 		SWAP_INT(pbdylib->linked_modules.offset);
 }
 
-__private_extern__
+extern
 void
 swap_dylinker_command(
 struct dylinker_command *dyld,
@@ -669,7 +669,7 @@ enum byte_sex target_byte_sex)
 	dyld->name.offset = SWAP_INT(dyld->name.offset);
 }
 
-__private_extern__
+extern
 void
 swap_fvmfile_command(
 struct fvmfile_command *ff,
@@ -686,7 +686,7 @@ enum byte_sex target_byte_sex)
 }
 
 
-__private_extern__
+extern
 void
 swap_thread_command(
 struct thread_command *ut,
@@ -700,7 +700,7 @@ enum byte_sex target_byte_sex)
 	ut->cmdsize = SWAP_INT(ut->cmdsize);
 }
 
-__private_extern__
+extern
 void
 swap_m68k_thread_state_regs(
 struct m68k_thread_state_regs *cpu,
@@ -721,7 +721,7 @@ enum byte_sex target_byte_sex)
 	cpu->pc = SWAP_INT(cpu->pc);
 }
 
-__private_extern__
+extern
 void
 swap_m68k_thread_state_68882(
 struct m68k_thread_state_68882 *fpu,
@@ -745,7 +745,7 @@ enum byte_sex target_byte_sex)
 	fpu->state = SWAP_INT(fpu->state);
 }
 
-__private_extern__
+extern
 void
 swap_m68k_thread_state_user_reg(
 struct m68k_thread_state_user_reg *user_reg,
@@ -758,7 +758,7 @@ enum byte_sex target_byte_sex)
 	user_reg->user_reg = SWAP_INT(user_reg->user_reg);
 }
 
-__private_extern__
+extern
 void
 swap_ppc_thread_state_t(
 ppc_thread_state_t *cpu,
@@ -806,7 +806,7 @@ enum byte_sex target_byte_sex)
 	cpu->vrsave = SWAP_INT(cpu->vrsave);
 }
 
-__private_extern__
+extern
 void
 swap_ppc_thread_state64_t(
 ppc_thread_state64_t *cpu,
@@ -853,7 +853,7 @@ enum byte_sex target_byte_sex)
 	cpu->vrsave =  SWAP_INT(cpu->vrsave);
 }
 
-__private_extern__
+extern
 void
 swap_ppc_float_state_t(
 ppc_float_state_t *fpu,
@@ -872,7 +872,7 @@ enum byte_sex target_byte_sex)
 	fpu->fpscr = SWAP_INT(fpu->fpscr);
 }
 
-__private_extern__
+extern
 void
 swap_ppc_exception_state_t(
 ppc_exception_state_t *state,
@@ -893,7 +893,7 @@ enum byte_sex target_byte_sex)
 	    state->pad1[i] = SWAP_INT(state->pad1[i]);
 }
 
-__private_extern__
+extern
 void
 swap_m88k_thread_state_grf_t(
 m88k_thread_state_grf_t *cpu,
@@ -939,7 +939,7 @@ enum byte_sex target_byte_sex)
 	cpu->nip = SWAP_INT(cpu->nip);
 }
 
-__private_extern__
+extern
 void
 swap_m88k_thread_state_xrf_t(
 m88k_thread_state_xrf_t *fpu,
@@ -1145,7 +1145,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_m88k_thread_state_user_t(
 m88k_thread_state_user_t *user,
@@ -1158,7 +1158,7 @@ enum byte_sex target_byte_sex)
 	user->user = SWAP_INT(user->user);
 }
 
-__private_extern__
+extern
 void
 swap_m88110_thread_state_impl_t(
 m88110_thread_state_impl_t *spu,
@@ -1308,7 +1308,7 @@ enum byte_sex target_byte_sex)
 	    SWAP_INT(spu->intermediate_result.x[3]);
 }
 
-__private_extern__
+extern
 void
 swap_i860_thread_state_regs(
 struct i860_thread_state_regs *cpu,
@@ -1349,7 +1349,7 @@ enum byte_sex target_byte_sex)
 	cpu->Mergehi32 = SWAP_INT(cpu->Mergehi32);
 }
 
-__private_extern__
+extern
 void
 swap_i386_thread_state(
 i386_thread_state_t *cpu,
@@ -1378,7 +1378,7 @@ enum byte_sex target_byte_sex)
 }
 
 #ifdef x86_THREAD_STATE64
-__private_extern__
+extern
 void
 swap_x86_thread_state64(
 x86_thread_state64_t *cpu,
@@ -1410,7 +1410,7 @@ enum byte_sex target_byte_sex)
 
 /* current i386 thread states */
 #if i386_THREAD_STATE == 1
-__private_extern__
+extern
 void
 swap_i386_float_state(
 struct i386_float_state *fpu,
@@ -1545,7 +1545,7 @@ enum byte_sex target_byte_sex)
 #endif /* defined(i386_EXCEPTION_STATE_COUNT) */
 }
 
-__private_extern__
+extern
 void
 swap_i386_exception_state(
 i386_exception_state_t *exc,
@@ -1558,7 +1558,7 @@ enum byte_sex target_byte_sex)
 
 #ifdef x86_THREAD_STATE64
 
-__private_extern__
+extern
 void
 swap_x86_float_state64(
 x86_float_state64_t *fpu,
@@ -1688,7 +1688,7 @@ enum byte_sex target_byte_sex)
 	fpu->fpu_reserved1 = SWAP_INT(fpu->fpu_reserved1);
 }
 
-__private_extern__
+extern
 void
 swap_x86_exception_state64(
 x86_exception_state64_t *exc,
@@ -1699,7 +1699,7 @@ enum byte_sex target_byte_sex)
     	exc->faultvaddr = SWAP_LONG_LONG(exc->faultvaddr);
 }
 
-__private_extern__
+extern
 void
 swap_x86_debug_state32(
 x86_debug_state32_t *debug,
@@ -1715,7 +1715,7 @@ enum byte_sex target_byte_sex)
 	debug->dr7 = SWAP_INT(debug->dr7);
 }
 
-__private_extern__
+extern
 void
 swap_x86_debug_state64(
 x86_debug_state64_t *debug,
@@ -1731,7 +1731,7 @@ enum byte_sex target_byte_sex)
 	debug->dr7 = SWAP_LONG_LONG(debug->dr7);
 }
 
-__private_extern__
+extern
 void
 swap_x86_state_hdr(
 struct x86_state_hdr *hdr,
@@ -1746,7 +1746,7 @@ enum byte_sex target_byte_sex)
 
 /* i386 thread states on older releases */
 #if i386_THREAD_STATE == -1
-__private_extern__
+extern
 void
 swap_i386_thread_fpstate(
 i386_thread_fpstate_t *fpu,
@@ -1987,7 +1987,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_i386_thread_exceptstate(
 i386_thread_exceptstate_t *exc,
@@ -2052,7 +2052,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_i386_thread_cthreadstate(
 i386_thread_cthreadstate_t *user,
@@ -2066,7 +2066,7 @@ enum byte_sex target_byte_sex)
 }
 #endif /* i386_THREAD_STATE == -1 */
 
-__private_extern__
+extern
 void
 swap_hppa_integer_thread_state(
 struct hp_pa_integer_thread_state *regs,
@@ -2114,7 +2114,7 @@ enum byte_sex target_byte_sex)
 	regs->ts_sar = SWAP_INT(regs->ts_sar);
 }
 
-__private_extern__
+extern
 void swap_hppa_frame_thread_state(
 struct hp_pa_frame_thread_state *frame,
 enum byte_sex target_byte_sex)
@@ -2134,7 +2134,7 @@ enum byte_sex target_byte_sex)
 	frame->ts_step_range_stop = SWAP_INT(frame->ts_step_range_stop);
 }
 
-__private_extern__
+extern
 void swap_hppa_fp_thread_state(
 struct hp_pa_fp_thread_state *fp,
 enum byte_sex target_byte_sex)
@@ -2177,7 +2177,7 @@ enum byte_sex target_byte_sex)
 	fp->ts_fp31 = SWAP_DOUBLE(fp->ts_fp31);
 }
 
-__private_extern__
+extern
 void
 swap_sparc_thread_state_regs(
 struct sparc_thread_state_regs *cpu,
@@ -2257,7 +2257,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_sparc_thread_state_fpu(
 struct sparc_thread_state_fpu *fpu,
@@ -2330,7 +2330,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_arm_thread_state_t(
 arm_thread_state_t *cpu,
@@ -2362,7 +2362,7 @@ enum byte_sex target_byte_sex)
 	cpu->__cpsr = SWAP_INT(cpu->__cpsr);
 }
 
-__private_extern__
+extern
 void
 swap_ident_command(
 struct ident_command *id_cmd,
@@ -2376,7 +2376,7 @@ enum byte_sex target_byte_sex)
 	id_cmd->cmdsize = SWAP_INT(id_cmd->cmdsize);
 }
 
-__private_extern__
+extern
 void
 swap_routines_command(
 struct routines_command *r_cmd,
@@ -2398,7 +2398,7 @@ enum byte_sex target_byte_sex)
 	r_cmd->reserved6 = SWAP_INT(r_cmd->reserved6);
 }
 
-__private_extern__
+extern
 void
 swap_routines_command_64(
 struct routines_command_64 *r_cmd,
@@ -2420,7 +2420,7 @@ enum byte_sex target_byte_sex)
 	r_cmd->reserved6 = SWAP_LONG_LONG(r_cmd->reserved6);
 }
 
-__private_extern__
+extern
 void
 swap_twolevel_hints_command(
 struct twolevel_hints_command *hints_cmd,
@@ -2436,7 +2436,7 @@ enum byte_sex target_byte_sex)
 	hints_cmd->nhints = SWAP_INT(hints_cmd->nhints);
 }
 
-__private_extern__
+extern
 void
 swap_twolevel_hint(
 struct twolevel_hint *hints,
@@ -2475,7 +2475,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_data_in_code_entry(
 struct data_in_code_entry *dices,
@@ -2491,7 +2491,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_prebind_cksum_command(
 struct prebind_cksum_command *cksum_cmd,
@@ -2506,7 +2506,7 @@ enum byte_sex target_byte_sex)
 	cksum_cmd->cksum = SWAP_INT(cksum_cmd->cksum);
 }
 
-__private_extern__
+extern
 void
 swap_uuid_command(
 struct uuid_command *uuid_cmd,
@@ -2516,7 +2516,7 @@ enum byte_sex target_byte_sex)
 	uuid_cmd->cmdsize = SWAP_INT(uuid_cmd->cmdsize);
 }
 
-__private_extern__
+extern
 void
 swap_linkedit_data_command(
 struct linkedit_data_command *ld,
@@ -2528,7 +2528,7 @@ enum byte_sex target_byte_sex)
 	ld->datasize = SWAP_INT(ld->datasize);
 }
 
-__private_extern__
+extern
 void
 swap_version_min_command(
 struct version_min_command *ver_cmd,
@@ -2539,7 +2539,7 @@ enum byte_sex target_byte_sex)
 	ver_cmd->version = SWAP_INT(ver_cmd->version);
 }
 
-__private_extern__
+extern
 void swap_rpath_command(
 struct rpath_command *rpath_cmd,
 enum byte_sex target_byte_sex)
@@ -2549,7 +2549,7 @@ enum byte_sex target_byte_sex)
 	rpath_cmd->path.offset = SWAP_INT(rpath_cmd->path.offset);
 }
 
-__private_extern__
+extern
  void
 swap_encryption_command(
 struct encryption_info_command *ec,
@@ -2562,7 +2562,7 @@ enum byte_sex target_byte_sex)
 	ec->cryptid = SWAP_INT(ec->cryptid);
 }
 
-__private_extern__
+extern
  void
 swap_encryption_command_64(
 struct encryption_info_command_64 *ec,
@@ -2576,7 +2576,7 @@ enum byte_sex target_byte_sex)
 	ec->cryptid = SWAP_INT(ec->pad);
 }
 
-__private_extern__
+extern
  void
 swap_linker_option_command(
 struct linker_option_command *lo,
@@ -2587,7 +2587,7 @@ enum byte_sex target_byte_sex)
 	lo->count = SWAP_INT(lo->count);
 }
 
-__private_extern__
+extern
  void
 swap_dyld_info_command(
 struct dyld_info_command *ed,
@@ -2607,7 +2607,7 @@ enum byte_sex target_byte_sex)
 	ed->export_size = SWAP_INT(ed->export_size);
 }
 
-__private_extern__
+extern
 void
 swap_entry_point_command(
 struct entry_point_command *ep,
@@ -2619,7 +2619,7 @@ enum byte_sex target_byte_sex)
 	ep->stacksize = SWAP_LONG_LONG(ep->stacksize);
 }
 
-__private_extern__
+extern
 void
 swap_source_version_command(
 struct source_version_command *sv,
@@ -2630,7 +2630,7 @@ enum byte_sex target_byte_sex)
 	sv->version = SWAP_LONG_LONG(sv->version);
 }
 
-__private_extern__
+extern
 void
 swap_nlist(
 struct nlist *symbols,
@@ -2652,7 +2652,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_nlist_64(
 struct nlist_64 *symbols,
@@ -2674,7 +2674,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_ranlib(
 struct ranlib *ranlibs,
@@ -2693,7 +2693,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_relocation_info(
 struct relocation_info *relocs,
@@ -2766,7 +2766,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_indirect_symbols(
 uint32_t *indirect_symbols,
@@ -2783,7 +2783,7 @@ enum byte_sex target_byte_sex)
 	    indirect_symbols[i] = SWAP_INT(indirect_symbols[i]);
 }
 
-__private_extern__
+extern
 void
 swap_dylib_reference(
 struct dylib_reference *refs,
@@ -2823,7 +2823,7 @@ enum byte_sex target_byte_sex)
 
 }
 
-__private_extern__
+extern
 void
 swap_dylib_module(
 struct dylib_module *mods,
@@ -2855,7 +2855,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_dylib_module_64(
 struct dylib_module_64 *mods,
@@ -2887,7 +2887,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_dylib_table_of_contents(
 struct dylib_table_of_contents *tocs,
@@ -2906,7 +2906,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-__private_extern__
+extern
 void
 swap_xar_header(
 struct xar_header *xar,

@@ -20,7 +20,7 @@ find ./ -name Makefile -exec rm -fv {} \;
 
 #
 find ./ -type f -name \*.[ch] | xargs sed -i 's/^#import/#include/g'
-#find ./ -type f -name \*.h | xargs sed -i 's/^__private_extern__/extern/g'
+find ./ -type f -name \*.[ch] | xargs sed -i 's/__private_extern__/extern/g'
 
 # Relocate man files
 mv -vf ./cctools-${CCV}/ar/ar.1 ./cctools-${CCV}/man

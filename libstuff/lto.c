@@ -34,7 +34,7 @@ static char * (*lto_get_sym_name)(void *mod, uint32_t n) = NULL;
  * stores the lto module in the ofile lto field, and also sets the lto_cputype
  * and lto_cpusubtype fields.  If not it returns 0 and sets those fields to 0.
  */
-__private_extern__
+extern
 int
 is_llvm_bitcode(
 struct ofile *ofile,
@@ -72,7 +72,7 @@ size_t size)
  * module in their, if not it frees the lto module.  If the memory buffer is
  * not an llvm bit code it returns 0.
  */
-__private_extern__ int is_llvm_bitcode_from_memory(
+extern int is_llvm_bitcode_from_memory(
 char *addr,
 uint32_t size,
 struct arch_flag *arch_flag,
@@ -291,7 +291,7 @@ char *target_triple)
 /*
  * lto_get_nsyms() returns the number of symbol in the lto module passed to it.
  */
-__private_extern__
+extern
 uint32_t
 lto_get_nsyms(
 void *mod)
@@ -305,7 +305,7 @@ void *mod)
  * or 0 if not.  The parameter commons_in_toc is non-zero if tentative
  * defintions are to be included in the table of contents and zero if not.
  */
-__private_extern__
+extern
 int
 lto_toc_symbol(
 void *mod,
@@ -335,7 +335,7 @@ int commons_in_toc)
  * for printing.  The "object" is assumed to have three sections, code: data,
  * and rodata.
  */
-__private_extern__
+extern
 void
 lto_get_nlist_64(
 struct nlist_64 *nl,
@@ -393,7 +393,7 @@ uint32_t symbol_index)
  * lto_symbol_name() is passed an lto module and a symbol index in that module,
  * and returns the name of that symbol.
  */
-__private_extern__
+extern
 char *
 lto_symbol_name(
 void *mod,
@@ -402,7 +402,7 @@ uint32_t symbol_index)
 	return(lto_get_sym_name(mod, symbol_index));
 }
 
-__private_extern__
+extern
 void
 lto_free(
 void *mod)

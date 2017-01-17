@@ -114,7 +114,7 @@ static const struct arch_flag arch_flags[] = {
  * If the pointer to the arch_flag is not NULL it is filled in with the
  * arch_flag struct that matches the name.
  */
-__private_extern__
+extern
 int
 get_arch_from_flag(
 char *name,
@@ -138,7 +138,7 @@ struct arch_flag *arch_flag)
  * get_arch_flags() returns a pointer to an array of all currently know
  * architecture flags (terminated with an entry with all zeros).
  */
-__private_extern__
+extern
 const struct arch_flag *
 get_arch_flags(
 void)
@@ -153,7 +153,7 @@ void)
  * to the an allocated string "cputype X cpusubtype Y" where X and Y are decimal
  * values.
  */
-__private_extern__
+extern
 const char *
 get_arch_name_from_types(
 cpu_type_t cputype,
@@ -184,7 +184,7 @@ cpu_subtype_t cpusubtype)
  * get_arch_family_from_cputype() returns the family architecture for the
  * specified cputype if known.  If unknown it returns NULL.
  */
-__private_extern__
+extern
 const struct arch_flag *
 get_arch_family_from_cputype(
 cpu_type_t cputype)
@@ -205,7 +205,7 @@ cpu_type_t cputype)
  * of reading a magic number from a file that should be done and this routine
  * should not be used as it could be out of date.
  */
-__private_extern__
+extern
 enum byte_sex
 get_byte_sex_from_flag(
 const struct arch_flag *flag)
@@ -234,7 +234,7 @@ const struct arch_flag *flag)
  * either positive (+1) or negative (-1) of the architecture for the
  * specified cputype and cpusubtype if known.  If unknown it returns 0.
  */
-__private_extern__
+extern
 int
 get_stack_direction_from_flag(
 const struct arch_flag *flag)
@@ -261,7 +261,7 @@ const struct arch_flag *flag)
  * can't include all of these headers in one source the constants have been
  * copied here.
  */
-__private_extern__
+extern
 uint64_t
 get_stack_addr_from_flag(
 const struct arch_flag *flag)
@@ -299,7 +299,7 @@ const struct arch_flag *flag)
  * these headers in one source and some of the constants covered the whole
  * address space the common value of 64meg was chosen.
  */
-__private_extern__
+extern
 uint32_t
 get_stack_size_from_flag(
 const struct arch_flag *flag)
@@ -316,7 +316,7 @@ const struct arch_flag *flag)
 /*
  * get_segalign_from_flag() returns the default segment alignment (page size).
  */
-__private_extern__
+extern
 uint32_t
 get_segalign_from_flag(
 const struct arch_flag *flag)
@@ -338,7 +338,7 @@ const struct arch_flag *flag)
 /*
  * get_segprot_from_flag() returns the default segment protection.
  */
-__private_extern__
+extern
 vm_prot_t
 get_segprot_from_flag(
 const struct arch_flag *flag)
@@ -353,7 +353,7 @@ const struct arch_flag *flag)
  * get_shared_region_size_from_flag() returns the default shared
  * region size.
  */
-__private_extern__
+extern
 uint32_t
 get_shared_region_size_from_flag(
 const struct arch_flag *flag)
@@ -369,7 +369,7 @@ const struct arch_flag *flag)
  * that cputype the cpusubtype should always be forced to the ALL cpusubtype,
  * otherwise it returns FALSE.
  */
-__private_extern__
+extern
 enum bool
 force_cpusubtype_ALL_for_cputype(
 cpu_type_t cputype)

@@ -29,8 +29,8 @@
 #ifndef _STUFF_BYTESEX_H_
 #define _STUFF_BYTESEX_H_
 
-#if defined(__MWERKS__) && !defined(__private_extern__)
-#define __private_extern__ __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(extern)
+#define extern __declspec(private_extern)
 #endif
 
 #include <mach-o/fat.h>
