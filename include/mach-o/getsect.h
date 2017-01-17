@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <mach-o/loader.h>
 
-#ifdef __cplusplus
+#if __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
@@ -124,7 +124,7 @@ extern const struct section_64 *getsectbynamefromheader_64(
     const char *segname,
     const char *sectname);
 
-#ifdef __cplusplus
+#if __cplusplus
 }
 #endif /* __cplusplus */
 

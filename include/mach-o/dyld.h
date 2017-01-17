@@ -23,7 +23,7 @@
 #ifndef _MACH_O_DYLD_H_
 #define _MACH_O_DYLD_H_
 
-#ifdef __cplusplus
+#if __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
@@ -320,7 +320,7 @@ extern int _dyld_func_lookup(
     const char *dyld_func_name,
     unsigned long *address);
 
-#ifdef __cplusplus
+#if __cplusplus
 }
 #endif /* __cplusplus */
 

@@ -29,7 +29,6 @@
 #include <dlfcn.h>
 #include <mach/machine.h>
 
-#include <algorithm>
 #include <vector>
 
 #include "ld.hpp"

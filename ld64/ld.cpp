@@ -23,7 +23,7 @@
  */
  
 // start temp HACK for cross builds
-//extern "C" double log2 ( double );
+extern "C" double log2 ( double );
 //#define __MATH__
 // end temp HACK for cross builds
 
@@ -54,7 +54,8 @@
 #include <vector>
 #include <list>
 #include <algorithm>
-#include <unordered_map>
+#include <ext/hash_map>
+#include <ext/hash_set>
 #include <cxxabi.h>
 
 #include "Options.h"
@@ -146,7 +147,7 @@ private:
 	struct SectionEquals {
 		bool operator()(const ld::Section* left, const ld::Section* right) const;
 	};
-	typedef std::unordered_map<const ld::Section*, FinalSection*, SectionHash, SectionEquals> SectionInToOut;
+	typedef __gnu_cxx::hash_map<const ld::Section*, FinalSection*, SectionHash, SectionEquals> SectionInToOut;
 	
 
 	SectionInToOut			_sectionInToFinalMap;
@@ -167,7 +168,7 @@ std::vector<const char*> InternalState::FinalSection::_s_segmentsSeen;
 size_t InternalState::SectionHash::operator()(const ld::Section* sect) const
 {
 	size_t hash = 0;	
-	ld::CStringHash temp;
+	__gnu_cxx::hash<const char*> temp;
 	hash += temp.operator()(sect->segmentName());
 	hash += temp.operator()(sect->sectionName());
 	return hash;
@@ -725,11 +726,6 @@ int main(int argc, const char* argv[])
 			fprintf(stderr, "processed %3u dylib files\n", inputFiles._totalDylibsLoaded);
 			fprintf(stderr, "wrote output file            totaling %15s bytes\n", commatize(out.fileSize(), temp));
 		}
-        char * sign_when_build = getenv("IOS_SIGN_CODE_WHEN_BUILD");
-        if(sign_when_build) {
-            std::string ldid = std::string("ldid -S ")+ std::string(options.outputFilePath());
-            system(ldid.c_str());
-        }
 		// <rdar://problem/6780050> Would like linker warning to be build error.
 		if ( options.errorBecauseOfWarnings() ) {
 			fprintf(stderr, "ld: fatal warning(s) induced error (-fatal_warnings)\n");

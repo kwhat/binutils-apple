@@ -248,8 +248,7 @@ static void print_text(
     char *object_addr,
     uint32_t object_size,
     struct data_in_code_entry *dices,
-    uint32_t ndices,
-    uint64_t seg_addr);
+    uint32_t ndices);
 
 static void print_argstrings(
     uint32_t magic,
@@ -282,7 +281,7 @@ char **envp)
 	progname = argv[0];
 	arch_flags = NULL;
 	narch_flags = 0;
-	all_archs = TRUE;
+	all_archs = FALSE;
 	use_member_syntax = TRUE;
 	llvm_mc = FALSE;
 
@@ -313,7 +312,6 @@ char **envp)
 		    all_archs = TRUE;
 		}
 		else{
-		    all_archs = FALSE;
 		    arch_flags = reallocate(arch_flags,
 			    (narch_flags + 1) * sizeof(struct arch_flag));
 		    if(get_arch_from_flag(argv[i+1],
@@ -487,12 +485,6 @@ char **envp)
 	    error("can't specify both -q and -Q");
 	    usage();
 	}
-	/*
-	 * The default, without the -Q flag, is to use the llvm dissembler
-	 * instead of otool's internal disassemblers.
-	 */
-	if(!Qflag)
-	    qflag = TRUE;
 	if(nfiles == 0){
 	    error("at least one file must be specified");
 	    usage();
@@ -567,7 +559,7 @@ void)
 	fprintf(stderr, "\t-X print no leading addresses or headers\n");
 	fprintf(stderr, "\t-m don't use archive(member) syntax\n");
 	fprintf(stderr, "\t-B force Thumb disassembly (ARM objects only)\n");
-	fprintf(stderr, "\t-q use llvm's disassembler (the default)\n");
+	fprintf(stderr, "\t-q use llvm's disassembler\n");
 	fprintf(stderr, "\t-Q use otool(1)'s disassembler\n");
 	exit(EXIT_FAILURE);
 }
@@ -611,7 +603,6 @@ void *cookie) /* cookie is not used */
     struct twolevel_hint *hints, *allocated_hints;
     struct data_in_code_entry *dices, *allocated_dices;
     uint32_t nhints, ndices;
-    uint64_t seg_addr;
 
 	sorted_symbols = NULL;
 	nsorted_symbols = 0;
@@ -906,7 +897,7 @@ void *cookie) /* cookie is not used */
 			mh_ncmds, mh_sizeofcmds, mh_filetype,
 			ofile->object_byte_sex,
 			addr, size, &sect, &sect_size, &sect_addr,
-			&sect_relocs, &sect_nrelocs, &sect_flags, &seg_addr);
+			&sect_relocs, &sect_nrelocs, &sect_flags);
 	    /*
 	     * The MH_DYLIB_STUB format has all section sizes set to zero 
 	     * except sections with indirect symbol table entries (so that the
@@ -1163,7 +1154,7 @@ void *cookie) /* cookie is not used */
 		    mh_ncmds, mh_sizeofcmds, mh_filetype,
 		    ofile->object_byte_sex,
 		    addr, size, &sect, &sect_size, &sect_addr,
-		    &sect_relocs, &sect_nrelocs, &sect_flags, &seg_addr);
+		    &sect_relocs, &sect_nrelocs, &sect_flags);
 
 	    /* create aligned relocations entries as needed */
 	    relocs = NULL;
@@ -1198,8 +1189,7 @@ void *cookie) /* cookie is not used */
 		       strings_size, relocs, nrelocs, indirect_symbols,
 		       nindirect_symbols, ofile->load_commands, mh_ncmds,
 		       mh_sizeofcmds, vflag, Vflag, mh_cpusubtype,
-		       ofile->object_addr, ofile->object_size, dices, ndices,
-                       seg_addr);
+		       ofile->object_addr, ofile->object_size, dices, ndices);
 
 	    if(relocs != NULL && relocs != sect_relocs)
 		free(relocs);
@@ -1209,7 +1199,7 @@ void *cookie) /* cookie is not used */
 	    if(get_sect_info(SEG_TEXT, SECT_FVMLIB_INIT0, ofile->load_commands,
 		mh_ncmds, mh_sizeofcmds, mh_filetype, ofile->object_byte_sex,
 		addr, size, &sect, &sect_size, &sect_addr,
-		&sect_relocs, &sect_nrelocs, &sect_flags, &seg_addr) == TRUE){
+		&sect_relocs, &sect_nrelocs, &sect_flags) == TRUE){
 
 		/* create aligned, sorted relocations entries */
 		nrelocs = sect_nrelocs;
@@ -1236,7 +1226,7 @@ void *cookie) /* cookie is not used */
 	    if(get_sect_info(SEG_DATA, SECT_DATA, ofile->load_commands,
 		mh_ncmds, mh_sizeofcmds, mh_filetype, ofile->object_byte_sex,
 		addr, size, &sect, &sect_size, &sect_addr,
-		&sect_relocs, &sect_nrelocs, &sect_flags, &seg_addr) == TRUE){
+		&sect_relocs, &sect_nrelocs, &sect_flags) == TRUE){
 
 		if(Xflag == FALSE)
 		    printf("(%s,%s) section\n", SEG_DATA, SECT_DATA);
@@ -1290,7 +1280,7 @@ void *cookie) /* cookie is not used */
 	    else if(get_sect_info(segname, sectname, ofile->load_commands,
 		mh_ncmds, mh_sizeofcmds, mh_filetype, ofile->object_byte_sex,
 		addr, size, &sect, &sect_size, &sect_addr,
-		&sect_relocs, &sect_nrelocs, &sect_flags, &seg_addr) == TRUE){
+		&sect_relocs, &sect_nrelocs, &sect_flags) == TRUE){
 
 		if(Xflag == FALSE)
 		    printf("Contents of (%.16s,%.16s) section\n", segname,
@@ -2246,8 +2236,7 @@ uint64_t *sect_size,
 uint64_t *sect_addr,
 struct relocation_info **sect_relocs,
 uint32_t *sect_nrelocs,
-uint32_t *sect_flags,
-uint64_t *seg_addr)
+uint32_t *sect_flags)
 {
     enum byte_sex host_byte_sex;
     enum bool found, swapped;
@@ -2297,7 +2286,7 @@ uint64_t *seg_addr)
 
 		if((filetype == MH_OBJECT && sg.segname[0] == '\0') ||
 		   strncmp(sg.segname, segname, sizeof(sg.segname)) == 0){
-                    *seg_addr = sg.vmaddr;
+
 		    p = (char *)lc + sizeof(struct segment_command);
 		    for(j = 0 ; found == FALSE && j < sg.nsects ; j++){
 			if(p + sizeof(struct section) >
@@ -2339,7 +2328,7 @@ uint64_t *seg_addr)
 
 		if((filetype == MH_OBJECT && sg64.segname[0] == '\0') ||
 		   strncmp(sg64.segname, segname, sizeof(sg64.segname)) == 0){
-                    *seg_addr = sg.vmaddr;
+
 		    p = (char *)lc + sizeof(struct segment_command_64);
 		    for(j = 0 ; found == FALSE && j < sg64.nsects ; j++){
 			if(p + sizeof(struct section_64) >
@@ -2561,8 +2550,7 @@ cpu_subtype_t cpusubtype,
 char *object_addr,
 uint32_t object_size,
 struct data_in_code_entry *dices,
-uint32_t ndices,
-uint64_t seg_addr)
+uint32_t ndices)
 {
     enum byte_sex host_byte_sex;
     enum bool swapped;
@@ -2701,7 +2689,7 @@ uint64_t seg_addr)
 				nindirect_symbols, load_commands, ncmds,
 				sizeofcmds, cpusubtype, verbose, arm_dc,
 				thumb_dc, object_addr, object_size, dices,
-				ndices, seg_addr);
+				ndices);
 		else{
 		    printf("Can't disassemble unknown cputype %d\n", cputype);
 		    return;

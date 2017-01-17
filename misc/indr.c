@@ -896,7 +896,8 @@ struct object *object)
 	new_ext_strsize = 0;
 	for(i = 0; i < nsyms; i++){
 	    if(symbols[i].n_un.n_strx != 0){
-		if((uint32_t)symbols[i].n_un.n_strx > strsize){
+		if(symbols[i].n_un.n_strx < 0 ||
+		   (uint32_t)symbols[i].n_un.n_strx > strsize){
 		    error_arch(arch, NULL, "bad string index for symbol "
 			       "table entry %d in: ", i);
 		    return;

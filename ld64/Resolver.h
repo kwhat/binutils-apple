@@ -42,7 +42,6 @@
 #include <mach-o/dyld.h>
 
 #include <vector>
-#include <unordered_set>
 
 #include "Options.h"
 #include "ld.hpp"
@@ -100,7 +99,11 @@ private:
 	bool					printReferencedBy(const char* name, SymbolTable::IndirectBindingSlot slot);
 	void					tweakWeakness();
 
-	typedef std::unordered_set<const char*, CStringHash, CStringEquals>  StringSet;
+	class CStringEquals {
+	public:
+		bool operator()(const char* left, const char* right) const { return (strcmp(left, right) == 0); }
+	};
+	typedef __gnu_cxx::hash_set<const char*, __gnu_cxx::hash<const char*>, CStringEquals>  StringSet;
 
 	class NotLive {
 	public:
@@ -122,7 +125,6 @@ private:
 	std::vector<const ld::Atom*>	_atoms;
 	std::set<const ld::Atom*>		_deadStripRoots;
 	std::vector<const ld::Atom*>	_atomsWithUnresolvedReferences;
-	std::vector<const class AliasAtom*>	_aliasesFromCmdLine;
 	SymbolTable						_symbolTable;
 	bool							_haveLLVMObjs;
 	bool							_completedInitialObjectFiles;

@@ -404,7 +404,7 @@ void Options::loadSymbolOrderFile(const char* fileOfExports, NameToOrder& orderM
 
 	::close(fd);
 
-	// parse into symbols and add to unordered_set
+	// parse into symbols and add to hash_set
 	unsigned int count = 0;
 	char * const end = &p[stat_buf.st_size];
 	enum { lineStart, inSymbol, inComment } state = lineStart;
@@ -1066,7 +1066,7 @@ void Options::loadExportFile(const char* fileOfExports, const char* option, SetW
 
 	::close(fd);
 
-	// parse into symbols and add to unordered_set
+	// parse into symbols and add to hash_set
 	char * const end = &p[stat_buf.st_size];
 	enum { lineStart, inSymbol, inComment } state = lineStart;
 	char* symbolStart = NULL;
@@ -1658,7 +1658,7 @@ void Options::addSection(const char* segment, const char* section, const char* p
 	::close(fd);
 
 	// record section to create
-	ExtraSection info = { segment, section, path, (uint8_t*)p, (uint64_t)stat_buf.st_size };
+	ExtraSection info = { segment, section, path, (uint8_t*)p, stat_buf.st_size };
 	fExtraSections.push_back(info);
 }
 
@@ -3231,28 +3231,6 @@ void Options::reconfigureDefaults()
 			break;
 	}
 	
-	// default to adding functions start for dynamic code, static code must opt-in
-	switch ( fOutputKind ) {
-		case Options::kPreload:
-		case Options::kStaticExecutable:
-		case Options::kKextBundle:
-			if ( fDataInCodeInfoLoadCommandForcedOn )
-				fDataInCodeInfoLoadCommand = true;
-			if ( fFunctionStartsForcedOn )
-				fFunctionStartsLoadCommand = true;
-			break;
-		case Options::kObjectFile:
-		case Options::kDynamicExecutable:
-		case Options::kDyld:
-		case Options::kDynamicLibrary:
-		case Options::kDynamicBundle:
-			if ( !fDataInCodeInfoLoadCommandForcedOff )
-				fDataInCodeInfoLoadCommand = true;
-			if ( !fFunctionStartsForcedOff )
-				fFunctionStartsLoadCommand = true;
-			break;
-	}
-		
 	// adjust kext type based on architecture
 	if ( fOutputKind == kKextBundle ) {
 		switch ( fArchitecture ) {
@@ -3663,6 +3641,28 @@ void Options::reconfigureDefaults()
 			break;
 	}
 	
+	// default to adding functions start for dynamic code, static code must opt-in
+	switch ( fOutputKind ) {
+		case Options::kPreload:
+		case Options::kStaticExecutable:
+		case Options::kKextBundle:
+			if ( fDataInCodeInfoLoadCommandForcedOn )
+				fDataInCodeInfoLoadCommand = true;
+			if ( fFunctionStartsForcedOn )
+				fFunctionStartsLoadCommand = true;
+			break;
+		case Options::kObjectFile:
+		case Options::kDynamicExecutable:
+		case Options::kDyld:
+		case Options::kDynamicLibrary:
+		case Options::kDynamicBundle:
+			if ( !fDataInCodeInfoLoadCommandForcedOff )
+				fDataInCodeInfoLoadCommand = true;
+			if ( !fFunctionStartsForcedOff )
+				fFunctionStartsLoadCommand = true;
+			break;
+	}
+		
 	// support re-export of individual symbols in MacOSX 10.7 and iOS 4.2
 	if ( (fOutputKind == kDynamicLibrary) && minOS(ld::mac10_7, ld::iOS_4_2) )
 		fCanReExportSymbols = true;
@@ -4034,7 +4034,7 @@ void Options::checkIllegalOptionCombinations()
 
 	// make sure all required exported symbols exist
 	std::vector<const char*> impliedExports;
-	for (NameSet::const_iterator it=fExportSymbols.regularBegin(); it != fExportSymbols.regularEnd(); ++it) {
+	for (NameSet::iterator it=fExportSymbols.regularBegin(); it != fExportSymbols.regularEnd(); ++it) {
 		const char* name = *it;
 		const int len = strlen(name);
 		if ( (strcmp(&name[len-3], ".eh") == 0) || (strncmp(name, ".objc_category_name_", 20) == 0) ) {
@@ -4066,7 +4066,7 @@ void Options::checkIllegalOptionCombinations()
 	}
 
 	// make sure all required re-exported symbols exist
-	for (NameSet::const_iterator it=fReExportSymbols.regularBegin(); it != fReExportSymbols.regularEnd(); ++it) {
+	for (NameSet::iterator it=fReExportSymbols.regularBegin(); it != fReExportSymbols.regularEnd(); ++it) {
 		fInitialUndefines.push_back(*it);
 	}
 	
@@ -4314,7 +4314,7 @@ void Options::checkForClassic(int argc, const char* argv[])
 
 void Options::gotoClassicLinker(int argc, const char* argv[])
 {
-	argv[0] = PROGRAM_PREFIX "ld_classic";
+	argv[0] = "ld_classic";
 	// ld_classic does not support -iphoneos_version_min, so change
 	for(int j=0; j < argc; ++j) {
 		if ( (strcmp(argv[j], "-iphoneos_version_min") == 0) || (strcmp(argv[j], "-ios_version_min") == 0) ) {

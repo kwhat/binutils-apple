@@ -11,8 +11,9 @@ tar xzvf ld64-${LDV}.tar.gz
 
 rm cctools-${CCV}.tar.gz ld64-${LDV}.tar.gz
 
-chmod -Rvf o+w *
+find ./ -type f -name notes -exec chmod 444 -vf {} \;
 find ./ -type f -name \*.[ch] -exec chmod 644 -vf {} \;
+find ./ -type d -exec chmod 755 -vf {} \;
 
 # Remove junk Makefile's
 find ./ -name Makefile -exec rm -fv {} \;

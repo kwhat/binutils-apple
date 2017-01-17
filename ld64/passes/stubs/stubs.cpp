@@ -30,14 +30,13 @@
 #include <assert.h>
 #include <libkern/OSByteOrder.h>
 
-#include <algorithm>
 #include <vector>
 #include <set>
 #include <map>
 
 #include "Options.h"
-#include "MachOFileAbstraction.hpp"
 #include "ld.hpp"
+#include "MachOFileAbstraction.hpp"
 
 #include "make_stubs.h"
 

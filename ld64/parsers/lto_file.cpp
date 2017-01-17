@@ -30,11 +30,10 @@
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <pthread.h>
 #include <mach-o/dyld.h>
 #include <vector>
-#include <unordered_set>
-#include <unordered_map>
+#include <ext/hash_set>
+#include <ext/hash_map>
 
 #include "MachOFileAbstraction.hpp"
 #include "Architectures.hpp"
@@ -212,8 +211,13 @@ private:
 	static const char*				tripletPrefixForArch(cpu_type_t arch);
 	static ld::relocatable::File*	parseMachOFile(const uint8_t* p, size_t len, const OptimizeOptions& options);
 
-	typedef	std::unordered_set<const char*, ld::CStringHash, ld::CStringEquals>  CStringSet;
-	typedef std::unordered_map<const char*, Atom*, ld::CStringHash, ld::CStringEquals> CStringToAtom;
+	class CStringEquals
+	{
+	public:
+		bool operator()(const char* left, const char* right) const { return (strcmp(left, right) == 0); }
+	};
+	typedef	__gnu_cxx::hash_set<const char*, __gnu_cxx::hash<const char*>, CStringEquals>  CStringSet;
+	typedef __gnu_cxx::hash_map<const char*, Atom*, __gnu_cxx::hash<const char*>, CStringEquals> CStringToAtom;
 	
 	class AtomSyncer : public ld::File::AtomHandler {
 	public:
@@ -323,7 +327,7 @@ File::File(const char* pth, time_t mTime, ld::File::Ordinal ordinal, const uint8
 	// create llvm module
 	_module = ::lto_module_create_from_memory(content, contentLength);
     if ( _module == NULL )
-		throwf("could not parse object file %s: '%s', using libLTO version '%s'", pth, ::lto_get_error_message(), ::lto_get_version());
+		throwf("could not parse object file %s: %s", pth, lto_get_error_message());
 
 	if ( log ) fprintf(stderr, "bitcode file: %s\n", pth);
 	
@@ -465,14 +469,14 @@ bool Parser::optimize(  const std::vector<const ld::Atom*>&	allAtoms,
 	
 	// print out LTO version string if -v was used
 	if ( options.verbose )
-		fprintf(stderr, "%s\n", ::lto_get_version());
+		fprintf(stderr, "%s\n", lto_get_version());
 	
 	// create optimizer and add each Reader
 	lto_code_gen_t generator = ::lto_codegen_create();
 	for (std::vector<File*>::iterator it=_s_files.begin(); it != _s_files.end(); ++it) {
 		if ( logBitcodeFiles ) fprintf(stderr, "lto_codegen_add_module(%s)\n", (*it)->path());
 		if ( ::lto_codegen_add_module(generator, (*it)->module()) )
-			throwf("lto: could not merge in %s because '%s', using libLTO version '%s'", (*it)->path(), ::lto_get_error_message(), ::lto_get_version());
+			throwf("lto: could not merge in %s because %s", (*it)->path(), ::lto_get_error_message());
 	}
 
 	// add any -mllvm command line options
@@ -590,8 +594,8 @@ bool Parser::optimize(  const std::vector<const ld::Atom*>&	allAtoms,
 	lto_codegen_model model = LTO_CODEGEN_PIC_MODEL_DYNAMIC;
 	if ( options.mainExecutable ) {
 		if ( options.staticExecutable ) {
-			// x86_64 "static" or any "-static -pie" is really dynamic code model
-			if ( (options.arch == CPU_TYPE_X86_64) || options.pie )
+			// darwin x86_64 "static" code model is really dynamic code model
+			if ( options.arch == CPU_TYPE_X86_64 )
 				model = LTO_CODEGEN_PIC_MODEL_DYNAMIC;
 			else
 				model = LTO_CODEGEN_PIC_MODEL_STATIC;
@@ -638,7 +642,7 @@ bool Parser::optimize(  const std::vector<const ld::Atom*>&	allAtoms,
 	size_t machOFileLen;
 	const uint8_t* machOFile = (uint8_t*)::lto_codegen_compile(generator, &machOFileLen);
 	if ( machOFile == NULL ) 
-		throwf("could not do LTO codegen: '%s', using libLTO version '%s'", ::lto_get_error_message(), ::lto_get_version());
+		throwf("could not do LTO codegen: %s", ::lto_get_error_message());
 	
     // if requested, save off temp mach-o file
     if ( options.saveTemps ) {

@@ -48,7 +48,7 @@
  * dependent library paths. 
  */
 
-#ifdef __cplusplus
+#if __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
@@ -270,7 +270,7 @@ uint32_t *ncksums,
 const char *program_name,
 char **error_message);
 
-#ifdef __cplusplus
+#if __cplusplus
 }
 #endif /* __cplusplus */
 

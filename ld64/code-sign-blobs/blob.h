@@ -45,6 +45,8 @@
 #include "endian.h"
 #include "memutils.h"
 #include <errno.h>
+
+/*
 #include <cstdio>
 
 // Patch 12/28/2014
@@ -55,6 +57,7 @@
 namespace std {
     typedef ::FILE FILE;
 }
+*/
 
 namespace Security {
 
