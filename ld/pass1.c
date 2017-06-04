@@ -344,6 +344,7 @@ static char *mkstr(
  * references or the -ObjC flag is set and their are symbols with the ".objc"
  * prefix defined.
  */
+// Patch Jan 19, 2017
 extern
 void
 pass1(

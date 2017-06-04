@@ -917,7 +917,7 @@ count_dwarf_symbols(const struct nlist *sym,
  * DWARF symbols.
  */
 static void
-maybe_remove_dwarf_symbol (struct symbolS *merged_symbol)
+maybe_remove_dwarf_symbol (struct merged_symbol *merged_symbol)
 {
   struct object_file * mo = merged_symbol->definition_object;
   struct object_file * cur_o = cur_obj;

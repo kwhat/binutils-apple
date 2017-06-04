@@ -20,9 +20,10 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
-#endif
+// Patch Jan 19, 2017
+//if defined(__MWERKS__) && !defined(extern)
+//define extern __declspec(private_extern)
+//endif
 
 /*
  * Global types, variables and routines declared in the file 4byte_literals.c.
