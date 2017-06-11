@@ -34,7 +34,7 @@
 /*
  * Print the fatal error message and exit.
  */
-extern
+__private_extern__
 void
 fatal(
 const char *format,
@@ -53,7 +53,7 @@ const char *format,
 /*
  * Print the fatal error message along with the system error message and exit.
  */
-extern
+__private_extern__
 void
 system_fatal(
 const char *format,
@@ -72,7 +72,7 @@ const char *format,
 /*
  * Print the fatal error message along with the mach error string and exit.
  */
-extern
+__private_extern__
 void
 mach_fatal(
 kern_return_t r,

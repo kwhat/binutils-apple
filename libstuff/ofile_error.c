@@ -29,7 +29,7 @@
 #include "stuff/print.h"
 #include "stuff/errors.h"
 
-extern
+__private_extern__
 void
 archive_error(
 struct ofile *ofile,
@@ -51,7 +51,7 @@ const char *format, ...)
 	errors++;
 }
 
-extern
+__private_extern__
 void
 archive_member_error(
 struct ofile *ofile,
@@ -76,7 +76,7 @@ const char *format, ...)
 }
 
 #ifndef OTOOL
-extern
+__private_extern__
 void
 Mach_O_error(
 struct ofile *ofile,

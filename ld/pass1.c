@@ -78,28 +78,22 @@
 
 #ifndef RLD
 /* TRUE if -search_paths_first was specified */
-// Patch Jan 17, 2017 - Alex Barker
-enum bool search_paths_first = FALSE;
+__private_extern__ enum bool search_paths_first = FALSE;
 
 /* the user specified directories to search for -lx names, and the number
    of them */
-// Patch Jan 17, 2017 - Alex Barker
-char **search_dirs = NULL;
-// Patch Jan 17, 2017 - Alex Barker
-unsigned long nsearch_dirs = 0;
+__private_extern__ char **search_dirs = NULL;
+__private_extern__ unsigned long nsearch_dirs = 0;
 
 /*
  * The user specified directories to search via the environment variable
  * LD_LIBRARY_PATH.
  */
-// Patch Jan 17, 2017 - Alex Barker
-char **ld_library_paths = NULL;
-// Patch Jan 17, 2017 - Alex Barker
-unsigned long nld_library_paths = 0;
+__private_extern__ char **ld_library_paths = NULL;
+__private_extern__ unsigned long nld_library_paths = 0;
 
 /* the standard directories to search for -lx names */
-// Patch Jan 17, 2017 - Alex Barker
-char *standard_dirs[] = {
+__private_extern__ char *standard_dirs[] = {
     "/lib/",
     "/usr/lib/",
     "/usr/local/lib/",
@@ -110,14 +104,11 @@ char *standard_dirs[] = {
  * The user specified directories to search for "-framework Foo" names, and the
  * number of them.  These are specified with -F options.
  */
-// Patch Jan 17, 2017 - Alex Barker
-char **framework_dirs = NULL;
-// Patch Jan 17, 2017 - Alex Barker
-unsigned long nframework_dirs = 0;
+__private_extern__ char **framework_dirs = NULL;
+__private_extern__ unsigned long nframework_dirs = 0;
 
 /* the standard framework directories to search for "-framework Foo" names */
-// Patch Jan 17, 2017 - Alex Barker
-char *standard_framework_dirs[] = {
+__private_extern__ char *standard_framework_dirs[] = {
 #ifdef __OPENSTEP__
     "/LocalLibrary/Frameworks/",
     "/NextLibrary/Frameworks/",
@@ -136,8 +127,7 @@ char *standard_framework_dirs[] = {
 };
 
 /* The pointer to the head of the base object file's segments */
-// Patch Jan 17, 2017 - Alex Barker
-struct merged_segment *base_obj_segments = NULL;
+__private_extern__ struct merged_segment *base_obj_segments = NULL;
 #endif /* !defined(RLD) */
 
 #if !defined(SA_RLD) && !(defined(KLD) && defined(__STATIC__))
@@ -155,19 +145,16 @@ static struct stat stat_buf = { 0 };
  * ran_name so that the library can be mapped read only and thus not get dirty
  * and maybe written to the swap area by the kernel.
  */
-// Patch Jan 17, 2017 - Alex Barker
-char *bsearch_strings = NULL;
+__private_extern__ char *bsearch_strings = NULL;
 #ifndef RLD
-// Patch Jan 17, 2017 - Alex Barker
-struct nlist *bsearch_symbols = NULL;
+__private_extern__ struct nlist *bsearch_symbols = NULL;
 
 /*
  * The list of dynamic libraries to search.  The list of specified libraries
  * can contain archive libraries when archive libraries appear after dynamic
  * libraries on the link line.
  */
-// Patch Jan 17, 2017 - Alex Barker
-struct dynamic_library *dynamic_libs = NULL;
+__private_extern__ struct dynamic_library *dynamic_libs = NULL;
 
 /*
  * When building two-level-namespace, indirect libraries are not kept
@@ -177,8 +164,7 @@ struct dynamic_library *dynamic_libs = NULL;
  * gives us a scaling factor to multiple by the number of libraries
  * in dynamic_libs as an estimate of the total number of libraries.
  */
-// Patch Jan 17, 2017 - Alex Barker
-unsigned int indirect_library_ratio = 1;
+__private_extern__ unsigned int indirect_library_ratio = 1;
 
 /*
  * The variable indirect_dylib is used for search_dynamic_libs() to communicate
@@ -344,8 +330,7 @@ static char *mkstr(
  * references or the -ObjC flag is set and their are symbols with the ".objc"
  * prefix defined.
  */
-// Patch Jan 19, 2017
-extern
+__private_extern__
 void
 pass1(
 char *name,
@@ -878,7 +863,7 @@ pass1_fat_return:
 	return;
 }
 
-extern
+__private_extern__
 void
 check_fat(
 char *file_name,
@@ -1773,7 +1758,7 @@ down:
  * object file's bytesex.  If it can't figure it out, because the library has
  * no object file members or is malformed it will return UNKNOWN_BYTE_SEX.
  */
-extern
+__private_extern__
 enum byte_sex
 get_toc_byte_sex(
 char *addr,
@@ -2054,7 +2039,7 @@ enum bool force_weak)
  * is unlike archive library search semantic when each library is search once
  * when encountered.
  */
-extern
+__private_extern__
 void
 search_dynamic_libs(
 void)
@@ -3365,7 +3350,7 @@ next_dep:	;
  * be done.  If a symbol is overridden prebinding is disabled and a warning
  * is printed.
  */
-extern
+__private_extern__
 void
 prebinding_check_for_dylib_override_symbols(
 void)
@@ -3395,7 +3380,7 @@ void)
  * where another symbol of the same name is being used from some other object
  * or dynamic library.
  */
-extern
+__private_extern__
 void
 twolevel_namespace_check_for_unused_dylib_symbols(
 void)
@@ -3928,7 +3913,7 @@ struct dynamic_library *sub)
  * dylib_name specified in the dylib_command (or a new dynamic_library struct
  * for archive types).
  */
-extern
+__private_extern__
 struct dynamic_library *
 add_dynamic_lib(
 enum library_type type,
@@ -4029,7 +4014,7 @@ struct object_file *definition_obj)
  * Function for bsearch() for finding a symbol name in a dylib table of
  * contents.
  */
-extern
+__private_extern__
 int
 dylib_bsearch(
 const char *symbol_name,
@@ -4072,7 +4057,7 @@ const struct ranlib *ran)
  * merge() merges all the global information from the cur_obj into the merged
  * data structures for the output object file to be built from.
  */
-extern
+__private_extern__
 void
 merge(
 enum bool dylib_only,
@@ -5569,7 +5554,7 @@ enum bool bundle_loader)
  * addresses from the _mh_execute_header.  This makes using the rest of the
  * code easy.
  */
-extern
+__private_extern__
 void
 merge_base_program(
 char *basefile_name,

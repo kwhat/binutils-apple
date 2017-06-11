@@ -20,21 +20,21 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
-extern void coalesced_section_merge(
+__private_extern__ void coalesced_section_merge(
     void *data, 
     struct merged_section *ms,
     struct section *s, 
     struct section_map *section_map,
     enum bool redo_live);
 
-extern void coalesced_section_order(
+__private_extern__ void coalesced_section_order(
     void *data, 
     struct merged_section *ms);
 
-extern void coalesced_section_reset_live(
+__private_extern__ void coalesced_section_reset_live(
     void *data,
     struct merged_section *ms);

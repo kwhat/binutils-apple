@@ -9,7 +9,7 @@
 #include "coff/bytesex.h"
 #include "coff/debug_directory.h"
 
-extern
+__private_extern__
 void
 swap_base_relocation_block_header(
 struct base_relocation_block_header *h,
@@ -19,7 +19,7 @@ enum byte_sex target_byte_sex)
 	h->block_size = SWAP_INT(h->block_size);
 }
 
-extern
+__private_extern__
 void
 swap_base_relocation_entry(
 struct base_relocation_entry *b,
@@ -63,7 +63,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-extern
+__private_extern__
 void
 swap_ms_dos_stub(
 struct ms_dos_stub *m,
@@ -94,7 +94,7 @@ enum byte_sex target_byte_sex)
 	m->e_lfanew = SWAP_INT(m->e_lfanew);
 }
 
-extern
+__private_extern__
 void
 swap_filehdr(
 struct filehdr *f,
@@ -109,7 +109,7 @@ enum byte_sex target_byte_sex)
 	f->f_flags = SWAP_SHORT(f->f_flags);
 }
 
-extern
+__private_extern__
 void
 swap_aouthdr(
 struct aouthdr *a,
@@ -154,7 +154,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-extern
+__private_extern__
 void
 swap_aouthdr_64(
 struct aouthdr_64 *a,
@@ -198,7 +198,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-extern
+__private_extern__
 void
 swap_scnhdr(
 struct scnhdr *s,
@@ -220,7 +220,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-extern
+__private_extern__
 void
 swap_syment(
 struct syment *s,
@@ -238,7 +238,7 @@ enum byte_sex target_byte_sex)
 	}
 }
 
-extern
+__private_extern__
 void
 swap_debug_directory_entry(
 struct debug_directory_entry *d,
@@ -254,7 +254,7 @@ enum byte_sex target_byte_sex)
 	d->PointerToRawData = SWAP_INT(d->PointerToRawData);
 }
 
-extern
+__private_extern__
 void
 swap_mtoc_debug_info(
 struct mtoc_debug_info *m,

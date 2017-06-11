@@ -107,7 +107,7 @@ static void load_llvm(void)
 /*
  * Wrapper to dynamically load LIB_LLVM and call LLVMCreateDisasm().
  */
-extern
+__private_extern__
 LLVMDisasmContextRef
 llvm_create_disasm(
 const char *TripleName,
@@ -144,7 +144,7 @@ LLVMSymbolLookupCallback SymbolLookUp)
 /*
  * Wrapper to call LLVMDisasmDispose().
  */
-extern
+__private_extern__
 void
 llvm_disasm_dispose(
 LLVMDisasmContextRef DC)
@@ -156,7 +156,7 @@ LLVMDisasmContextRef DC)
 /*
  * Wrapper to call LLVMDisasmInstruction().
  */
-extern
+__private_extern__
 size_t
 llvm_disasm_instruction(
 LLVMDisasmContextRef DC,
@@ -175,7 +175,7 @@ size_t OutStringSize)
 /*
  * Wrapper to call LLVMSetDisasmOptions().
  */
-extern
+__private_extern__
 int
 llvm_disasm_set_options(
 LLVMDisasmContextRef DC,
@@ -190,7 +190,7 @@ uint64_t Options)
 /*
  * Wrapper to call lto_get_version().
  */
-extern
+__private_extern__
 const char *
 llvm_disasm_version_string(void)
 {

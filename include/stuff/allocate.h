@@ -20,21 +20,21 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 /* defined in allocate.c */
 
-extern void *allocate(
+__private_extern__ void *allocate(
     size_t size);
 
-extern void *reallocate(
+__private_extern__ void *reallocate(
     void *,
     size_t size);
 
-extern char *savestr(
+__private_extern__ char *savestr(
     const char *s);
 
-extern char *makestr(
+__private_extern__ char *makestr(
     const char *args, ...);

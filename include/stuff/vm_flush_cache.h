@@ -20,12 +20,12 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 #include <mach/mach.h>
-extern kern_return_t vm_flush_cache(
+__private_extern__ kern_return_t vm_flush_cache(
     mach_port_t target_task,
     vm_address_t address,
     vm_size_t size);

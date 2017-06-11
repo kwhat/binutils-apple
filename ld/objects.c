@@ -58,28 +58,24 @@
  * in the list.  The number objects is only used in main() to tell if there
  * had been any objects loaded into the output file.
  */
-// Patch Jan 17, 2017 - Alex Barker
-struct object_list *objects = NULL;
-// Patch Jan 17, 2017 - Alex Barker
-unsigned long nobjects = 0;
+__private_extern__ struct object_list *objects = NULL;
+__private_extern__ unsigned long nobjects = 0;
 
 /*
  * A pointer to the current object being processed in pass1 or pass2.
  */
-// Patch Jan 17, 2017 - Alex Barker
-struct object_file *cur_obj = NULL;
+__private_extern__ struct object_file *cur_obj = NULL;
 
 /*
  * A pointer to the base object for an incremental link if not NULL.
  */
-// Patch Jan 17, 2017 - Alex Barker
-struct object_file *base_obj = NULL;
+__private_extern__ struct object_file *base_obj = NULL;
 
 /*
  * new_object_file() returns a pointer to the next available object_file
  * structrure.  The object_file structure is allways zeroed.
  */
-extern
+__private_extern__
 struct object_file *
 new_object_file(void)
 {
@@ -116,7 +112,7 @@ new_object_file(void)
  * structure.  It is only used in the creation of the table of contents entries
  * in a multi module MH_DYLIB file.
  */
-extern
+__private_extern__
 unsigned long
 object_index(
 struct object_file *obj)
@@ -151,7 +147,7 @@ struct object_file *obj)
  * add_last_object_file() adds the specified object file to the end of the
  * object file list.
  */
-extern
+__private_extern__
 struct object_file *
 add_last_object_file(
 struct object_file *new_object)
@@ -167,7 +163,7 @@ struct object_file *new_object)
  * remove_last_object_file() removes the specified object file from the end of
  * the object file list.
  */
-extern
+__private_extern__
 void
 remove_last_object_file(
 struct object_file *last_object)
@@ -194,7 +190,7 @@ struct object_file *last_object)
  * Print the name of the specified object structure in the form: "filename ",
  * "archive(member) " or "dylib(member).
  */
-extern
+__private_extern__
 void
 print_obj_name(
 struct object_file *obj)
@@ -214,7 +210,7 @@ struct object_file *obj)
 	    print("%s ", obj->file_name);
 }
 
-extern
+__private_extern__
 unsigned long
 size_ar_name(
 struct ar_hdr *ar_hdr)
@@ -236,7 +232,7 @@ struct ar_hdr *ar_hdr)
  * set_obj_resolved_path() sets the resolved_path field of the specified
  * object file structure to be used for N_OSO names.
  */
-extern
+__private_extern__
 void
 set_obj_resolved_path(
 struct object_file *obj)
@@ -272,7 +268,7 @@ struct object_file *obj)
  * print_whatsloaded() prints which object files are loaded.  This has to be
  * called after pass1 to get the correct result.
  */
-extern
+__private_extern__
 void
 print_whatsloaded(void)
 {
@@ -312,7 +308,7 @@ print_whatsloaded(void)
  * to make sure the module that defines the library initialization routine is
  * loaded.
  */
-extern
+__private_extern__
 enum bool
 is_dylib_module_loaded(
 struct dylib_module *dylib_module)
@@ -338,7 +334,7 @@ struct dylib_module *dylib_module)
  * fine_reloc_output_offset() returns the output offset for the specified 
  * input offset and the section map using the fine relocation entries.
  */
-extern
+__private_extern__
 unsigned long
 fine_reloc_output_offset(
 struct section_map *map,
@@ -381,7 +377,7 @@ unsigned long input_offset)
  * offset for the fine relocation entry is added to the specified
  * output_base_address.
  */
-extern
+__private_extern__
 unsigned long
 fine_reloc_output_address(
 struct section_map *map,
@@ -496,7 +492,7 @@ unsigned long output_base_address)
  * with a LIVE_REF_SYMBOL.  Otherwise the input_offset is added back to the
  * map->s->addr for a LIVE_REF_VALUE.
  */
-extern
+__private_extern__
 void
 fine_reloc_output_ref(
 struct section_map *map,
@@ -602,7 +598,7 @@ struct live_ref *ref)
  * a section is a symbol stub section, lazy pointer section or coalesced
  * section or -dead_strip is specified.
  */
-extern
+__private_extern__
 enum bool
 fine_reloc_offset_in_output(
 struct section_map *map,
@@ -635,7 +631,7 @@ unsigned long input_offset)
  * because the r_address of a relocation entry was modified by the reloc
  * routine.
  */
-extern
+__private_extern__
 enum bool
 fine_reloc_offset_in_output_for_output_offset(
 struct section_map *map,
@@ -666,7 +662,7 @@ unsigned long output_offset)
  * define then the section number of the merged symbol is used.  Otherwise the
  * section number of the referenced section has in the output is returned.
  */
-extern
+__private_extern__
 unsigned long
 fine_reloc_output_sectnum(
 struct section_map *map,
@@ -733,7 +729,7 @@ unsigned long input_offset)
  * that ends up going to target the address of an arm symbol. Then in this case
  * the branch instruction needs to be changed from a blx to a bl instruction.
  */
-extern
+__private_extern__
 enum bool
 fine_reloc_arm(
 struct section_map *map,
@@ -763,7 +759,7 @@ unsigned long input_offset)
  * the branch instruction needs to be changed to a branch and exchange
  * instuction.
  */
-extern
+__private_extern__
 enum bool
 fine_reloc_thumb(
 struct section_map *map,
@@ -788,7 +784,7 @@ unsigned long input_offset)
  * fine_reloc_local() returns TRUE if fine relocation entry for the input_offset
  * in the section specified is for a symbol stub for a defined local symbol.
  */
-extern
+__private_extern__
 enum bool
 fine_reloc_local(
 struct section_map *map,
@@ -812,7 +808,7 @@ unsigned long input_offset)
  * fine_reloc_for_input_offset() returns the fine relocation entry for the
  * specified input offset and the section map.
  */
-extern
+__private_extern__
 struct fine_reloc *
 fine_reloc_for_input_offset(
 struct section_map *map,
@@ -852,7 +848,7 @@ unsigned long input_offset)
  * so it still can be used by trace_symbol() on future rld_load()'s (again only
  * for object files in the current set).
  */
-extern
+__private_extern__
 void
 clean_objects(void)
 {
@@ -912,7 +908,7 @@ clean_objects(void)
  * current object file set.  This takes advantage of the fact
  * that objects from the current set come after the previous set.
  */
-extern
+__private_extern__
 void
 remove_objects(void)
 {
@@ -984,7 +980,7 @@ remove_objects(void)
 /*
  * print_object_list() prints the object table.  Used for debugging.
  */
-extern
+__private_extern__
 void
 print_object_list(void)
 {
@@ -1046,7 +1042,7 @@ print_object_list(void)
 /*
  * print_fine_relocs() prints fine_relocs.  Used for debugging.
  */
-extern
+__private_extern__
 void
 print_fine_relocs(
 struct fine_reloc *fine_relocs,

@@ -29,7 +29,7 @@
  * All printing of all messages for ofile functions goes through this function.
  * It is broken out here so it can be overridden for some uses.
  */
-extern
+__private_extern__
 void
 vprint(
 const char *format,
@@ -41,7 +41,7 @@ va_list ap)
 /*
  * The print function that just calls the above vprint() function.
  */
-extern
+__private_extern__
 void
 print(
 const char *format,

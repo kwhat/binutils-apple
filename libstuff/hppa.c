@@ -28,7 +28,7 @@
  * sharing of the LR% when the round value of the offset is the same.
  * See hppa/reloc.h for more infomation.
  */
-extern
+__private_extern__
 void
 calc_hppa_HILO(
 uint32_t base,
@@ -47,7 +47,7 @@ uint32_t *right14)
 /* 
  * 2 helper routines for branch displacement calculations on hppa
  */
-extern
+__private_extern__
 uint32_t
 assemble_17(
 uint32_t x,
@@ -65,7 +65,7 @@ uint32_t z)
 	return(temp);
 }
 
-extern
+__private_extern__
 uint32_t
 assemble_21(
 uint32_t x)
@@ -83,7 +83,7 @@ uint32_t x)
 /*
  * The following functions are all from hppa_ctrl_funcs.c in the assembler.
  */
-extern
+__private_extern__
 uint32_t
 assemble_12(
 uint32_t x,
@@ -97,7 +97,7 @@ uint32_t y)
 	return(temp & 0xfff);
 }
 
-extern
+__private_extern__
 uint32_t
 assemble_3(
 uint32_t x)
@@ -109,7 +109,7 @@ uint32_t x)
 	return(temp & 7);
 }
 
-extern
+__private_extern__
 uint32_t
 sign_ext(
 uint32_t x,
@@ -154,7 +154,7 @@ uint32_t n)
 	return(len_ones);
 }
 
-extern
+__private_extern__
 uint32_t
 low_sign_ext(
 uint32_t x,
@@ -170,7 +170,7 @@ uint32_t len)
 	return(sign_ext( (temp1 | temp2),len));
 }
 
-extern
+__private_extern__
 uint32_t
 dis_assemble_21(
 uint32_t as21)
@@ -185,7 +185,7 @@ uint32_t as21)
 	return(temp);
 }
 
-extern
+__private_extern__
 uint32_t
 low_sign_unext(
 uint32_t x,
@@ -210,7 +210,7 @@ uint32_t len)
 	return(rest | sign);
 }
 
-extern
+__private_extern__
 void
 dis_assemble_17(
 uint32_t as17,
@@ -223,7 +223,7 @@ uint32_t *z)
 	*y = ( ( as17 & 0x00400 ) >> 10 ) | ( ( as17 & 0x3ff ) << 1 );
 }
 
-extern
+__private_extern__
 uint32_t
 sign_unext(
 uint32_t x,
@@ -235,7 +235,7 @@ uint32_t len)
 	return(x & len_ones);
 }
 
-extern
+__private_extern__
 uint32_t
 dis_assemble_3(
 uint32_t x)
@@ -246,7 +246,7 @@ uint32_t x)
 	return(r);
 }
 
-extern
+__private_extern__
 void
 dis_assemble_12(
 uint32_t as12,

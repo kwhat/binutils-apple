@@ -35,7 +35,7 @@
  * and flag and argument are used for error messages.  It TRUE if there were
  * no errors FALSE otherwise.
  */
-extern
+__private_extern__
 enum bool
 get_version_number(
 char *flag,

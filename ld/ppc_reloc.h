@@ -20,8 +20,8 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 /*
@@ -31,7 +31,7 @@
  * #include <reloc.h>
  * #include "section.h"
  */
-extern void ppc_reloc(
+__private_extern__ void ppc_reloc(
     char *contents,
     struct relocation_info *relocs,
     struct section_map *section_map,

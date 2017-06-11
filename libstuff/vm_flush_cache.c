@@ -32,7 +32,7 @@
  * the other architectures are hacked in here.
  */
 #ifndef __hppa__
-extern
+__private_extern__
 kern_return_t
 vm_flush_cache(
 mach_port_t target_task,
@@ -65,7 +65,7 @@ vm_size_t size)
  * This is currently only implemented on the hppa architecture so versions for
  * the other architectures are hacked in here.
  */
-extern
+__private_extern__
 kern_return_t
 vm_flush_cache(
 mach_port_t target_task,

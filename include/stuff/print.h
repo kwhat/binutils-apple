@@ -20,17 +20,17 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 #include <stdarg.h>
 
-extern void print(
+__private_extern__ void print(
     const char *format, ...)
 #ifdef __GNUC__
     __attribute__ ((format (printf, 1, 2)))
 #endif
     ;
-extern void vprint(
+__private_extern__ void vprint(
     const char *format, va_list ap);

@@ -58,7 +58,7 @@
 /*
  * The number of indirect symbol table entries in the output file.
  */
-extern unsigned long nindirectsyms = 0;
+__private_extern__ unsigned long nindirectsyms = 0;
 
 /*
  * If we are still attempting to prebind when indirect_section_merge() is
@@ -68,7 +68,7 @@ extern unsigned long nindirectsyms = 0;
  * various problems.  But the count of relocs can't change after layout so
  * we'll put them out anyway.
  */
-extern enum bool save_lazy_symbol_pointer_relocs = FALSE;
+__private_extern__ enum bool save_lazy_symbol_pointer_relocs = FALSE;
 
 #ifndef SA_RLD
 
@@ -98,7 +98,7 @@ static unsigned long lookup_indirect_item(
  * and symbol stub sections from the specified section in the current object
  * file (cur_obj).
  */
-extern
+__private_extern__
 void
 indirect_section_merge(
 struct indirect_section_data *data, 
@@ -1017,7 +1017,7 @@ enum bool *new)
  * indirect_section_merge() and it enters the indirect symbols in the order of
  * the file it causes the section to be ordered.
  */
-extern
+__private_extern__
 void
 indirect_section_order(
 struct indirect_section_data *data, 
@@ -1062,7 +1062,7 @@ struct merged_section *ms)
  * the indirect_section_data so the live indirect items can be re-merged (by
  * later calling indirect_section_merge() with redo_live == TRUE.
  */
-extern
+__private_extern__
 void
 indirect_section_reset_live(
 struct indirect_section_data *data, 
@@ -1100,7 +1100,7 @@ struct merged_section *ms)
  * map and obj.  This routine sets the ref struct passed to it for the
  * reference if there is one and returns TRUE else it returns FALSE.
  */
-extern
+__private_extern__
 enum bool
 indirect_live_ref(
 struct fine_reloc *fine_reloc,
@@ -1204,7 +1204,7 @@ struct ref *r)
  * indirect_section_free() free()'s up all space used by the data block except 
  * the data block itself.
  */
-extern
+__private_extern__
 void
 indirect_section_free(
 struct indirect_section_data *data)
@@ -1250,7 +1250,7 @@ struct indirect_section_data *data)
  * causing the reference.  It returns TRUE if the reference is legal if not it
  * prints the appropate error message and returns FALSE.
  */
-extern
+__private_extern__
 enum bool
 legal_reference(
 struct section_map *from_map,
@@ -1504,7 +1504,7 @@ enum bool sectdiff_reloc)
  * output_indirect_symbols() copies the indirect symbol table into the output
  * file.
  */
-extern
+__private_extern__
 void
 output_indirect_symbols(
 void)

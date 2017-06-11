@@ -30,7 +30,7 @@
  * arch_usage() is called when an unknown architecture flag is encountered.
  * It prints the currently know architecture flags on stderr.
  */
-extern
+__private_extern__
 void
 arch_usage(void)
 {

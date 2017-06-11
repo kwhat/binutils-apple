@@ -20,8 +20,8 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 /*
@@ -93,33 +93,33 @@ struct literal_pointer_order_line {
     unsigned long output_offset;
 };
 
-extern void literal_pointer_merge(
+__private_extern__ void literal_pointer_merge(
     struct literal_pointer_data *data, 
     struct merged_section *ms,
     struct section *s, 
     struct section_map *section_map,
     enum bool redo_live);
 
-extern void literal_pointer_order(
+__private_extern__ void literal_pointer_order(
     struct literal_pointer_data *data, 
     struct merged_section *ms);
 
-extern void literal_pointer_reset_live(
+__private_extern__ void literal_pointer_reset_live(
     struct literal_pointer_data *data, 
     struct merged_section *ms);
 
-extern void literal_pointer_output(
+__private_extern__ void literal_pointer_output(
     struct literal_pointer_data *data, 
     struct merged_section *ms);
 
-extern void literal_pointer_free(
+__private_extern__ void literal_pointer_free(
     struct literal_pointer_data *data);
 
 #ifdef DEBUG
-extern void print_literal_pointer_data(
+__private_extern__ void print_literal_pointer_data(
     struct literal_pointer_data *data, 
     char *ident);
-extern void literal_pointer_data_stats(
+__private_extern__ void literal_pointer_data_stats(
     struct literal_pointer_data *data,
     struct merged_section *ms);
 #endif /* DEBUG */

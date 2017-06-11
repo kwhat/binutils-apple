@@ -38,7 +38,7 @@
  * verbose is non-zero the command is printed to stderr.  A non-zero return
  * value indicates success zero indicates failure.
  */
-extern
+__private_extern__
 int
 execute(
 char **argv,
@@ -110,7 +110,7 @@ static struct {
  * This routine is passed a string to be added to the list of strings for 
  * command line arguments.
  */
-extern
+__private_extern__
 void
 add_execute_list(
 char *str)
@@ -133,7 +133,7 @@ char *str)
  * This routine is passed a string to be added to the list of strings for 
  * command line arguments and is then prefixed with the path of the executable.
  */
-extern
+__private_extern__
 void
 add_execute_list_with_prefix(
 char *str)
@@ -145,7 +145,7 @@ char *str)
  * This routine is passed a string of a command name and a string is returned
  * prefixed with the path of the executable and that command name.
  */
-extern
+__private_extern__
 char *
 cmd_with_prefix(
 char *str)
@@ -179,7 +179,7 @@ char *str)
  * This routine reset the list of strings of command line arguments so that
  * an new command line argument list can be built.
  */
-extern
+__private_extern__
 void
 reset_execute_list(void)
 {
@@ -190,7 +190,7 @@ reset_execute_list(void)
  * This routine calls execute() to run the command built up in the runlist
  * strings.
  */
-extern
+__private_extern__
 int
 execute_list(
 int verbose)

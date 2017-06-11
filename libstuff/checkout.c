@@ -48,7 +48,7 @@ static void order_error(
     struct member *member,
     char *reason);
 
-extern
+__private_extern__
 void
 checkout(
 struct arch *archs,

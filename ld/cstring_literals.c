@@ -63,7 +63,7 @@
  * well as the count).  When redo_live is TRUE it re-merges only the live
  * cstrings based on the live bit in the previouly allocated fine_relocs.
  */
-extern
+__private_extern__
 void
 cstring_merge(
 struct cstring_data *data,
@@ -154,7 +154,7 @@ enum bool redo_live)
  * and it enters the strings in the order of the file it causes the section
  * to be ordered.
  */
-extern
+__private_extern__
 void
 cstring_order(
 struct cstring_data *data,
@@ -273,7 +273,7 @@ struct merged_section *ms)
  * redo_live == TRUE.  In here we first merge in the live cstrings from the
  * order file if any. 
  */
-extern
+__private_extern__
 void
 cstring_reset_live(
 struct cstring_data *data,
@@ -356,7 +356,7 @@ struct merged_section *ms)
  * cstring it parsed.  line_number and char_pos are used for printing error
  * messages and refer the line_number and character possition the index is at.
  */
-extern
+__private_extern__
 void
 get_cstring_from_sectorder(
 struct merged_section *ms,
@@ -536,7 +536,7 @@ unsigned long char_pos)
  * section for this literal section.  The string is aligned to the alignment
  * in the merged section (ms->s.align).
  */
-extern
+__private_extern__
 unsigned long
 lookup_cstring(
 char *cstring,
@@ -617,7 +617,7 @@ struct merged_section *ms)
  * called cstring_free() to free() up all space used by this data block except
  * the data block itself.
  */
-extern
+__private_extern__
 void
 cstring_output(
 struct cstring_data *data,
@@ -648,7 +648,7 @@ struct merged_section *ms)
  * cstring_free() free()'s up all space used by this cstring_data block except
  * the data block itself.
  */
-extern
+__private_extern__
 void
 cstring_free(
 struct cstring_data *data)
@@ -684,7 +684,7 @@ struct cstring_data *data)
 /*
  * print_cstring_data() prints a cstring_data.  Used for debugging.
  */
-extern
+__private_extern__
 void
 print_cstring_data(
 struct cstring_data *data,
@@ -737,7 +737,7 @@ char *indent)
 /*
  * cstring_data_stats() prints the cstring_data stats.  Used for tuning.
  */
-extern
+__private_extern__
 void
 cstring_data_stats(
 struct cstring_data *data,

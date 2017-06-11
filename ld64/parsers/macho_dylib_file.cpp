@@ -34,10 +34,10 @@
 #include <set>
 #include <map>
 #include <algorithm>
-#include <unordered_map>
-#include <unordered_set>
 
 // Patch Nov 05, 2015 - Alex Barker
+//#include <unordered_map>
+//#include <unordered_set>
 #include <memory>
 
 #include "Architectures.hpp"

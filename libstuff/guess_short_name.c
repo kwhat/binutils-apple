@@ -59,7 +59,7 @@ static char *look_back_for_slash(
  * If the name of the dynamic library is none of the forms above then NULL is
  * returned.
  */
-extern
+__private_extern__
 char *
 guess_short_name(
 char *name,

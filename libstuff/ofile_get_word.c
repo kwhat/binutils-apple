@@ -26,7 +26,7 @@
 /*
  * ofile_get_word() gets a 32 bit word for the address in the object file.
  */
-extern
+__private_extern__
 int32_t
 ofile_get_word(
 uint64_t addr,

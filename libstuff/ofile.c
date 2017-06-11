@@ -189,7 +189,7 @@ const char *format, ...)
  * an architecture name (when it should be printed or show by processor) and
  * cookie is the same value as passed to ofile_process.
  */
-extern
+__private_extern__
 void
 ofile_process(
 char *name,
@@ -824,7 +824,7 @@ void *cookie)
  * and calls error routines to print error messages and clears the
  * ofile structure pointed to by ofile.
  */
-extern
+__private_extern__
 #ifdef OFI
 NSObjectFileImageReturnCode
 #else
@@ -890,7 +890,7 @@ enum bool archives_with_fat_objects)
  * ofile_map_from_memory() is the guts of ofile_map() but with an interface
  * to pass the address and size of the file already mapped in.
  */
-extern
+__private_extern__
 #ifdef OFI
 NSObjectFileImageReturnCode
 #else
@@ -1396,7 +1396,7 @@ cleanup:
  * ofile_unmap() deallocates the memory associated with the specified ofile
  * struct.
  */
-extern
+__private_extern__
 void
 ofile_unmap(
 struct ofile *ofile)
@@ -1422,7 +1422,7 @@ struct ofile *ofile)
  * ofile_first_arch() sets up the ofile struct for a fat file to the first arch
  * in it.
  */
-extern
+__private_extern__
 enum bool
 ofile_first_arch(
 struct ofile *ofile)
@@ -1442,7 +1442,7 @@ struct ofile *ofile)
  * ofile_next_arch() sets up the ofile struct for a fat file to the next arch
  * in it.
  */
-extern
+__private_extern__
 enum bool
 ofile_next_arch(
 struct ofile *ofile)
@@ -1665,7 +1665,7 @@ cleanup:
  * the object file fields if the first member is an object file) for the first
  * member.
  */
-extern
+__private_extern__
 enum bool
 ofile_first_member(
 struct ofile *ofile)
@@ -1948,7 +1948,7 @@ cleanup:
  * the object file fields if the next member is an object file) for the next
  * member.
  */
-extern
+__private_extern__
 enum bool
 ofile_next_member(
 struct ofile *ofile)
@@ -2206,7 +2206,7 @@ cleanup:
  * the object file fields if the member is an object file) for the specified
  * member member_name.
  */
-extern
+__private_extern__
 enum bool
 ofile_specific_member(
 const char *member_name,
@@ -2479,7 +2479,7 @@ cleanup:
  * ofile_first_module() set up the ofile structure (the dylib_module field)
  * for the first module of an MH_DYLIB or MH_DYLIB_STUB file.
  */
-extern
+__private_extern__
 enum bool
 ofile_first_module(
 struct ofile *ofile)
@@ -2579,7 +2579,7 @@ struct ofile *ofile)
  * ofile_next_module() set up the ofile structure (the dylib_module field)
  * for the next module of an MH_DYLIB or MH_DYLIB_STUB file.
  */
-extern
+__private_extern__
 enum bool
 ofile_next_module(
 struct ofile *ofile)
@@ -2671,7 +2671,7 @@ struct ofile *ofile)
  * for the specified module, module_name, of an MH_DYLIB or an MH_DYLIB_STUB
  * file.
  */
-extern
+__private_extern__
 enum bool
 ofile_specific_module(
 const char *module_name,
@@ -2800,7 +2800,7 @@ struct ofile *ofile)
 }
 
 #ifdef DEBUG
-extern
+__private_extern__
 void
 ofile_print(
 struct ofile *ofile)
@@ -6463,7 +6463,7 @@ uint32_t module_index)
 #endif /* OTOOL */
 }
 
-extern
+__private_extern__
 uint32_t
 size_ar_name(
 const struct ar_hdr *ar_hdr)

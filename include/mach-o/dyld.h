@@ -27,8 +27,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 #include <mach-o/loader.h>
@@ -316,7 +316,7 @@ extern void _dyld_lookup_and_bind_fully(
     unsigned long *address,
     void **module);
 
-extern int _dyld_func_lookup(
+__private_extern__ int _dyld_func_lookup(
     const char *dyld_func_name,
     unsigned long *address);
 

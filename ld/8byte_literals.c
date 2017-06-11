@@ -57,7 +57,7 @@
  * well as the count).  When redo_live is TRUE it re-merges only the live
  * cstrings based on the live bit in the previouly allocated fine_relocs.
  */
-extern
+__private_extern__
 void
 literal8_merge(
 struct literal8_data *data,
@@ -145,7 +145,7 @@ enum bool redo_live)
  * and it enters the literals in the order of the file it causes the section
  * to be ordered.
  */
-extern
+__private_extern__
 void
 literal8_order(
 struct literal8_data *data,
@@ -226,7 +226,7 @@ struct merged_section *ms)
  * redo_live == TRUE.  In here we first merge in the live literals from the
  * order file if any. 
  */
-extern
+__private_extern__
 void
 literal8_reset_live(
 struct literal8_data *data,
@@ -291,7 +291,7 @@ struct merged_section *ms)
  * error message is printed stating the order file and the section it is for
  * and the line_number (passed in) it occured on.
  */
-extern
+__private_extern__
 enum bool
 get_hex_from_sectorder(
 struct merged_section *ms,
@@ -369,7 +369,7 @@ unsigned long line_number)
  * literal section.  The literal is aligned to the alignment in the merged
  * section (ms->s.align).
  */
-extern
+__private_extern__
 unsigned long
 lookup_literal8(
 struct literal8 literal8,
@@ -418,7 +418,7 @@ struct merged_section *ms)
  * calls literal8_free() to free up all space used by the data block except the
  * data block itself.
  */
-extern
+__private_extern__
 void
 literal8_output(
 struct literal8_data *data,
@@ -455,7 +455,7 @@ struct merged_section *ms)
  * literal8_free() free()'s up all space used by the data block except the
  * data block itself.
  */
-extern
+__private_extern__
 void
 literal8_free(
 struct literal8_data *data)
@@ -477,7 +477,7 @@ struct literal8_data *data)
 /*
  * print_literal8_data() prints a literal8_data.  Used for debugging.
  */
-extern
+__private_extern__
 void
 print_literal8_data(
 struct literal8_data *data,
@@ -508,7 +508,7 @@ char *indent)
 /*
  * literal8_data_stats() prints the literal8_data stats.  Used for tuning.
  */
-extern
+__private_extern__
 void
 literal8_data_stats(
 struct literal8_data *data,

@@ -20,8 +20,8 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 /*
@@ -63,26 +63,26 @@ struct section_spec {
 };
 
 /* The structures to hold the information specified about segments */
-extern struct segment_spec *segment_specs;
-extern unsigned long nsegment_specs;
+__private_extern__ struct segment_spec *segment_specs;
+__private_extern__ unsigned long nsegment_specs;
 
-extern struct segment_spec *create_segment_spec(
+__private_extern__ struct segment_spec *create_segment_spec(
     char *segname);
-extern struct section_spec *create_section_spec(
+__private_extern__ struct section_spec *create_section_spec(
     struct segment_spec *seg_spec,
     char *sectname);
-extern struct segment_spec * lookup_segment_spec(
+__private_extern__ struct segment_spec * lookup_segment_spec(
     char *segname);
-extern struct section_spec *lookup_section_spec(
+__private_extern__ struct section_spec *lookup_section_spec(
     char *segname,
     char *sectname);
-extern void process_section_specs(
+__private_extern__ void process_section_specs(
     void);
-extern void process_segment_specs(
+__private_extern__ void process_segment_specs(
     void);
 #ifdef DEBUG
-extern void print_segment_specs(
+__private_extern__ void print_segment_specs(
     void);
-extern void print_prot(
+__private_extern__ void print_prot(
     vm_prot_t prot);
 #endif /* DEBUG */

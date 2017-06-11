@@ -68,7 +68,7 @@
  * in when nfine_relocs != 0). When refs is not NULL, only refs is filled in
  * and returned and the contents are not relocated.
  */
-extern
+__private_extern__
 void
 arm_reloc(
 char *contents,

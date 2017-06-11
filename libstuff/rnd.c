@@ -30,7 +30,7 @@
 /*
  * rnd() rounds v to a multiple of r.
  */
-extern
+__private_extern__
 uint64_t
 rnd(
 uint64_t v,

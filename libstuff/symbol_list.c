@@ -44,7 +44,7 @@ static int cmp_qsort_name(
  * leading and trailing white space is removed and lines starting with a '#'
  * and lines with only white space are ignored.
  */
-extern
+__private_extern__
 void
 setup_symbol_list(
 char *file,
@@ -171,7 +171,7 @@ const struct symbol_list *sym2)
 /*
  * Function for bsearch for finding a symbol name.
  */
-extern
+__private_extern__
 int
 symbol_list_bsearch(
 const char *name,

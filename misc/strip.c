@@ -51,7 +51,7 @@
 #endif /* TRIE_SUPPORT */
 
 /* These are set from the command line arguments */
-extern
+__private_extern__
 char *progname = NULL;	/* name of the program for error messages (argv[0]) */
 static char *output_file;/* name of the output file */
 static char *sfile;	/* filename of global symbol names to keep */

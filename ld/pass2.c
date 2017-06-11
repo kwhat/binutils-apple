@@ -67,10 +67,8 @@
 /*
  * The total size of the output file and the memory buffer for the output file.
  */
-// Patch Jan 17, 2017 - Alex Barker
-unsigned long output_size = 0;
-// Patch Jan 17, 2017 - Alex Barker
-char *output_addr = NULL;
+__private_extern__ unsigned long output_size = 0;
+__private_extern__ char *output_addr = NULL;
 
 /*
  * This is used to setting the SG_NORELOC flag in the segment flags correctly.
@@ -85,8 +83,7 @@ char *output_addr = NULL;
  * routine set_SG_NORELOC_flags() in here can use these two fields to set the
  * SG_NORELOC flag in the segments that have no relocation to or for them.
  */
-// Patch Jan 17, 2017 - Alex Barker
-struct merged_section **output_sections = NULL;
+__private_extern__ struct merged_section **output_sections = NULL;
 
 #ifndef RLD
 /* the file descriptor of the output file */
@@ -123,7 +120,7 @@ static void output_headers(void);
  * into.  It drives the process to get everything copied into the buffer for
  * the output file.  It then writes the output file and deallocates the buffer.
  */ 
-extern
+__private_extern__
 void
 pass2(void)
 {
@@ -372,7 +369,7 @@ pass2(void)
  * pass2_rld_symfile() drives the process to get everything copied into the
  * buffer for the output file.
  */ 
-extern
+__private_extern__
 void
 pass2_rld_symfile(void)
 {
@@ -402,7 +399,7 @@ pass2_rld_symfile(void)
  * one from the section number) with the section number of a merged symbol that
  * is refered to in a relocation entry.
  */
-extern
+__private_extern__
 void
 create_output_sections_array(void)
 {
@@ -670,7 +667,7 @@ setup_output_flush(void)
  * to prevent these pages to be written to the swap area when they could just be
  * written to the output file (if only external pagers worked well ...).
  */
-extern
+__private_extern__
 void
 output_flush(
 unsigned long offset,

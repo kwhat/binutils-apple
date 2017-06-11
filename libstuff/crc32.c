@@ -115,7 +115,7 @@ static const u_int32_t crctab[] = {
 
 #define	COMPUTE(var, ch)	(var) = (var) << 8 ^ crctab[(var) >> 24 ^ (ch)]
 
-extern
+__private_extern__
 uint32_t
 crc32(
 const void *buf,

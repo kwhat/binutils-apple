@@ -20,18 +20,18 @@
  * 
  * @APPLE_LICENSE_HEADER_END@
  */
-#if defined(__MWERKS__) && !defined(extern)
-#define extern __declspec(private_extern)
+#if defined(__MWERKS__) && !defined(__private_extern__)
+#define __private_extern__ __declspec(private_extern)
 #endif
 
 #include <mach/machine.h>
 #include "stuff/bool.h"
 
-extern uint32_t reloc_pair_r_type(
+__private_extern__ uint32_t reloc_pair_r_type(
     cpu_type_t cputype);
-extern enum bool reloc_has_pair(
+__private_extern__ enum bool reloc_has_pair(
     cpu_type_t cputype,
     uint32_t r_type);
-extern enum bool reloc_is_sectdiff(
+__private_extern__ enum bool reloc_is_sectdiff(
     cpu_type_t cputype,
     uint32_t r_type);

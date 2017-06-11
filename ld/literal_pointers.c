@@ -100,7 +100,7 @@ static void count_reloc(
  * literal pointers based on the live bit in the previouly allocated
  * fine_relocs.
  */
-extern
+__private_extern__
 void
 literal_pointer_merge(
 struct literal_pointer_data *data, 
@@ -723,7 +723,7 @@ enum bool defined)
  * literal_pointer_merge and it enters the literals in the order of the file it
  * causes the section to be ordered.
  */
-extern
+__private_extern__
 void
 literal_pointer_order(
 struct literal_pointer_data *data, 
@@ -1003,7 +1003,7 @@ char *buffer)
  * later calling literal_pointer_merge() with redo_live == TRUE.  In here we
  * first merge in the live literal pointers from the order file if any. 
  */
-extern
+__private_extern__
 void
 literal_pointer_reset_live(
 struct literal_pointer_data *data, 
@@ -1192,7 +1192,7 @@ enum bool *new)
  * It also puts the relocation entries for the literal pointers in the output
  * file if relocation entries are being saved.
  */
-extern
+__private_extern__
 void
 literal_pointer_output(
 struct literal_pointer_data *data, 
@@ -1384,7 +1384,7 @@ struct merged_section *ms)
  * literal_pointer_free() free()'s up all space used by the data block except 
  * the data block itself.
  */
-extern
+__private_extern__
 void
 literal_pointer_free(
 struct literal_pointer_data *data)
@@ -1423,7 +1423,7 @@ struct literal_pointer_data *data)
  * print_literal_pointer_data() prints a literal_pointer_data.  Used for
  * debugging.
  */
-extern
+__private_extern__
 void
 print_literal_pointer_data(
 struct literal_pointer_data *data, 
@@ -1465,7 +1465,7 @@ char *indent)
  * literal_pointer_data_stats() prints the literal_pointer_data stats.  Used for
  * tuning.
  */
-extern
+__private_extern__
 void
 literal_pointer_data_stats(
 struct literal_pointer_data *data,

@@ -37,7 +37,7 @@
  * architecture and specific architecure for the host.  If the architecture
  * is unknown and the parameters are not NULL then all fields are set to zero.
  */
-extern
+__private_extern__
 int
 get_arch_from_host(
 struct arch_flag *family_arch_flag,

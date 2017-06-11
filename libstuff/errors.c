@@ -31,12 +31,12 @@
 
 #include "stuff/errors.h"
 
-extern uint32_t errors = 0;	/* number of calls to error() */
+__private_extern__ uint32_t errors = 0;	/* number of calls to error() */
 
 /*
  * Just print the message in the standard format without setting an error.
  */
-extern
+__private_extern__
 void
 warning(
 const char *format,
@@ -55,7 +55,7 @@ const char *format,
  * Print the error message and return to the caller after setting the error
  * indication.
  */
-extern
+__private_extern__
 void
 error(
 const char *format,
@@ -75,7 +75,7 @@ const char *format,
  * Print the error message, the architecture if not NULL and return to the
  * caller after setting the error indication.
  */
-extern
+__private_extern__
 void
 error_with_arch(
 const char *arch_name,
@@ -98,7 +98,7 @@ const char *format,
  * Print the error message along with the system error message and return to
  * the caller after setting the error indication.
  */
-extern
+__private_extern__
 void
 system_error(
 const char *format,
@@ -117,7 +117,7 @@ const char *format,
 /*
  * Print the error message along with the mach error string.
  */
-extern
+__private_extern__
 void
 my_mach_error(
 kern_return_t r,

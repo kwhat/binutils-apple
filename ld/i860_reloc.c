@@ -56,7 +56,7 @@
  * i860_reloc() relocates the contents of the specified section for the 
  * relocation entries using the section map from the current object (cur_obj).
  */
-extern
+__private_extern__
 void
 i860_reloc(
 char *contents,
