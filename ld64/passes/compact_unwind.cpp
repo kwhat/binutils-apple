@@ -306,6 +306,7 @@ bool UnwindInfoAtom<arm64>::encodingMeansUseDwarf(compact_unwind_encoding_t enc)
 	return ((enc & UNWIND_ARM64_MODE_MASK) == UNWIND_ARM64_MODE_DWARF);
 }
 
+
 template <>
 bool UnwindInfoAtom<arm>::encodingMeansUseDwarf(compact_unwind_encoding_t enc)
 {
@@ -427,6 +428,7 @@ void UnwindInfoAtom<arm64>::addCompressedAddressOffsetFixup(uint32_t offset, con
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k3of3, ld::Fixup::kindStoreLittleEndianLow24of32));
 }
 
+
 template <>
 void UnwindInfoAtom<arm>::addCompressedAddressOffsetFixup(uint32_t offset, const ld::Atom* func, const ld::Atom* fromFunc)
 {
@@ -464,6 +466,7 @@ void UnwindInfoAtom<arm64>::addCompressedEncodingFixup(uint32_t offset, const ld
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k2of2, ld::Fixup::kindStoreLittleEndianLow24of32));
 }
 
+
 template <>
 void UnwindInfoAtom<arm>::addCompressedEncodingFixup(uint32_t offset, const ld::Atom* fde)
 {
@@ -491,6 +494,7 @@ void UnwindInfoAtom<arm64>::addRegularAddressFixup(uint32_t offset, const ld::At
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of2, ld::Fixup::kindSetTargetImageOffset, func));
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k2of2, ld::Fixup::kindStoreLittleEndian32));
 }
+
 
 template <>
 void UnwindInfoAtom<arm>::addRegularAddressFixup(uint32_t offset, const ld::Atom* func)
@@ -520,6 +524,7 @@ void UnwindInfoAtom<arm64>::addRegularFDEOffsetFixup(uint32_t offset, const ld::
 	_fixups.push_back(ld::Fixup(offset+4, ld::Fixup::k2of2, ld::Fixup::kindStoreLittleEndianLow24of32));
 }
 
+
 template <>
 void UnwindInfoAtom<arm>::addRegularFDEOffsetFixup(uint32_t offset, const ld::Atom* fde)
 {
@@ -547,6 +552,7 @@ void UnwindInfoAtom<arm64>::addImageOffsetFixup(uint32_t offset, const ld::Atom*
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of2, ld::Fixup::kindSetTargetImageOffset, targ));
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k2of2, ld::Fixup::kindStoreLittleEndian32));
 }
+
 
 template <>
 void UnwindInfoAtom<arm>::addImageOffsetFixup(uint32_t offset, const ld::Atom* targ)
@@ -578,6 +584,7 @@ void UnwindInfoAtom<arm64>::addImageOffsetFixupPlusAddend(uint32_t offset, const
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k2of3, ld::Fixup::kindAddAddend, addend));
 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k3of3, ld::Fixup::kindStoreLittleEndian32));
 }
+
 
 template <>
 void UnwindInfoAtom<arm>::addImageOffsetFixupPlusAddend(uint32_t offset, const ld::Atom* targ, uint32_t addend)

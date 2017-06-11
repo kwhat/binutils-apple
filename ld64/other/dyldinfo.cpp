@@ -237,6 +237,7 @@ bool DyldInfoPrinter<x86_64>::validFile(const uint8_t* fileContent)
 		case MH_DYLIB_STUB:
 		case MH_BUNDLE:
 		case MH_DYLINKER:
+		case MH_KEXT_BUNDLE:
 			return true;
 	}
 	return false;
@@ -257,6 +258,7 @@ bool DyldInfoPrinter<arm>::validFile(const uint8_t* fileContent)
 		case MH_DYLIB_STUB:
 		case MH_BUNDLE:
 		case MH_DYLINKER:
+		case MH_KEXT_BUNDLE:
 			return true;
 	}
 	return false;
@@ -277,11 +279,13 @@ bool DyldInfoPrinter<arm64>::validFile(const uint8_t* fileContent)
 		case MH_DYLIB:
 		case MH_BUNDLE:
 		case MH_DYLINKER:
+		case MH_KEXT_BUNDLE:
 			return true;
 	}
 	return false;
 }
 #endif
+
 
 template <typename A>
 DyldInfoPrinter<A>::DyldInfoPrinter(const uint8_t* fileContent, uint32_t fileLength, const char* path, bool printArch)
@@ -1653,7 +1657,10 @@ void DyldInfoPrinter<A>::printSharedRegionInfo()
 				uint64_t toOffsetCount = read_uleb128(p, infoEnd);
 				const macho_section<P>* fromSection = fSections[fromSectionIndex];
 				const macho_section<P>* toSection = fSections[toSectionIndex];
-				printf("from sect=%s, to sect=%s, count=%lld:\n", fromSection->sectname(), toSection->sectname(), toOffsetCount);
+				char fromSectionName[20];
+				strncpy(fromSectionName, fromSection->sectname(), 16);
+				fromSectionName[16] = '\0';
+				printf("from sect=%s/%s, to sect=%s/%s, count=%lld:\n", fromSection->segname(), fromSectionName, toSection->segname(), toSection->sectname(), toOffsetCount);
 				uint64_t toSectionOffset = 0;
 				const char* lastFromSymbol = NULL;
 				for (uint64_t j=0; j < toOffsetCount; ++j) {
@@ -1934,6 +1941,7 @@ arm64::P::uint_t DyldInfoPrinter<arm64>::relocBase()
 }
 #endif
 
+
 template <>
 const char*	DyldInfoPrinter<ppc>::relocTypeName(uint8_t r_type)
 {
@@ -1994,6 +2002,7 @@ const char*	DyldInfoPrinter<arm64>::relocTypeName(uint8_t r_type)
 	return "??";
 }
 #endif
+
 
 template <typename A>
 void DyldInfoPrinter<A>::printRelocRebaseInfo()
@@ -2325,7 +2334,7 @@ static void dump(const char* path)
 						if ( DyldInfoPrinter<arm64>::validFile(p + offset) )
 							DyldInfoPrinter<arm64>::make(p + offset, size, path, (sPreferredArch == 0));
 						else
-							throw "in universal file, arm64 slice does not contain arm mach-o";
+							throw "in universal file, arm64 slice does not contain arm64 mach-o";
 						break;
 #endif
 					default:

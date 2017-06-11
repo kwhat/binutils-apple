@@ -1,5 +1,6 @@
 bin_PROGRAMS =  \
 	dyldinfo \
+	objcimageinfo \
 	ObjectDump \
 	unwinddump \
 	machochecker 
@@ -47,3 +48,6 @@ ObjectDump_LDADD =  \
 
 dyldinfo_SOURCES = dyldinfo.cpp
 dyldinfo_LDADD = $(top_builddir)/ld64/3rd/libhelper.la
+
+objcimageinfo_SOURCES = objcimageinfo.cpp
+objcimageinfo_LDADD = $(top_builddir)/ld64/3rd/libhelper.la
