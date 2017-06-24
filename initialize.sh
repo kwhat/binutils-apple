@@ -1,7 +1,7 @@
 #!/bin/sh
 
 CCV=886
-LDV=264.3.102
+LDV=264.3.101
 
 wget http://opensource.apple.com/tarballs/cctools/cctools-${CCV}.tar.gz
 wget http://opensource.apple.com/tarballs/ld64/ld64-${LDV}.tar.gz
@@ -11,14 +11,16 @@ tar xzvf ld64-${LDV}.tar.gz
 
 rm cctools-${CCV}.tar.gz ld64-${LDV}.tar.gz
 
-chmod -Rvf o+w *
+find ./ -type f -name notes -exec chmod 444 -vf {} \;
+find ./ -type f -name \*.[ch] -exec chmod 644 -vf {} \;
+find ./ -type d -exec chmod 755 -vf {} \;
 
 # Remove junk Makefile's
 find ./ -name Makefile -exec rm -fv {} \;
 
 #
 find ./ -type f -name \*.[ch] | xargs sed -i 's/^#import/#include/g'
-#find ./ -type f -name \*.h | xargs sed -i 's/^__private_extern__/extern/g'
+#find ./ -type f -name \*.[ch] | xargs sed -i 's/__private_extern__/extern/g'
 
 # Relocate man files
 mv -vf ./cctools-${CCV}/ar/ar.1 ./cctools-${CCV}/man

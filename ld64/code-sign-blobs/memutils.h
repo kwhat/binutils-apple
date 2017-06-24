@@ -53,9 +53,12 @@ static const size_t systemAlignment = 4;
 //
 // Get the local alignment for a type, as used by the acting compiler.
 //
-// Patch 12/28/2014
-//template <class T>
-//inline size_t alignof() { struct { char c; T t; } s; return sizeof(s) - sizeof(T); }
+template <typename T>
+unsigned long myalignof() {
+	struct { char c; T t; } s;
+	return sizeof(s) - sizeof(T);
+}
+
 
 //
 // Get the local offset of a field in a (struct or class) type, as layed out
