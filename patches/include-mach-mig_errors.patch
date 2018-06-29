@@ -1,0 +1,16 @@
+--- a/include/mach/mig_errors.h	2018-06-27 22:49:17.068604371 -0700
++++ b/include/mach/mig_errors.h	2018-06-27 16:19:22.804798601 -0700
+@@ -110,7 +110,7 @@
+ #define __NDR_convert__mig_reply_error_t__defined
+ 
+ static __inline__ void
+-__NDR_convert__mig_reply_error_t(__unused mig_reply_error_t *x)
++__NDR_convert__mig_reply_error_t(__attribute__((unused)) mig_reply_error_t *x) // Patch Jun 27, 2018 - Alexander Barker
+ {
+ #if defined(__NDR_convert__int_rep__kern_return_t__defined)
+ 	if (x->NDR.int_rep != NDR_record.int_rep)
+@@ -122,3 +122,4 @@
+ __END_DECLS
+ 
+ #endif	/* _MACH_MIG_ERRORS_H_ */
++

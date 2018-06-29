@@ -1,0 +1,27 @@
+--- a/ld64/src/ld/ld.cpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/ld/ld.cpp	2018-06-28 03:56:46.275232424 -0700
+@@ -23,7 +23,7 @@
+  */
+  
+ // start temp HACK for cross builds
+-extern "C" double log2 ( double );
++//extern "C" double log2 ( double ); // Patch Jun 28, 2018 - Alexander Barker
+ //#define __MATH__
+ // end temp HACK for cross builds
+ 
+--- a/ld64/src/ld/ld.hpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/ld/ld.hpp	2018-06-28 03:25:24.020613977 -0700
+@@ -34,6 +34,13 @@
+ #include <vector>
+ #include <set>
+ 
++// Begun Patch Jun 26, 2018 - Alexander Barker
++#include <algorithm>
++#include <string.h>
++
++#define HW_NCPU     3
++#define CTL_HW      6
++// End Patch
+ 
+ namespace ld {
+ 

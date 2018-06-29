@@ -1,36 +1,41 @@
 #!/bin/sh
 
-CCV=839
-LDV=136
+echo "Initializing XCode 4.6 CCTools (10.8.4)";
 
-wget http://opensource.apple.com/tarballs/cctools/cctools-${CCV}.tar.gz
-wget http://opensource.apple.com/tarballs/ld64/ld64-${LDV}.tar.gz
+curl -L https://opensource.apple.com/tarballs/cctools/cctools-839.tar.gz | tar xzv --strip 1
 
-tar xzvf cctools-${CCV}.tar.gz
-tar xzvf ld64-${LDV}.tar.gz
+#mkdir ./libunwind
+#curl -L http://opensource.apple.com/tarballs/libunwind/libunwind-35.1.tar.gz | tar xzv -C ./libunwind --strip 1
+#find ./libunwind -name *.s -exec mv -v {} {}x \;
 
-rm cctools-${CCV}.tar.gz ld64-${LDV}.tar.gz
+mkdir ./ld64
+curl -L https://opensource.apple.com/tarballs/ld64/ld64-136.tar.gz | tar xzv -C ./ld64 --strip 1
+curl -L https://opensource.apple.com/tarballs/dyld/dyld-210.2.3.tar.gz | tar xzv -C ./ld64/src/abstraction/ --strip 2 dyld-210.2.3/include/mach-o/
+curl -L http://opensource.apple.com/tarballs/libunwind/libunwind-35.1.tar.gz | tar xzv -C ./ld64/src/abstraction/ --strip 2 libunwind-35.1/include/
+touch ./ld64/src/ld/configure.h
 
-chmod -Rvf o+w *
-find ./ -type f -name \*.[ch] -exec chmod 644 -vf {} \;
+mkdir ./include/i386
+curl -L https://opensource.apple.com/source/xnu/xnu-2050.24.15/osfmk/mach/mig_errors.h > ./include/mach/mig_errors.h
+curl -L https://opensource.apple.com/source/xnu/xnu-2050.24.15/bsd/i386/_types.h > ./include/i386/_types.h
+
+mkdir ./libemulated
+curl -L https://opensource.apple.com/source/Libc/Libc-825.26/string/strlcpy.c > libemulated/strlcpy.c
+curl -L https://opensource.apple.com/source/Libc/Libc-825.26/string/strlcat.c > libemulated/strlcat.c
+curl -L https://opensource.apple.com/source/Libc/Libc-825.26/string/FreeBSD/strmode.c > libemulated/strmode.c
+touch libemulated/config.h
+
 
 # Remove junk Makefile's
 find ./ -name Makefile -exec rm -fv {} \;
+find ./ -type f -name notes -exec chmod 444 -vf {} \;
+find ./ -type f -name \*.[ch] -exec chmod 644 -vf {} \;
+find ./ -type d -exec chmod 755 -vf {} \;
 
-#
-find ./ -type f -name \*.[ch] | xargs sed -i 's/^#import/#include/g'
-find ./ -type f -name \*.h | xargs sed -i 's/^__private_extern__/extern/g'
+# Fix private extern
+find ./ -type f -a \( -name \*.h -o -name \*.c \) -exec sed -i 's/^__private_extern__/__attribute__((visibility("hidden")))/g' {} \;
 
-# Clean things we dont use.
-rm -Rvf ./cctools-${CCV}/cbtlibs/
-rm -Rvf ./cctools-${CCV}/efitools/
-rm -Rvf ./cctools-${CCV}/gprof/
-rm -Rvf ./cctools-${CCV}/libmacho/
-rm -vf ./cctools-${CCV}/PB.project
-rm -Rvf ./ld64-${LDV}/ld64.xcodeproj/
-rm -vf ./ld64-${LDV}/compile_stubs
-rm -vf ./ld64-${LDV}/src/create_configure
+find ./patches -name *.patch -exec patch -p1 -i {} \;
 
-cp ./cctools-${CCV}/APPLE_LICENSE ./COPYING
 echo "Alexander Barker <alex@1stleg.com>" > ./AUTHORS
 touch ChangeLog NEWS README
+mv APPLE_LICENSE COPYING

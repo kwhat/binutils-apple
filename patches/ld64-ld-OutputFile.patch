@@ -1,0 +1,38 @@
+--- a/ld64/src/ld/OutputFile.cpp	2012-10-19 15:50:28.000000000 -0700
++++ b/ld64/src/ld/OutputFile.cpp	2018-06-28 03:46:25.408327109 -0700
+@@ -42,6 +42,7 @@
+ #include <dlfcn.h>
+ #include <mach-o/dyld.h>
+ #include <mach-o/fat.h>
++#include <sys/statfs.h> // Patch Jun 26, 2018 - Alexander Barker
+ 
+ #include <string>
+ #include <map>
+@@ -65,6 +66,9 @@
+ #include "LinkEdit.hpp"
+ #include "LinkEditClassic.hpp"
+ 
++#include "emulated/strlcat.h" // Patch Jun 28, 2018 - Alexander Barker
++#include "emulated/strlcpy.h" // Patch Jun 28, 2018 - Alexander Barker
++#define HFS_SUPER_MAGIC 0x4244 // Patch Jun 26, 2018 - Alexander Barker
+ 
+ namespace ld {
+ namespace tool {
+@@ -1696,7 +1700,7 @@
+ 			// <rdar://problem/12264302> Don't use mmap on non-hfs volumes
+ 			struct statfs fsInfo;
+ 			if ( statfs(_options.outputFilePath(), &fsInfo) != -1 ) {
+-				if ( strcmp(fsInfo.f_fstypename, "hfs") == 0) {
++				if ( fsInfo.f_type == HFS_SUPER_MAGIC) {
+ 					(void)unlink(_options.outputFilePath());
+ 					outputIsMappableFile = true;
+ 				}
+@@ -1720,7 +1724,7 @@
+ 			end[1] = '\0';
+ 			struct statfs fsInfo;
+ 			if ( statfs(dirPath, &fsInfo) != -1 ) {
+-				if ( strcmp(fsInfo.f_fstypename, "hfs") == 0) {
++				if ( fsInfo.f_type == HFS_SUPER_MAGIC) {
+ 					outputIsMappableFile = true;
+ 				}
+ 			}

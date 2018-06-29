@@ -1,0 +1,11 @@
+--- a/libstuff/seg_addr_table.c	2018-06-27 22:49:17.148606548 -0700
++++ b/libstuff/seg_addr_table.c	2018-06-27 16:28:33.969801128 -0700
+@@ -31,7 +31,7 @@
+ #include <sys/stat.h>
+ #include <sys/mman.h>
+ #include <mach/mach.h>
+-#include <libc.h>
++//#include <libc.h> // Patch Jun 27, 2018 - Alexander Barker
+ 
+ #include "stuff/bool.h"
+ #include "stuff/errors.h"

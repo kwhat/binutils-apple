@@ -1,0 +1,28 @@
+--- a/ld64/src/ld/parsers/libunwind/AddressSpace.hpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/ld/parsers/libunwind/AddressSpace.hpp	2018-06-28 01:32:56.988007850 -0700
+@@ -29,6 +29,7 @@
+ #ifndef __ADDRESSSPACE_HPP__
+ #define __ADDRESSSPACE_HPP__
+ 
++#include <uuid/uuid.h> // Patch Jun 28, 2018 - Alexander Barker
+ #include <stdint.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -43,7 +44,7 @@
+ #include "libunwind.h"
+ #include "InternalMacros.h"
+ #include "dwarf2.h"
+-
++#include "emulated/strlcpy.h" // Patch Jun 26, 2018 - Alexander Barker
+ 
+ #if 0
+ #if __i386__ || __x86_64__ 
+@@ -270,7 +271,7 @@
+ 
+ inline bool	LocalAddressSpace::findFunctionName(pint_t addr, char* buf, size_t bufLen, unw_word_t* offset)
+ {
+-	dl_info dyldInfo;
++	Dl_info dyldInfo; // Patch Jun 26, 2018 - Alexander Barker
+ 	if ( dladdr((void*)addr, &dyldInfo) ) {
+ 		if ( dyldInfo.dli_sname != NULL ) {
+ 			strlcpy(buf, dyldInfo.dli_sname, bufLen);

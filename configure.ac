@@ -1,4 +1,4 @@
-AC_INIT([binutils-apple], [4.6], [https://github.com/kwhat/binutils-apple/])
+AC_INIT([cctools-gnu-linux], [4.6], [https://github.com/kwhat/cctools-gnu-linux/])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -6,11 +6,10 @@ AC_CANONICAL_TARGET
 
 AC_ARG_PROGRAM
 
-#force compiler to clang
+# Force compiler to clang
 CC=clang
 CXX=clang++
-# I am not sure why this is here or if it is needed.
-CPP="clang -E"
+#CPP="clang -E"
 
 AM_INIT_AUTOMAKE([1.10 subdir-objects no-define no-dist-gzip dist-bzip2 tar-ustar])
 
@@ -30,12 +29,19 @@ AC_PROG_INSTALL
 
 AC_PROG_CC([clang])
 AC_PROG_CXX([clang++])
+
 AM_PROG_CC_C_O
 AC_PROG_OBJC([clang])
 AM_PROG_AS([clang])
 
 AC_PROG_CC_C99
 AX_CXX_COMPILE_STDCXX_11()
+
+# Setup LLVM Include and Lib dirs.
+AC_CHECK_PROG([llvm_config], [llvm-config], [yes], [no])
+if test "x$llvm-config" = "xno"; then
+    AC_MSG_ERROR("Could not find llvm-config.")
+fi
 
 
 AC_CHECK_TOOL([HOST_RANLIB], [ranlib], :)
@@ -52,64 +58,132 @@ if test "$buggy_unistd"; then
   exit
 fi
 
-if test "$CC" != "clang"; then
-AC_MSG_ERROR("You must use clang to compile it")
-fi
+# Checks for header files.
+AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h])
 
-if test "$CXX" != "clang++"; then
-AC_MSG_ERROR("You must use clang to compile it")
-fi
+# Checks for typedefs, structures, and compiler characteristics.
+AC_CHECK_HEADER_STDBOOL
+AC_TYPE_INT16_T
+AC_TYPE_INT32_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT8_T
 
-AC_CHECK_HEADERS([llvm-c/lto.h], [], [AC_MSG_ERROR([*** lto.h not found, Please install llvm dev packages according to your system])])
-AC_CHECK_HEADERS([openssl/md5.h], [], [AC_MSG_ERROR([*** md5.h not found, Please install ssl dev packages according to your system])])
-AC_CHECK_HEADERS([uuid/uuid.h], [], [AC_MSG_ERROR([*** uuid.h not found, Please install uuid dev packages according to your system])])
-AC_CHECK_HEADERS([objc/runtime.h], [], [AC_MSG_ERROR([*** runtime.h not found, Please install objc dev packages according to your system])])
+# Checks for library functions.
+AC_FUNC_CHOWN
+AC_FUNC_FORK
+AC_CHECK_FUNCS([memset strdup strrchr strtoul])
 
-#for libstuff emulated.c
+#AC_CHECK_HEADERS([openssl/md5.h], [], [AC_MSG_ERROR([*** md5.h not found, Please install ssl dev packages according to your system])])
+#AC_CHECK_HEADERS([uuid/uuid.h], [], [AC_MSG_ERROR([*** uuid.h not found, Please install uuid dev packages according to your system])])
+#AC_CHECK_HEADERS([objc/runtime.h], [], [AC_MSG_ERROR([*** runtime.h not found, Please install objc dev packages according to your system])])
+
+
+# For libstuff emulated.c
+AC_DEFINE(ALL_SUPPORTED_ARCHS, "i386 x86_64 armv4t armv5 armv6 armv7 armv7f armv7k armv7s")
 case $target_cpu in
+    arm*)
+        AC_DEFINE(EMULATED_HOST_CPU_TYPE, 12, [Emulated CPU type])
+        AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 0, [Emulated CPU subtype])
+
+        AC_DEFINE(SUPPORT_ARCH_armv4t)
+        AC_DEFINE(SUPPORT_ARCH_armv5)
+        AC_DEFINE(SUPPORT_ARCH_armv6)
+        AC_DEFINE(SUPPORT_ARCH_armv7)
+        AC_DEFINE(SUPPORT_ARCH_armv7f)
+        AC_DEFINE(SUPPORT_ARCH_armv7k)
+        AC_DEFINE(SUPPORT_ARCH_armv7s)
+        CPU_DEFINES="-DARM"
+    ;;
+     arm64*|aarch64)
+        AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777228, [Emulated CPU type])
+        AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 0, [Emulated CPU subtype])
+
+        AC_DEFINE(SUPPORT_ARCH_armv4t)
+        AC_DEFINE(SUPPORT_ARCH_armv5)
+        AC_DEFINE(SUPPORT_ARCH_armv6)
+        AC_DEFINE(SUPPORT_ARCH_armv7)
+        AC_DEFINE(SUPPORT_ARCH_armv7f)
+        AC_DEFINE(SUPPORT_ARCH_armv7k)
+        AC_DEFINE(SUPPORT_ARCH_armv7s)
+        
+        CPU_DEFINES="-DARM -DARCH64"
+    ;;
      powerpc)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 18, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 100, [Emulated CPU subtype])
+
+        CPU_DEFINES="-DPPC"
     ;;
-     powerpc64)
+    powerpc64*)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777234, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 0, [Emulated CPU subtype])
+
+        CPU_DEFINES="-DPPC -DARCH64"
        ;;
-     i?86)
+    i?86)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 7, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 10, [Emulated CPU subtype])
+
+        AC_DEFINE(SUPPORT_ARCH_i386)
+        CPU_DEFINES="-DI386 -i486 -i586 -i686"
     ;;
-     x86_64)
+    x86_64|amd64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777223, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 3, [Emulated CPU subtype])
+        
+        AC_DEFINE(SUPPORT_ARCH_i386)
+        AC_DEFINE(SUPPORT_ARCH_x86_64)
+        CPU_DEFINES="-DI386 -i486 -i586 -i686 -DARCH64"
     ;;
-     arm)
-        AC_DEFINE(EMULATED_HOST_CPU_TYPE, 12, [Emulated CPU type])
-        AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 0, [Emulated CPU subtype])
-    ;;
-     *)
-    AC_MSG_ERROR([Unsupported target $target_cpu])
+    *)
+        AC_MSG_ERROR([Unsupported target $target_cpu])
     ;;
 esac
 
-#as reported, some users may use llvm-c/Disassembler.h instead of local copy in include dir.
-#add these macros for avoid compilation failed.
+AC_DEFINE(_POSIX_C_SOURCE)
+AC_DEFINE(_DARWIN_C_SOURCE)
+AC_DEFINE(__APPLE_CPP__)
+AC_DEFINE(__DARWIN_UNIX03)
+AC_DEFINE(NeXT_MOD)
+AC_DEFINE(_SYS_UCRED_H_)
+AC_DEFINE(__DYNAMIC__)
 
-AC_DEFINE(__STDC_LIMIT_MACROS)
-AC_DEFINE(__STDC_CONSTANT_MACROS)
-
-
-
-#for as wrapper.
-AC_SUBST([ASLIBEXECDIR], ['${libexecdir}/as'])
-
-#for ld_class involk in ld64 and other command call.
+#AC_DEFINE(__MAC_OS_X_VERSION_MIN_REQUIRED, 1070)
 if test "$target_alias"; then
-AC_SUBST([PROGRAM_PREFIX], ['${target_alias}-'])
+    AC_DEFINE(PROGRAM_PREFIX, "${target_alias}-")
+else 
+    AC_DEFINE(PROGRAM_PREFIX, "")
 fi
 
-#disable warnings.
+AC_C_BIGENDIAN(
+  [ AC_DEFINE(__BIG_ENDIAN__) ], 
+  [ AC_DEFINE(__LITTLE_ENDIAN__) ]
+)
 
+
+LLVM_CFLAGS=`llvm-config --cflags`
+AC_SUBST(LLVM_CFLAGS)
+
+LLVM_CXXFLAGS=`llvm-config --cxxflags`
+AC_SUBST(LLVM_CXXFLAGS)
+
+LLVM_LDFLAGS=`llvm-config --ldflags`
+AC_SUBST(LLVM_LDFLAGS)
+
+OSX_CFLAGS="-I/tmp/apple-sdk/usr/include/ar.h -isystem/usr/include -idirafter/tmp/apple-sdk/usr/include"
+AC_SUBST(OSX_CFLAGS)
+
+
+AC_SEARCH_LIBS([dlopen], [dl dld], [], [
+  AC_MSG_ERROR([unable to find the dlopen() function])
+])
+
+AC_CHECK_LIB([dl], [dlopen], [DL_LIBS=-ldl])
+
+# Disable warnings.
 WARNINGS=""
 
 ORIGCFLAGS=$CFLAGS
@@ -192,83 +266,26 @@ CFLAGS=$ORIGCFLAGS
 AC_SUBST([WARNINGS], [$WARNINGS])
 
 
-# Checks for header files.
-AC_CHECK_HEADERS([stddef.h stdint.h stdlib.h])
 
-# Checks for typedefs, structures, and compiler characteristics.
-#AC_CHECK_HEADER_STDBOOL
-AC_TYPE_INT16_T
-AC_TYPE_INT32_T
-AC_TYPE_PID_T
-AC_TYPE_SIZE_T
-AC_TYPE_UINT16_T
-AC_TYPE_UINT32_T
-AC_TYPE_UINT8_T
 
-# Checks for library functions.
-AC_FUNC_CHOWN
-AC_FUNC_FORK
-AC_CHECK_FUNCS([memset strdup strrchr strtoul])
 
-AC_CHECK_LIB([dl],[dlopen],[
-         DL_LIBS=-ldl
-         ])
-AC_SUBST(DL_LIBS)
+#AC_SUBST(DL_LIBS)
 
-AC_CHECK_LIB([pthread],[pthread_create],[
-         PTHREAD_FLAGS=-pthread
-         ])
+AC_CHECK_LIB([pthread],[pthread_create],[PTHREAD_FLAGS=-pthread])
 AC_SUBST(PTHREAD_FLAGS)
 
-AC_CHECK_LIB([uuid],[uuid_generate_random],[
-         UUID_LIBS=-luuid
-         ])
+AC_CHECK_LIB([uuid],[uuid_generate_random],[UUID_LIBS=-luuid])
 AC_SUBST(UUID_LIBS)
 
-AC_CHECK_LIB([crypto],[MD5_Init],[
-         CRYPT_LIBS=-lcrypto
-         ])
-AC_SUBST(CRYPT_LIBS)
+#AC_CHECK_LIB([ crypto ], [ MD5_Init ], [ CRYPT_LIBS=-lcrypto ])
+#AC_SUBST(CRYPT_LIBS)
 
-AC_C_BIGENDIAN([AC_SUBST([ENDIAN_FLAG],[-D__BIG_ENDIAN__=1])],
-			[AC_SUBST([ENDIAN_FLAG],[-D__LITTLE_ENDIAN__=1])])
 
-# Check LTO
-AC_CHECK_PROG(HAVE_LLVM_CONFIG, llvm-config, true, false)
+#for as wrapper.
+#AC_SUBST([ASLIBEXECDIR], ['${libexecdir}/as'])
 
-#if test "x$HAVE_LLVM_CONFIG" = "xfalse"; then
-#        AC_CHECK_PROG(HAVE_LLVM_CONFIG_32, llvm-config-3.2, true, false)
-#        if test "x$HAVE_LLVM_CONFIG_32" = "xfalse"; then
-#                AC_MSG_ERROR([llvm-config or llvm-config-3.2 not found on your system,please install related packages])
-#        else
-#	        LLVM_LIBDIR=`llvm-config-3.2 --libdir`
-#        	if test -f $LLVM_LIBDIR/libLTO.so;then
-#                	LTO_LIBS="-L`llvm-config-3.2 --libdir` -lLTO"
-#                	LTO_DEFS="-DLTO_SUPPORT=1"
-#        	fi
-#        fi
-#else
-#        LLVM_LIBDIR=`llvm-config --libdir`
-#        if test -f $LLVM_LIBDIR/libLTO.so;then
-#                LTO_LIBS="-L`llvm-config --libdir` -lLTO"
-#                LTO_DEFS="-DLTO_SUPPORT=1"
-#        fi
-#fi
+# For ld_class involk in ld64 and other command call.
 
-# Check LTO
-AC_CHECK_PROG([llvm_config], [llvm-config],[yes],[no])
-if test "x$llvm-config" = "xno"; then
-        AC_MSG_ERROR("Could not find llvm-config.")
-else
-        LLVM_LIBDIR=`llvm-config --libdir`
-        if test -f $LLVM_LIBDIR/libLTO.so;then
-                LTO_LIBS="-L`llvm-config --libdir` -lLTO"
-                LTO_DEFS="-DLTO_SUPPORT=1"
-        fi
-fi
-
-AC_SUBST(LTO_LIBS)
-AC_SUBST(LTO_DEFS)
 
 #compile ld_classic or not. only for 32bit.
 # LD32=""
@@ -289,37 +306,27 @@ AC_SUBST(LTO_DEFS)
 # AC_MSG_NOTICE(["Your system is 64bit, disable ld_classic"])
 # fi
 
-AC_SUBST([CCTOOLS], [cctools-839])
-AC_CHECK_SIZEOF([long]) 
-AS_IF([test "$ac_cv_sizeof_long" -eq 8], 
-    [AC_SUBST([LD], [ld64-136])], 
-    [AC_SUBST([LD], [cctools-839/ld])]) 
-
-
-# sed 's/cctools-839/cctools-###' to change version numbers until
-# AC_CONFIG_FILES([$fu], [], [fu='fu']) does what it and the 
-# documentation and examples claim it should!
 AC_CONFIG_FILES([
 	Makefile
-	libstuff/Makefile
+	libemulated/Makefile
+  libstuff/Makefile
 	ar/Makefile
-	as/arm/Makefile
+	as/Makefile
+  as/arm/Makefile
 	as/i386/Makefile
-	as/x86_64/Makefile
 	as/ppc/Makefile
 	as/ppc64/Makefile
-	as/Makefile
-	man/Makefile
+	as/x86_64/Makefile
 	misc/Makefile
 	otool/Makefile
-	ld/Makefile
 
 	ld64/Makefile
-	ld64/3rd/Makefile
-	ld64/3rd/BlocksRuntime/Makefile
-	ld64/parsers/Makefile
-	ld64/passes/Makefile
-	ld64/other/Makefile
+	ld64/src/Makefile
+	ld64/src/ld/Makefile
+	ld64/src/ld/code-sign-blobs/Makefile
+	ld64/src/ld/parsers/Makefile
+	ld64/src/ld/passes/Makefile
+	ld64/src/other/Makefile
 ])
 
 AC_OUTPUT

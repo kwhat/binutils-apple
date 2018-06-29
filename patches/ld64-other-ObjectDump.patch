@@ -1,0 +1,42 @@
+--- a/ld64/src/other/ObjectDump.cpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/other/ObjectDump.cpp	2018-06-28 14:23:27.235272125 -0700
+@@ -34,6 +34,8 @@
+ #include "MachOFileAbstraction.hpp"
+ #include "parsers/macho_relocatable_file.h"
+ #include "parsers/lto_file.h"
++#include "emulated/strlcat.h" // Patch Jun 28, 2018 - Alexander Barker
++#include "emulated/strlcpy.h" // Patch Jun 28, 2018 - Alexander Barker
+ 
+ static bool			sDumpContent= true;
+ static bool			sDumpStabs	= false;
+@@ -51,6 +53,7 @@
+ static int sPrintAlign;
+ static int sPrintName;
+ 
++/* Patch Jun 28, 2018 - Alexander Barker
+  __attribute__((noreturn))
+ void throwf(const char* format, ...) 
+ {
+@@ -73,6 +76,7 @@
+ 	va_end(list);
+ 	fprintf(stderr, "\n");
+ }
++*/
+ 
+ static void dumpStabs(const std::vector<ld::relocatable::File::Stab>* stabs)
+ {
+@@ -1131,12 +1135,12 @@
+ 	ld::relocatable::File* objResult = mach_o::relocatable::parse(p, fileLen, path, stat_buf.st_mtime, ld::File::Ordinal::NullOrdinal(), objOpts);
+ 	if ( objResult != NULL )
+ 		return objResult;
+-
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ 	// see if it is an llvm object file
+ 	objResult = lto::parse(p, fileLen, path, stat_buf.st_mtime, ld::File::Ordinal::NullOrdinal(), sPreferredArch, sPreferredSubArch, false);
+ 	if ( objResult != NULL ) 
+ 		return objResult;
+-
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 	throwf("not a mach-o object file: %s", path);
+ #else
+ 	// for peformance testing

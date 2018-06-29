@@ -1,0 +1,73 @@
+--- a/ld64/src/ld/Options.cpp	2012-09-25 15:56:00.000000000 -0700
++++ b/ld64/src/ld/Options.cpp	2018-06-28 12:30:14.265867142 -0700
+@@ -34,6 +34,7 @@
+ #include <spawn.h>
+ #include <cxxabi.h>
+ #include <Availability.h>
++#include <limits.h> // Patch Jun 26, 2018 - Alexander Barker
+ 
+ #include <vector>
+ 
+@@ -41,6 +42,8 @@
+ #include "Architectures.hpp"
+ #include "MachOFileAbstraction.hpp"
+ #include "Snapshot.h"
++#include "emulated/strlcpy.h" // Patch Jun 26, 2018 - Alexander Barker
++#include "emulated/strlcat.h" // Patch Jun 28, 2018 - Alexander Barker
+ 
+ // upward dependency on lto::version()
+ namespace lto {
+@@ -1658,7 +1661,7 @@
+ 	::close(fd);
+ 
+ 	// record section to create
+-	ExtraSection info = { segment, section, path, (uint8_t*)p, stat_buf.st_size };
++	ExtraSection info = { segment, section, path, (uint8_t*)p, (uint64_t)stat_buf.st_size }; // Patch Jun 26, 2018 - Alexander Barker
+ 	fExtraSections.push_back(info);
+ }
+ 
+@@ -2894,9 +2897,11 @@
+ 			fprintf(stderr, "configured to support archs: %s\n", ALL_SUPPORTED_ARCHS);
+ 			 // if only -v specified, exit cleanly
+ 			 if ( argc == 2 ) {
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ 				const char* ltoVers = lto::version();
+ 				if ( ltoVers != NULL )
+ 					fprintf(stderr, "LTO support using: %s\n", ltoVers);
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 				exit(0);
+ 			}
+ 		}
+@@ -4034,7 +4039,8 @@
+ 
+ 	// make sure all required exported symbols exist
+ 	std::vector<const char*> impliedExports;
+-	for (NameSet::iterator it=fExportSymbols.regularBegin(); it != fExportSymbols.regularEnd(); ++it) {
++  // Patch Jun 26, 2018 - Alexander Barker
++	for (NameSet::const_iterator it=fExportSymbols.regularBegin(); it != fExportSymbols.regularEnd(); ++it) {
+ 		const char* name = *it;
+ 		const int len = strlen(name);
+ 		if ( (strcmp(&name[len-3], ".eh") == 0) || (strncmp(name, ".objc_category_name_", 20) == 0) ) {
+@@ -4066,7 +4072,8 @@
+ 	}
+ 
+ 	// make sure all required re-exported symbols exist
+-	for (NameSet::iterator it=fReExportSymbols.regularBegin(); it != fReExportSymbols.regularEnd(); ++it) {
++	// Patch Jun 26, 2018 - Alexander Barker
++	for (NameSet::const_iterator it=fReExportSymbols.regularBegin(); it != fReExportSymbols.regularEnd(); ++it) {
+ 		fInitialUndefines.push_back(*it);
+ 	}
+ 	
+--- a/ld64/src/ld/Options.h	2018-06-28 17:11:56.763825141 -0700
++++ b/ld64/src/ld/Options.h	2018-06-28 00:30:13.567915520 -0700
+@@ -355,8 +355,8 @@
+ 		bool					containsNonWildcard(const char*) const;
+ 		bool					empty() const			{ return fRegular.empty() && fWildCard.empty(); }
+ 		bool					hasWildCards() const	{ return !fWildCard.empty(); }
+-		NameSet::iterator		regularBegin() const	{ return fRegular.begin(); }
+-		NameSet::iterator		regularEnd() const		{ return fRegular.end(); }
++		NameSet::const_iterator	regularBegin() const	{ return fRegular.begin(); } // Patch Jun 21, 2018 - Alexander Barker
++		NameSet::const_iterator	regularEnd() const		{ return fRegular.end(); } // Patch Jun 21, 2018 - Alexander Barker
+ 		void					remove(const NameSet&); 
+ 	private:
+ 		static bool				hasWildCards(const char*);

@@ -1,0 +1,21 @@
+--- a/ar/misc.c	2018-06-27 22:49:16.455254355 -0700
++++ b/ar/misc.c	2018-06-27 21:32:42.526842432 -0700
+@@ -164,10 +164,10 @@
+ badfmt()
+ {
+ 
+-	errno = EFTYPE;
++	errno = EINVAL; // Patch Dec 28, 2014 - Alexander Barker
+ 	err(1, "%s", archive);
+ }
+-
++/* Patch Jun 17, 2018
+ void
+ error(name)
+ 	char *name;
+@@ -175,3 +175,5 @@
+ 
+ 	err(1, "%s", name);
+ }
++*/
++

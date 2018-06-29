@@ -1,0 +1,11 @@
+--- a/ld64/src/ld/passes/branch_island.cpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/ld/passes/branch_island.cpp	2018-06-28 03:19:33.794297231 -0700
+@@ -43,7 +43,7 @@
+ 
+ 
+ 
+-struct TargetAndOffset { const ld::Atom* atom; uint32_t offset; };
++struct TargetAndOffset { const ld::Atom* atom; uint64_t offset; }; // Patch Jun 26, 2018 - Alexander Barker
+ class TargetAndOffsetComparor
+ {
+ public:

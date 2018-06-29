@@ -1,0 +1,21 @@
+--- a/libstuff/writeout.c	2018-06-27 22:49:17.115272307 -0700
++++ b/libstuff/writeout.c	2018-06-27 16:39:34.264674649 -0700
+@@ -24,7 +24,17 @@
+ #include <sys/time.h>
+ #include <mach/mach.h>
+ #include "stuff/openstep_mach.h"
+-#include <libc.h>
++// Begin Patch Jun 27, 2018 - Alexander Barker
++//#include <libc.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <time.h>
++#include <sys/types.h> 
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <limits.h>
++// End Patch
+ #ifndef __OPENSTEP__
+ #include <utime.h>
+ #endif

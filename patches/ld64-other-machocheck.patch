@@ -1,0 +1,28 @@
+--- a/ld64/src/other/machochecker.cpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/other/machochecker.cpp	2018-06-28 13:22:25.717763708 -0700
+@@ -34,6 +34,7 @@
+ #include <vector>
+ #include <set>
+ #include <unordered_set>
++#include <utility> // Patch Jun 28, 2018 - Alexander Barker
+ 
+ #include "configure.h"
+ 
+@@ -498,7 +499,7 @@
+ 				else {
+ 					throw "overlapping segment vm addresses";
+ 				}
+-				segmentAddressRanges.push_back(std::make_pair<pint_t, pint_t>(startAddr, endAddr));
++				segmentAddressRanges.push_back(std::make_pair<pint_t, pint_t>((pint_t) startAddr, (pint_t) endAddr)); // Patch Jun 28, 2018 - Alexander Barker
+ 			}
+ 			// see if this overlaps another segment file offset range
+ 			uint64_t startOffset = segCmd->fileoff();
+@@ -515,7 +516,7 @@
+ 				else {
+ 					throw "overlapping segment file data";
+ 				}
+-				segmentFileOffsetRanges.push_back(std::make_pair<pint_t, pint_t>(startOffset, endOffset));
++				segmentFileOffsetRanges.push_back(std::make_pair<pint_t, pint_t>((pint_t) startOffset, (pint_t) endOffset)); // Patch Jun 28, 2018 - Alexander Barker
+ 				// check is within file bounds
+ 				if ( (startOffset > fLength) || (endOffset > fLength) )
+ 					throw "segment file data is past end of file";

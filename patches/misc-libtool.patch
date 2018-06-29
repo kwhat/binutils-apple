@@ -1,0 +1,34 @@
+--- a/misc/libtool.c	2018-06-27 22:49:16.915266867 -0700
++++ b/binutils-apple-working/misc/libtool.c	2018-06-27 22:07:18.560094343 -0700
+@@ -27,7 +27,15 @@
+  */
+ #include <mach/mach.h>
+ #include "stuff/openstep_mach.h"
+-#include <libc.h>
++// Being Patch Jun 27, 2018 - Alexander Barker
++//#include <libc.h>
++#include <unistd.h>
++#include <time.h>
++#include <fcntl.h>
++#include <limits.h>
++#include <sys/param.h>
++// End Patch
++
+ #ifndef __OPENSTEP__
+ #include <utime.h>
+ #endif
+@@ -1369,8 +1377,12 @@
+ 			    }
+ 			}
+ 		    }
+-		    else if(ofiles[i].arch_type == OFILE_Mach_O ||
+-		            ofiles[i].arch_type == OFILE_LLVM_BITCODE){
++		    else if(ofiles[i].arch_type == OFILE_Mach_O
++// Patch Jun 21, 2018 - Alexander Barker
++#ifdef LTO_SUPPORT
++		            || ofiles[i].arch_type == OFILE_LLVM_BITCODE
++#endif
++		        ){
+ 			if(cmd_flags.ranlib == TRUE){
+ 			    error("for architecture: %s file: %s is not an "
+ 				  "archive (no processing done on this file)",

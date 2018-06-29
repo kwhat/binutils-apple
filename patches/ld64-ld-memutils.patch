@@ -1,0 +1,15 @@
+--- a/ld64/src/ld/code-sign-blobs/memutils.h	2018-06-28 17:11:56.767158567 -0700
++++ b/ld64/src/ld/code-sign-blobs/memutils.h	2018-06-28 00:25:50.364000988 -0700
+@@ -50,9 +50,9 @@
+ //
+ // Get the local alignment for a type, as used by the acting compiler.
+ //
+-template <class T>
+-inline size_t alignof() { struct { char c; T t; } s; return sizeof(s) - sizeof(T); }
+-
++// Patch 12/28/2014
++//template <class T>
++//inline size_t alignof() { struct { char c; T t; } s; return sizeof(s) - sizeof(T); }
+ 
+ //
+ // Get the local offset of a field in a (struct or class) type, as layed out

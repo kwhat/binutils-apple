@@ -1,13 +1,16 @@
-Darwin assembler as(1) and static linker ld(1), XCode Tools 4.6
+Darwin assembler as(1) and static linker ld(1), XCode Tools 4.6 (10.8.4)
+
+This repository contains everything needed to create an Apple OS X cross 
+compiler toolchain for Linux.
+
+Dependencies:
+ * LLVM 5/6
+ * [MacOSX10.8.sdk](https://github.com/kwhat/apple-sdk/tree/10.8)
 
 To Compile:
-autoreconf --install --force --verbose
-CC=clang CXX=clang++ ./configure --prefix=/usr --target=i586-apple-darwin9
+git checkout https://github.com/kwhat/apple-sdk.git /opt/MacOSX10.8.sdk
+./initialize.sh
+./bootstrap.sh
+./configure --prefix=/usr --target=i586-apple-darwin9
 make
 make install
-
-Credits:
-Most of the work in this project is based on the following two projects.
-
-https://code.google.com/p/ios-toolchain-based-on-clang-for-linux/
-https://code.google.com/p/iphone-dev/

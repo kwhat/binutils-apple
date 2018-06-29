@@ -1,0 +1,11 @@
+--- a/misc/checksyms.c	2018-06-27 22:49:16.925267139 -0700
++++ b/misc/checksyms.c	2018-06-27 21:53:21.420590550 -0700
+@@ -25,7 +25,7 @@
+ #include <string.h>
+ #include <ctype.h>
+ #include <limits.h>
+-#include <libc.h>
++//#include <libc.h> // Jun 24, 2018 - Alexander Barker
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <mach/mach.h>

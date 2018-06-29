@@ -1,0 +1,11 @@
+--- a/libemulated/strlcpy.c	2018-06-28 17:11:57.943858019 -0700
++++ b/libemulated/strlcpy.c	2018-06-28 14:34:49.660719246 -0700
+@@ -21,7 +21,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
+-#include <strings.h>
++#include <string.h> // Patch Jun 28, 2018 - Alexander Barker
+ 
+ size_t
+ strlcpy(char * restrict dst, const char * restrict src, size_t maxlen) {

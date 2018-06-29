@@ -1,17 +1,26 @@
 bin_PROGRAMS = otool 
 
-#$(top_builddir)/libobjc2/libobjc.la 
 otool_LDADD =  \
+	$(top_builddir)/libemulated/libemulated.la \
 	$(top_builddir)/libstuff/libstuff.la \
 	$(DL_LIBS) 
 
-otool_LDFLAGS = $(PTHREAD_FLAGS) -lobjc
+otool_LDFLAGS = \
+	$(AM_LDFLAGS) \
+	$(PTHREAD_FLAGS)
 
-otool_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/foreign -I$(top_srcdir)/libstuff -D__DARWIN_UNIX03 $(WARNINGS) $(LTO_DEFS) -D__DARWIN_UNIX03 $(ENDIAN_FLAG) -DOTOOL
+otool_CFLAGS = \
+	$(CFLAGS) \
+	$(WARNINGS) \
+	-I$(top_srcdir)/include \
+	$(LLVM_CFLAGS) \
+	$(CPU_DEFINES) \
+	$(ENDIAN_FLAG) \
+	-idirafter/opt/MacOSX10.8.sdk/usr/include \
+	-DOTOOL -UPC
 
-otool_SOURCES =  \
+otool_SOURCES = \
 	main.c \
-	../libstuff/ofile.c \
 	ofile_print.c \
 	m68k_disasm.c \
 	i860_disasm.c \
@@ -24,4 +33,3 @@ otool_SOURCES =  \
 	print_objc.c \
 	print_objc2_32bit.c \
 	print_objc2_64bit.c
-

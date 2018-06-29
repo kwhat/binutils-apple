@@ -1,0 +1,14 @@
+--- a/ld64/src/other/rebase.cpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/other/rebase.cpp	2018-06-28 12:55:59.831463082 -0700
+@@ -783,9 +783,11 @@
+ 	if ( dst == -1 )
+ 		throwf("can't create temp file %s, errnor=%d", dstFile, errno);
+ 
++#ifdef F_NOCACHE // Patch Jun 28, 2018 - Alexander Barker
+ 	// mark source as "don't cache"
+ 	(void)fcntl(src, F_NOCACHE, 1);
+ 	// we want to cache the dst because we are about to map it in and modify it
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 	
+ 	// copy permission bits
+ 	if ( chmod(dstFile, stat_buf.st_mode & 07777) == -1 )

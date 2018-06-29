@@ -1,0 +1,56 @@
+--- a/ld64/src/ld/parsers/macho_relocatable_file.cpp	2012-10-19 15:50:28.000000000 -0700
++++ b/ld64/src/ld/parsers/macho_relocatable_file.cpp	2018-06-28 03:18:37.829418225 -0700
+@@ -50,6 +50,8 @@
+ #include "ld.hpp"
+ #include "macho_relocatable_file.h"
+ 
++#include "qsort_r.h" // Patch Jun 26, 2018 - Alexander Barker
++#define CPU_SUBTYPE_X86_ALL ((cpu_subtype_t)3) // Patch Jun 28, 2018 - Alexander Barker
+ 
+ 
+ extern void throwf(const char* format, ...) __attribute__ ((noreturn,format(printf, 1, 2)));
+@@ -1871,7 +1873,7 @@
+ 	// sort by symbol table address
+ 	for (uint32_t i=0; i < _machOSectionsCount; ++i)
+ 		array[i] = i;
+-	::qsort_r(array, _machOSectionsCount, sizeof(uint32_t), this, &sectionIndexSorter);
++	::qsort_r_local(array, _machOSectionsCount, sizeof(uint32_t), this, &sectionIndexSorter); // Patch Jun 26, 2018 - Alexander Barker
+ 
+ 	if ( log ) {
+ 		fprintf(stderr, "sorted sections:\n");
+@@ -1964,7 +1966,7 @@
+ 	
+ 	// sort by symbol table address
+ 	ParserAndSectionsArray extra = { this, sectionArray };
+-	::qsort_r(array, _symbolsInSections, sizeof(uint32_t), &extra, &symbolIndexSorter);
++    ::qsort_r_local(array, _symbolsInSections, sizeof(uint32_t), &extra, &symbolIndexSorter); // Patch Jun 26, 2018 - Alexander Barker
+ 
+ 	
+ 	// look for two symbols at same address
+@@ -3749,7 +3751,7 @@
+ 
+ template <>
+ void CFISection<x86_64>::cfiParse(class Parser<x86_64>& parser, uint8_t* buffer, 
+-									libunwind::CFI_Atom_Info<CFISection<x86_64>::OAS>::CFI_Atom_Info cfiArray[], 
++									libunwind::CFI_Atom_Info<CFISection<x86_64>::OAS> cfiArray[], // Patch Jun 26, 2018 - Alexander Barker
+ 									uint32_t count)
+ {
+ 	// copy __eh_frame data to buffer
+@@ -3811,7 +3813,7 @@
+ 
+ template <>
+ void CFISection<x86>::cfiParse(class Parser<x86>& parser, uint8_t* buffer, 
+-									libunwind::CFI_Atom_Info<CFISection<x86>::OAS>::CFI_Atom_Info cfiArray[], 
++									libunwind::CFI_Atom_Info<CFISection<x86>::OAS> cfiArray[], // Patch Jun 26, 2018 - Alexander Barker
+ 									uint32_t count)
+ {
+ 	// create ObjectAddressSpace object for use by libunwind
+@@ -3831,7 +3833,7 @@
+ 
+ template <>
+ void CFISection<arm>::cfiParse(class Parser<arm>& parser, uint8_t* buffer, 
+-									libunwind::CFI_Atom_Info<CFISection<arm>::OAS>::CFI_Atom_Info cfiArray[], 
++									libunwind::CFI_Atom_Info<CFISection<arm>::OAS> cfiArray[], // Patch Jun 26, 2018 - Alexander Barker
+ 									uint32_t count)
+ {
+ 	// arm does not use zero cost exceptions

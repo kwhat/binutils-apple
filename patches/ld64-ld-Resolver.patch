@@ -1,0 +1,38 @@
+--- a/ld64/src/ld/Resolver.cpp	2012-10-19 15:50:28.000000000 -0700
++++ b/ld64/src/ld/Resolver.cpp	2018-06-28 12:31:21.791053466 -0700
+@@ -57,7 +57,7 @@
+ #include "SymbolTable.h"
+ #include "Resolver.h"
+ #include "parsers/lto_file.h"
+-
++#include "emulated/strlcpy.h" // Patch Jun 26, 2018 - Alexander Barker
+ 
+ namespace ld {
+ namespace tool {
+@@ -1319,6 +1319,7 @@
+ 	}
+ }
+ 
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ void Resolver::linkTimeOptimize()
+ {
+ 	// only do work here if some llvm obj files where loaded
+@@ -1408,7 +1409,7 @@
+ 		this->checkDylibSymbolCollisions();
+ 	}
+ }
+-
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 
+ void Resolver::tweakWeakness()
+ {
+@@ -1455,7 +1456,9 @@
+ 	this->checkDylibSymbolCollisions();
+ 	this->removeCoalescedAwayAtoms();
+ 	this->fillInEntryPoint();
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ 	this->linkTimeOptimize();
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 	this->fillInInternalState();
+ 	this->tweakWeakness();
+     _symbolTable.checkDuplicateSymbols();

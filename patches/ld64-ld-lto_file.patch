@@ -1,0 +1,32 @@
+--- a/ld64/src/ld/parsers/lto_file.cpp	2012-10-19 15:50:28.000000000 -0700
++++ b/ld64/src/ld/parsers/lto_file.cpp	2018-06-28 12:21:15.121128226 -0700
+@@ -22,6 +22,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ #ifndef __LTO_READER_H__
+ #define __LTO_READER_H__
+ 
+@@ -876,4 +877,4 @@
+ 
+ 
+ #endif
+-
++#endif // Patch Jun 28, 2018 - Alexander Barker
+--- a/ld64/src/ld/parsers/lto_file.h	2018-06-28 17:11:56.777158846 -0700
++++ b/ld64/src/ld/parsers/lto_file.h	2018-06-28 12:21:35.248343957 -0700
+@@ -22,6 +22,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ #ifndef __LTO_FILE_H__
+ #define __LTO_FILE_H__
+ 
+@@ -69,4 +70,4 @@
+ 
+ #endif // __LTO_FILE_H__
+ 
+-
++#endif // Patch Jun 28, 2018 - Alexander Barker

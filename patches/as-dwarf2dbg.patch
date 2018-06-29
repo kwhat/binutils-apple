@@ -1,0 +1,11 @@
+--- a/as/dwarf2dbg.c	2018-06-27 22:49:16.491922020 -0700
++++ b/as/dwarf2dbg.c	2018-06-27 21:39:50.638496302 -0700
+@@ -56,7 +56,7 @@
+ #endif
+ 
+ #include "dwarf2dbg.h"
+-#include <filenames.h>
++#include "filenames.h" // Patch Jun 21, 2018 - Alexander Barker
+ 
+ #ifdef HAVE_DOS_BASED_FILE_SYSTEM
+ /* We need to decide which character to use as a directory separator.

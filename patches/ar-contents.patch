@@ -1,0 +1,14 @@
+--- a/ar/contents.c	2018-06-27 22:49:16.451920931 -0700
++++ b/ar/contents.c	2018-06-27 22:27:33.643207898 -0700
+@@ -81,6 +81,11 @@
+ #include "archive.h"
+ #include "extern.h"
+ 
++// Begin Patch Jun 27, 2018 - Alexander Barker
++#include <time.h>
++#include "emulated/strmode.h"
++// End Patch
++
+ /*
+  * contents --
+  *	Handles t[v] option - opens the archive and then reads headers,

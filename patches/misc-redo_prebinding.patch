@@ -1,0 +1,10 @@
+--- a/misc/redo_prebinding.c	2018-06-27 22:49:16.951934532 -0700
++++ b/misc/redo_prebinding.c	2018-06-27 22:30:55.255342764 -0700
+@@ -110,6 +110,7 @@
+ #import <stuff/macosx_deployment_target.h>
+ 
+ #include <mach-o/dyld.h>
++#include "emulated/darwin.h" // Patch Jun 27, 2018 - Alexander Barker
+ 
+ #define U_ABS(l) (((int32_t)(l))<0 ? (uint32_t)(-(l)) : (l))
+ 

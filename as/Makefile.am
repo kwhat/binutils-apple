@@ -1,8 +1,22 @@
-# SUBDIRS=arm i386 x86_64 ppc ppc64
+SUBDIRS = arm i386 x86_64 ppc ppc64
 
 bin_PROGRAMS = as 
-as_LDADD = $(top_builddir)/libstuff/libstuff.la
 
-as_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/foreign -I$(top_srcdir)/libstuff $(WARNINGS) $(LTO_DEFS) -DNeXT_MOD -DASLIBEXECDIR="\"$(ASLIBEXECDIR)/\"" -D__DARWIN_UNIX03 $(ENDIAN_FLAG)
+as_CFLAGS = \
+	$(CFLAGS) \
+	$(WARNINGS) \
+	$(CPU_DEFINES) \
+	$(ENDIAN_FLAG) \
+	$(LLVM_CFLAGS) \
+	-I$(top_srcdir)/include \
+	-idirafter/opt/MacOSX10.8.sdk/usr/include
+
+as_LDFLAGS = \
+	$(LDFLAGS)
+	$(LLVM_LDFLAGS)
+
+as_LDADD = \
+	$(top_builddir)/libemulated/libemulated.la \
+	$(top_builddir)/libstuff/libstuff.la
 
 as_SOURCES = driver.c 

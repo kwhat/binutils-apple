@@ -1,0 +1,40 @@
+--- a/ar/archive.c	2018-06-27 22:49:16.461921203 -0700
++++ b/ar/archive.c	2018-06-27 16:46:03.275430777 -0700
+@@ -68,6 +68,7 @@
+ 
+ #include <sys/param.h>
+ #include <sys/stat.h>
++#include <sys/file.h> // Patch Dec 28, 2014 - Alexander Barker
+ 
+ #include <ar.h>
+ #include <dirent.h>
+@@ -84,6 +85,11 @@
+ #include "archive.h"
+ #include "extern.h"
+ 
++// Patch Jun 17, 2018 - Alexander Barker
++#ifndef AR_EFMT1
++#define	AR_EFMT1	"#1/"		/* extended format #1 */
++#endif
++
+ typedef struct ar_hdr HDR;
+ static char hb[sizeof(HDR) + 1];	/* real header */
+ 
+@@ -166,7 +172,7 @@
+ 		/* Locking seems to not be working */
+ 		case ENOTSUP:
+ 		case EHOSTUNREACH:
+-		case EBADRPC:
++		//case EBADRPC:  // Patch Dec 28, 2014 - Alexander Barker
+ 		default:
+ 			/* Filesystem does not support locking */
+ 			break;
+@@ -321,7 +327,7 @@
+ 		 * things for exact binary equality.
+ 		 */
+ 		if (getenv("ZERO_AR_DATE") == NULL)
+-			tv_sec = (long int)sb->st_mtimespec.tv_sec;
++			tv_sec = (long int)sb->st_mtime; // Patch Dec 28, 2014 - Alexander Barker
+ 		else
+ 			tv_sec = (long int)0;
+ 

@@ -1,0 +1,30 @@
+--- a/include/i386/_types.h	2018-06-27 23:56:52.429570403 -0700
++++ b/include/i386/_types.h	2018-06-27 23:26:15.809127972 -0700
+@@ -43,8 +43,15 @@
+ typedef	unsigned short		__uint16_t;
+ typedef int			__int32_t;
+ typedef unsigned int		__uint32_t;
++
++// Patch Jun 27, 2018 - Alexander Barker
++#ifdef __GNUC__
++typedef long int		__int64_t; // Patch Jun 27, 2018 - Alexander Barker
++typedef unsigned long int	__uint64_t; // Patch Jun 27, 2018 - Alexander Barker
++#else
+ typedef long long		__int64_t;
+ typedef unsigned long long	__uint64_t;
++#endif
+ 
+ typedef long			__darwin_intptr_t;
+ typedef unsigned int		__darwin_natural_t;
+@@ -76,9 +83,9 @@
+ typedef union {
+ 	char		__mbstate8[128];
+ 	long long	_mbstateL;			/* for alignment */
+-} __mbstate_t;
++} __mb_state_t; // Patch Jun 27, 2018 - Alexander Barker
+ 
+-typedef __mbstate_t		__darwin_mbstate_t;	/* mbstate_t */
++typedef __mb_state_t		__darwin_mbstate_t;	/* mbstate_t */ // Patch Jun 27, 2018 - Alexander Barker
+ 
+ #if defined(__GNUC__) && defined(__PTRDIFF_TYPE__)
+ typedef __PTRDIFF_TYPE__	__darwin_ptrdiff_t;	/* ptr1 - ptr2 */

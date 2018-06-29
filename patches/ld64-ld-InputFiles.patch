@@ -1,0 +1,71 @@
+--- a/ld64/src/ld/InputFiles.cpp	2012-10-19 15:50:28.000000000 -0700
++++ b/ld64/src/ld/InputFiles.cpp	2018-06-28 12:26:46.046819870 -0700
+@@ -26,6 +26,7 @@
+ #include <stdlib.h>
+ #include <sys/types.h>
+ #include <sys/stat.h>
++#include <sys/param.h> // Patch Jun 26, 2018 - Alexander Barker
+ #include <sys/mman.h>
+ #include <sys/sysctl.h>
+ #include <fcntl.h>
+@@ -181,9 +182,11 @@
+ 	if ( result != NULL  )
+ 		 return result;
+ 		 
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ 	result = lto::archName(p, len);
+ 	if ( result != NULL  )
+ 		 return result;
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 	
+ 	if ( strncmp((const char*)p, "!<arch>\n", 8) == 0 )
+ 		return "archive";
+@@ -282,6 +285,7 @@
+ 		return objResult;
+ 	}
+ 
++#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ 	// see if it is an llvm object file
+ 	objResult = lto::parse(p, len, info.path, info.modTime, info.ordinal, _options.architecture(), _options.subArchitecture(), _options.logAllFiles());
+ 	if ( objResult != NULL ) {
+@@ -289,6 +293,7 @@
+ 		OSAtomicIncrement32(&_totalObjectLoaded);
+ 		return objResult;
+ 	}
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 	
+ 	// see if it is a dynamic library
+ 	ld::dylib::File* dylibResult = mach_o::dylib::parse(p, len, info.path, info.modTime, _options, info.ordinal, info.options.fBundleLoader, indirectDylib);
+@@ -312,13 +317,14 @@
+ 		return archiveResult;
+ 	}
+ 	
++	#ifdef LTO_SUPPORT // Patch Jun 28, 2018 - Alexander Barker
+ 	// does not seem to be any valid linker input file, check LTO misconfiguration problems
+ 	if ( lto::archName((uint8_t*)p, len) != NULL ) {
+ 		if ( lto::libLTOisLoaded() ) {
+ 			throwf("lto file was built for %s which is not the architecture being linked (%s): %s", fileArch(p, len), _options.architectureName(), info.path);
+ 		}
+ 		else {
+-			const char* libLTO = "libLTO.dylib";
++			const char* libLTO = "libLTO.so"; // Patch Jun 26, 2018 - Alexander Barker
+ 			char ldPath[PATH_MAX];
+ 			char tmpPath[PATH_MAX];
+ 			char libLTOPath[PATH_MAX];
+@@ -330,7 +336,7 @@
+ 				if ( realpath(ldPath, tmpPath) != NULL ) {
+ 					char* lastSlash = strrchr(tmpPath, '/');
+ 					if ( lastSlash != NULL )
+-						strcpy(lastSlash, "/../lib/libLTO.dylib");
++						strcpy(lastSlash, "/../lib/llvm/libLTO.so"); // Patch Jun 26, 2018 - Alexander Barker
+ 					libLTO = tmpPath;
+ 					if ( realpath(tmpPath, libLTOPath) != NULL ) 
+ 						libLTO = libLTOPath;
+@@ -339,6 +345,7 @@
+ 			throwf("could not process llvm bitcode object file, because %s could not be loaded", libLTO);
+ 		}
+ 	}
++#endif // Patch Jun 28, 2018 - Alexander Barker
+ 
+ 	// error handling
+ 	if ( ((fat_header*)p)->magic == OSSwapBigToHostInt32(FAT_MAGIC) ) {

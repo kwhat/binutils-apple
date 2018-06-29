@@ -1,0 +1,18 @@
+--- a/ld64/src/ld/code-sign-blobs/blob.h	2018-06-28 17:11:56.767158567 -0700
++++ b/ld64/src/ld/code-sign-blobs/blob.h	2018-06-28 00:25:37.533647567 -0700
+@@ -47,6 +47,15 @@
+ #include <errno.h>
+ #include <cstdio>
+ 
++// Begin Patch 12/28/2014
++#include <string.h>
++#include <unistd.h>
++
++namespace std {
++    typedef ::FILE FILE;
++}
++// End Patch 12/28/2014
++
+ namespace Security {
+ 
+ enum {

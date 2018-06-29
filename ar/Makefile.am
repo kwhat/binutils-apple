@@ -1,16 +1,34 @@
-bin_PROGRAMS = ar 
-ar_LDADD = $(top_builddir)/libstuff/libstuff.la
+bin_PROGRAMS = ar
 
-ar_CFLAGS = -D__DARWIN_UNIX03 -I$(top_srcdir)/include -I$(top_srcdir)/include/foreign -I$(top_srcdir)/libstuff $(WARNINGS) $(LTO_DEFS) $(ENDIAN_FLAG)
+ar_CFLAGS = \
+	$(CFLAGS) \
+	$(WARNINGS) \
+	$(CPU_DEFINES) \
+	$(ENDIAN_FLAG) \
+	$(LLVM_CFLAGS) \
+	-I$(top_srcdir)/include \
+	-idirafter/opt/MacOSX10.8.sdk/usr/include
 
-ar_SOURCES =  \
-	append.c  \
-	ar.c  \
-	archive.c  \
-	contents.c  \
-	delete.c  \
-	extract.c  \
-	misc.c  \
-	move.c  \
-	print.c  \
+ar_LDFLAGS = \
+	$(LDFLAGS) \
+	$(LLVM_LDFLAGS)
+
+ar_LDADD = \
+	$(top_builddir)/libemulated/libemulated.la \
+	$(top_builddir)/libstuff/libstuff.la
+
+ar_SOURCES = \
+	append.c \
+	ar.c \
+	archive.c \
+	contents.c \
+	delete.c \
+	extract.c \
+	misc.c \
+	move.c \
+	print.c \
 	replace.c
+
+ar_MANPAGES1 = ar.1
+
+ar_MANPAGES5 = ar.5
