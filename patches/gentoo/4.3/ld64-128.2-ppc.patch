@@ -1,0 +1,5492 @@
+diff --git a/src/abstraction/MachOFileAbstraction.hpp b/src/abstraction/MachOFileAbstraction.hpp
+index f4d136f..ebb7b44 100644
+--- a/src/abstraction/MachOFileAbstraction.hpp
++++ b/src/abstraction/MachOFileAbstraction.hpp
+@@ -30,6 +30,7 @@
+ #include <mach-o/fat.h>
+ #include <mach-o/stab.h>
+ #include <mach-o/reloc.h>
++#include <mach-o/ppc/reloc.h>
+ #include <mach-o/x86_64/reloc.h>
+ #include <mach-o/arm/reloc.h>
+ #include <mach-o/compact_unwind_encoding.h>
+@@ -38,6 +39,7 @@
+ 
+ #include "FileAbstraction.hpp"
+ 
++#include "configure.h"
+ 
+ // stuff that will eventually go away once newer cctools headers are widespread
+ #ifndef LC_LOAD_UPWARD_DYLIB
+diff --git a/src/ld/HeaderAndLoadCommands.hpp b/src/ld/HeaderAndLoadCommands.hpp
+index 903a2bf..582e7e3 100644
+--- a/src/ld/HeaderAndLoadCommands.hpp
++++ b/src/ld/HeaderAndLoadCommands.hpp
+@@ -519,15 +519,49 @@ uint32_t HeaderAndLoadCommandsAtom<A>::flags() const
+ 	return bits;
+ }
+ 
++#if SUPPORT_ARCH_ppc
++template <> uint32_t HeaderAndLoadCommandsAtom<ppc>::magic() const		{ return MH_MAGIC; }
++#endif
++#if SUPPORT_ARCH_ppc64
++template <> uint32_t HeaderAndLoadCommandsAtom<ppc64>::magic() const		{ return MH_MAGIC_64; }
++#endif
+ template <> uint32_t HeaderAndLoadCommandsAtom<x86>::magic() const		{ return MH_MAGIC; }
+ template <> uint32_t HeaderAndLoadCommandsAtom<x86_64>::magic() const	{ return MH_MAGIC_64; }
++#if SUPPORT_ARCH_arm_any
+ template <> uint32_t HeaderAndLoadCommandsAtom<arm>::magic() const		{ return MH_MAGIC; }
+-
++#endif
++
++#if SUPPORT_ARCH_ppc
++template <> uint32_t HeaderAndLoadCommandsAtom<ppc>::cpuType() const	{ return CPU_TYPE_POWERPC; }
++#endif
++#if SUPPORT_ARCH_ppc64
++template <> uint32_t HeaderAndLoadCommandsAtom<ppc64>::cpuType() const	{ return CPU_TYPE_POWERPC64; }
++#endif
+ template <> uint32_t HeaderAndLoadCommandsAtom<x86>::cpuType() const	{ return CPU_TYPE_I386; }
+ template <> uint32_t HeaderAndLoadCommandsAtom<x86_64>::cpuType() const	{ return CPU_TYPE_X86_64; }
++#if SUPPORT_ARCH_arm_any
+ template <> uint32_t HeaderAndLoadCommandsAtom<arm>::cpuType() const	{ return CPU_TYPE_ARM; }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++uint32_t HeaderAndLoadCommandsAtom<ppc>::cpuSubType() const
++{
++	return _state.cpuSubType;
++}
++#endif
++
++#if SUPPORT_ARCH_ppc64
++template <>
++uint32_t HeaderAndLoadCommandsAtom<ppc64>::cpuSubType() const
++{
++	if ( (_options.outputKind() == Options::kDynamicExecutable) && (_options.macosxVersionMin() >= ld::mac10_5) )
++		return (CPU_SUBTYPE_POWERPC_ALL | 0x80000000);
++	else
++		return CPU_SUBTYPE_POWERPC_ALL;
++}
++#endif
+ 
+ template <>
+ uint32_t HeaderAndLoadCommandsAtom<x86>::cpuSubType() const
+@@ -544,11 +578,13 @@ uint32_t HeaderAndLoadCommandsAtom<x86_64>::cpuSubType() const
+ 		return CPU_SUBTYPE_X86_64_ALL;
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ uint32_t HeaderAndLoadCommandsAtom<arm>::cpuSubType() const
+ {
+ 	return _state.cpuSubType;
+ }
++#endif
+ 
+ 
+ 
+@@ -965,8 +1001,10 @@ template <typename A>
+ uint8_t* HeaderAndLoadCommandsAtom<A>::copyRoutinesLoadCommand(uint8_t* p) const
+ {
+ 	pint_t initAddr = _state.entryPoint->finalAddress(); 
++#if SUPPORT_ARCH_arm_any
+ 	if ( _state.entryPoint->isThumb() )
+ 		initAddr |= 1ULL;
++#endif
+ 	macho_routines_command<P>* cmd = (macho_routines_command<P>*)p;
+ 	cmd->set_cmd(macho_routines_command<P>::CMD);
+ 	cmd->set_cmdsize(sizeof(macho_routines_command<P>));
+@@ -1018,6 +1056,54 @@ uint8_t* HeaderAndLoadCommandsAtom<A>::copyVersionLoadCommand(uint8_t* p) const
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++uint32_t HeaderAndLoadCommandsAtom<ppc>::threadLoadCommandSize() const
++{
++	return this->alignedSize(16 + 40*4);	// base size + PPC_THREAD_STATE_COUNT * 4
++}
++
++
++template <>
++uint8_t* HeaderAndLoadCommandsAtom<ppc>::copyThreadsLoadCommand(uint8_t* p) const
++{
++	assert(_state.entryPoint != NULL);
++	pint_t start = _state.entryPoint->finalAddress();
++	macho_thread_command<ppc::P>* cmd = (macho_thread_command<ppc::P>*)p;
++	cmd->set_cmd(LC_UNIXTHREAD);
++	cmd->set_cmdsize(threadLoadCommandSize());
++	cmd->set_flavor(1);				// PPC_THREAD_STATE
++	cmd->set_count(40);				// PPC_THREAD_STATE_COUNT;
++	cmd->set_thread_register(0, start);
++	if ( _options.hasCustomStack() )
++		cmd->set_thread_register(3, _options.customStackAddr());	// r1
++	return p + threadLoadCommandSize();
++}
++#endif
++
++#if SUPPORT_ARCH_ppc64
++template <>
++uint32_t HeaderAndLoadCommandsAtom<ppc64>::threadLoadCommandSize() const
++{
++	return this->alignedSize(16 + 76*4);	// base size + PPC_THREAD_STATE64_COUNT * 4
++}
++
++template <>
++uint8_t* HeaderAndLoadCommandsAtom<ppc64>::copyThreadsLoadCommand(uint8_t* p) const
++{
++	assert(_state.entryPoint != NULL);
++	pint_t start = _state.entryPoint->finalAddress();
++	macho_thread_command<ppc::P>* cmd = (macho_thread_command<ppc::P>*)p;
++	cmd->set_cmd(LC_UNIXTHREAD);
++	cmd->set_cmdsize(threadLoadCommandSize());
++	cmd->set_flavor(5);				// PPC_THREAD_STATE64
++	cmd->set_count(76);				// PPC_THREAD_STATE64_COUNT;
++	cmd->set_thread_register(0, start);
++	if ( _options.hasCustomStack() )
++		cmd->set_thread_register(3, _options.customStackAddr());	// r1
++	return p + threadLoadCommandSize();
++}
++#endif
+ 
+ template <>
+ uint32_t HeaderAndLoadCommandsAtom<x86>::threadLoadCommandSize() const
+@@ -1063,6 +1149,7 @@ uint8_t* HeaderAndLoadCommandsAtom<x86_64>::copyThreadsLoadCommand(uint8_t* p) c
+ 	return p + threadLoadCommandSize();
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ uint32_t HeaderAndLoadCommandsAtom<arm>::threadLoadCommandSize() const
+ {
+@@ -1086,6 +1173,7 @@ uint8_t* HeaderAndLoadCommandsAtom<arm>::copyThreadsLoadCommand(uint8_t* p) cons
+ 		cmd->set_thread_register(13, _options.customStackAddr());	// sp
+ 	return p + threadLoadCommandSize();
+ }
++#endif
+ 
+ template <typename A>
+ uint8_t* HeaderAndLoadCommandsAtom<A>::copyEncryptionLoadCommand(uint8_t* p) const
+diff --git a/src/ld/InputFiles.cpp b/src/ld/InputFiles.cpp
+index 7b05a96..7c15736 100644
+--- a/src/ld/InputFiles.cpp
++++ b/src/ld/InputFiles.cpp
+@@ -629,6 +629,10 @@ void InputFiles::inferArchitecture(Options& opts, const char** archName)
+ 	warning("-arch not specified");
+ #if __i386__
+ 	opts.setArchitecture(CPU_TYPE_I386, CPU_SUBTYPE_X86_ALL);
++#elif __ppc__
++	opts.setArchitecture(CPU_TYPE_POWERPC, CPU_SUBTYPE_POWERPC_ALL);
++#elif __ppc64__
++	opts.setArchitecture(CPU_TYPE_POWERPC64, CPU_SUBTYPE_POWERPC_ALL);
+ #elif __x86_64__
+ 	opts.setArchitecture(CPU_TYPE_X86_64, CPU_SUBTYPE_X86_64_ALL);
+ #elif __arm__
+diff --git a/src/ld/LinkEdit.hpp b/src/ld/LinkEdit.hpp
+index 7bca2e3..5007cf3 100644
+--- a/src/ld/LinkEdit.hpp
++++ b/src/ld/LinkEdit.hpp
+@@ -1007,8 +1007,10 @@ void ExportInfoAtom<A>::encode() const
+ 			//fprintf(stderr, "re-export %s from lib %llu as %s\n", entry.importName, entry.other, entry.name);
+ 		}
+ 		else {
++#if SUPPORT_ARCH_arm_any
+ 			if ( atom->isThumb() )
+ 				address |= 1;
++#endif
+ 			if ( atom->contentType() == ld::Atom::typeResolver ) {
+ 				flags |= EXPORT_SYMBOL_FLAGS_STUB_AND_RESOLVER;
+ 				// set normal lookup to return stub address
+@@ -1016,8 +1018,10 @@ void ExportInfoAtom<A>::encode() const
+ 				other = address;
+ 				const ld::Atom* stub = stubForResolverFunction(atom);
+ 				address = stub->finalAddress() - imageBaseAddress;
++#if SUPPORT_ARCH_arm_any
+ 				if ( stub->isThumb() )
+ 					address |= 1;
++#endif
+ 			}
+ 			entry.name = atom->name();
+ 			entry.flags = flags;
+@@ -1063,10 +1067,15 @@ private:
+ 
+ 	mutable std::vector<uint64_t>				_32bitPointerLocations;
+ 	mutable std::vector<uint64_t>				_64bitPointerLocations;
++#if SUPPORT_ARCH_ppc
++	mutable std::vector<uint64_t>				_ppcHi16Locations;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 	mutable std::vector<uint64_t>				_thumbLo16Locations;
+ 	mutable std::vector<uint64_t>				_thumbHi16Locations[16];
+ 	mutable std::vector<uint64_t>				_armLo16Locations;
+ 	mutable std::vector<uint64_t>				_armHi16Locations[16];
++#endif
+ 
+ 
+ 	static ld::Section			_s_section;
+@@ -1117,6 +1126,7 @@ void SplitSegInfoAtom<x86>::addSplitSegInfo(uint64_t address, ld::Fixup::Kind ki
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void SplitSegInfoAtom<arm>::addSplitSegInfo(uint64_t address, ld::Fixup::Kind kind, uint32_t extra) const
+ {
+@@ -1143,8 +1153,43 @@ void SplitSegInfoAtom<arm>::addSplitSegInfo(uint64_t address, ld::Fixup::Kind ki
+ 			break;
+ 	}
+ }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++void SplitSegInfoAtom<ppc>::addSplitSegInfo(uint64_t address, ld::Fixup::Kind kind, uint32_t extra) const
++{
++	switch (kind) {
++		case ld::Fixup::kindStorePPCPicHigh16AddLow:
++			_ppcHi16Locations.push_back(address);
++			break;
++		case ld::Fixup::kindStoreBigEndian32:
++			_32bitPointerLocations.push_back(address);
++			break;
++		default:
++			warning("codegen at address 0x%08llX prevents image from working in dyld shared cache", address);
++			break;
++	}
++}
++#endif
++
++
++#if SUPPORT_ARCH_ppc64
++template <>
++void SplitSegInfoAtom<ppc64>::addSplitSegInfo(uint64_t address, ld::Fixup::Kind kind, uint32_t extra) const
++{
++	switch (kind) {
++		case ld::Fixup::kindStorePPCPicHigh16AddLow:
++			_ppcHi16Locations.push_back(address);
++			break;
++		default:
++			warning("codegen at address 0x%08llX prevents image from working in dyld shared cache", address);
++			break;
++	}
++}
++#endif
++
+ 
+ template <typename A>
+ void SplitSegInfoAtom<A>::uleb128EncodeAddresses(const std::vector<uint64_t>& locations) const
+@@ -1200,6 +1245,17 @@ void SplitSegInfoAtom<A>::encode() const
+ 		this->_encodedData.append_byte(0); // terminator
+ 	}
+ 
++#if SUPPORT_ARCH_ppc
++	if ( _ppcHi16Locations.size() != 0 ) {
++		this->_encodedData.append_byte(3);
++		//fprintf(stderr, "type 3:\n");
++		std::sort(_ppcHi16Locations.begin(), _ppcHi16Locations.end());
++		this->uleb128EncodeAddresses(_ppcHi16Locations);
++		this->_encodedData.append_byte(0); // terminator
++	}
++#endif
++
++#if SUPPORT_ARCH_arm_any
+ 	if ( _thumbLo16Locations.size() != 0 ) {
+ 		this->_encodedData.append_byte(5);
+ 		//fprintf(stderr, "type 5:\n");
+@@ -1235,6 +1291,7 @@ void SplitSegInfoAtom<A>::encode() const
+ 			this->_encodedData.append_byte(0); // terminator
+ 		}
+ 	}
++#endif
+ 
+ 	// always add zero byte to mark end
+ 	this->_encodedData.append_byte(0);
+@@ -1247,6 +1304,9 @@ void SplitSegInfoAtom<A>::encode() const
+ 	// clean up temporaries
+ 	_32bitPointerLocations.clear();
+ 	_64bitPointerLocations.clear();
++#if SUPPORT_ARCH_ppc
++	_ppcHi16Locations.clear();
++#endif
+ }
+ 
+ 
+@@ -1293,8 +1353,10 @@ void FunctionStartsAtom<A>::encode() const
+ 			for (std::vector<const ld::Atom*>::iterator ait = atoms.begin(); ait != atoms.end(); ++ait) {
+ 				const ld::Atom* atom = *ait;
+ 				uint64_t nextAddr = atom->finalAddress();
++#if SUPPORT_ARCH_arm_any
+ 				if ( atom->isThumb() )
+ 					nextAddr |= 1; 
++#endif
+ 				uint64_t delta = nextAddr - addr;
+ 				if ( delta != 0 )
+ 					this->_encodedData.append_uleb128(delta);
+diff --git a/src/ld/LinkEditClassic.hpp b/src/ld/LinkEditClassic.hpp
+index 7fbc755..05fdac0 100644
+--- a/src/ld/LinkEditClassic.hpp
++++ b/src/ld/LinkEditClassic.hpp
+@@ -313,8 +313,10 @@ bool SymbolTableAtom<A>::addLocal(const ld::Atom* atom, StringPoolAtom* pool)
+         desc |= N_NO_DEAD_STRIP;
+ 	if ( (atom->definition() == ld::Atom::definitionRegular) && (atom->combine() == ld::Atom::combineByName) )
+ 		desc |= N_WEAK_DEF;
++#if SUPPORT_ARCH_arm_any
+ 	if ( atom->isThumb() )
+ 		desc |= N_ARM_THUMB_DEF;
++#endif
+ 	entry.set_n_desc(desc);
+ 
+ 	// set n_value ( address this symbol will be at if this executable is loaded at it preferred address )
+@@ -372,8 +374,10 @@ void SymbolTableAtom<A>::addGlobal(const ld::Atom* atom, StringPoolAtom* pool)
+ 
+ 	// set n_desc
+ 	uint16_t desc = 0;
++#if SUPPORT_ARCH_arm_any
+     if ( atom->isThumb() )
+         desc |= N_ARM_THUMB_DEF;
++#endif
+     if ( atom->symbolTableInclusion() == ld::Atom::symbolTableInAndNeverStrip )
+         desc |= REFERENCED_DYNAMICALLY;
+     if ( (atom->contentType() == ld::Atom::typeResolver) && (this->_options.outputKind() == Options::kObjectFile) )
+@@ -798,6 +802,54 @@ void LocalRelocationsAtom<A>::addPointerReloc(uint64_t addr, uint32_t symNum)
+ template <typename A>
+ void LocalRelocationsAtom<A>::addTextReloc(uint64_t addr, ld::Fixup::Kind kind, uint64_t targetAddr, uint32_t symNum)
+ {
++	macho_relocation_info<P> reloc1;
++	macho_relocation_info<P> reloc2;
++	switch ( kind ) {
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCAbsLow14:
++		case ld::Fixup::kindStorePPCAbsLow16:
++			// a reference to the absolute address of something in this same linkage unit can be
++			// encoded as a local text reloc in a dylib or bundle
++			if ( _options.outputSlidable() ) {
++				reloc1.set_r_address(addr);
++				reloc1.set_r_symbolnum(symNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(false);
++				reloc1.set_r_type(kind==ld::Fixup::kindStorePPCAbsLow16 ? PPC_RELOC_LO16 : PPC_RELOC_LO14);
++				reloc2.set_r_address(targetAddr >> 16);
++				reloc2.set_r_symbolnum(0);
++				reloc2.set_r_pcrel(false);
++				reloc2.set_r_length(2);
++				reloc2.set_r_extern(false);
++				reloc2.set_r_type(PPC_RELOC_PAIR);
++				_relocs.push_back(reloc1);
++				_relocs.push_back(reloc2);
++			}
++			break;
++		case ld::Fixup::kindStorePPCAbsHigh16AddLow:
++		case ld::Fixup::kindStorePPCAbsHigh16:
++			if ( _options.outputSlidable() ) {
++				reloc1.set_r_address(addr);
++				reloc1.set_r_symbolnum(symNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(false);
++				reloc1.set_r_type(kind==ld::Fixup::kindStorePPCAbsHigh16AddLow ? PPC_RELOC_HA16 : PPC_RELOC_HI16);
++				reloc2.set_r_address(targetAddr & 0xFFFF);
++				reloc2.set_r_symbolnum(0);
++				reloc2.set_r_pcrel(false);
++				reloc2.set_r_length(2);
++				reloc2.set_r_extern(false);
++				reloc2.set_r_type(PPC_RELOC_PAIR);
++				_relocs.push_back(reloc1);
++				_relocs.push_back(reloc2);
++			}
++			break;
++#endif
++		default:
++			break;
++	}
+ }
+ 
+ 
+@@ -919,9 +971,17 @@ uint64_t ExternalRelocationsAtom<A>::size() const
+ 	return (_pointerLocations.size() + _callSiteLocations.size()) * sizeof(macho_relocation_info<P>);
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <> uint32_t ExternalRelocationsAtom<arm>::pointerReloc() { return ARM_RELOC_VANILLA; }
++#endif
+ template <> uint32_t ExternalRelocationsAtom<x86>::pointerReloc() { return GENERIC_RELOC_VANILLA; }
++#if SUPPORT_ARCH_ppc
++template <> uint32_t ExternalRelocationsAtom<ppc>::pointerReloc() { return PPC_RELOC_VANILLA; }
++#endif
+ template <> uint32_t ExternalRelocationsAtom<x86_64>::pointerReloc() { return X86_64_RELOC_UNSIGNED; }
++#if SUPPORT_ARCH_ppc64
++template <> uint32_t ExternalRelocationsAtom<ppc64>::pointerReloc() { return PPC_RELOC_VANILLA; }
++#endif
+ 
+ 
+ template <> uint32_t ExternalRelocationsAtom<x86_64>::callReloc() { return X86_64_RELOC_BRANCH; }
+@@ -1390,6 +1450,7 @@ void SectionRelocationsAtom<x86>::encodeSectionReloc(ld::Internal::FinalSection*
+ }
+ 
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void SectionRelocationsAtom<arm>::encodeSectionReloc(ld::Internal::FinalSection* sect, 
+ 													const Entry& entry, std::vector<macho_relocation_info<P> >& relocs)
+@@ -1614,8 +1675,589 @@ void SectionRelocationsAtom<arm>::encodeSectionReloc(ld::Internal::FinalSection*
+ 		
+ 	}
+ }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++void SectionRelocationsAtom<ppc>::encodeSectionReloc(ld::Internal::FinalSection* sect,
++													const Entry& entry, std::vector<macho_relocation_info<P> >& relocs)
++{
++	macho_relocation_info<P> reloc1;
++	macho_relocation_info<P> reloc2;
++	macho_scattered_relocation_info<P>* sreloc1 = (macho_scattered_relocation_info<P>*)&reloc1;
++	macho_scattered_relocation_info<P>* sreloc2 = (macho_scattered_relocation_info<P>*)&reloc2;
++	uint64_t address = entry.inAtom->finalAddress()+entry.offsetInAtom - sect->address;
++	bool external = entry.toTargetUsesExternalReloc;
++	uint32_t symbolNum = sectSymNum(external, entry.toTarget);
++	bool fromExternal = false;
++	uint32_t fromSymbolNum = 0;
++	if ( entry.fromTarget != NULL ) {
++		fromExternal = entry.fromTargetUsesExternalReloc;
++		fromSymbolNum= sectSymNum(fromExternal, entry.fromTarget);
++	}
++	uint32_t toAddr;
++	uint32_t fromAddr;
++
++	switch ( entry.kind ) {
++
++		case ld::Fixup::kindStorePPCBranch24:
++		case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++		case ld::Fixup::kindStorePPCDtraceCallSiteNop:
++		case ld::Fixup::kindStorePPCDtraceIsEnableSiteClear:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(true);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_BR24);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(true);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_BR24);
++			}
++			relocs.push_back(reloc1);
++			break;
++
++		case ld::Fixup::kindStorePPCBranch14:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(true);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_BR14);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(true);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_BR14);
++			}
++			relocs.push_back(reloc1);
++			break;
++
++		case ld::Fixup::kindStoreBigEndian32:
++		case ld::Fixup::kindStoreTargetAddressBigEndian32:
++			if ( entry.fromTarget != NULL ) {
++				// this is a pointer-diff
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				if ( entry.toTarget->scope() == ld::Atom::scopeTranslationUnit )
++					sreloc1->set_r_type(PPC_RELOC_LOCAL_SECTDIFF);
++				else
++					sreloc1->set_r_type(PPC_RELOC_SECTDIFF);
++				sreloc1->set_r_address(address);
++				if ( entry.toTarget == entry.inAtom )
++					sreloc1->set_r_value(entry.toTarget->finalAddress()+entry.toAddend);
++				else
++					sreloc1->set_r_value(entry.toTarget->finalAddress());
++				sreloc2->set_r_scattered(true);
++				sreloc2->set_r_pcrel(false);
++				sreloc2->set_r_length(2);
++				sreloc2->set_r_type(PPC_RELOC_PAIR);
++				sreloc2->set_r_address(0);
++				if ( entry.fromTarget == entry.inAtom ) {
++					if ( entry.fromAddend > entry.fromTarget->size() )
++						sreloc2->set_r_value(entry.fromTarget->finalAddress()+entry.offsetInAtom);
++					else
++						sreloc2->set_r_value(entry.fromTarget->finalAddress()+entry.fromAddend);
++				}
++				else
++					sreloc2->set_r_value(entry.fromTarget->finalAddress());
++				relocs.push_back(reloc1);
++				relocs.push_back(reloc2);
++			}
++			else {
++				// regular pointer
++				if ( !external && (entry.toAddend != 0) ) {
++					// use scattered reloc is target offset is non-zero
++					sreloc1->set_r_scattered(true);
++					sreloc1->set_r_pcrel(false);
++					sreloc1->set_r_length(2);
++					sreloc1->set_r_type(GENERIC_RELOC_VANILLA);
++					sreloc1->set_r_address(address);
++					sreloc1->set_r_value(entry.toTarget->finalAddress());
++				}
++				else {
++					reloc1.set_r_address(address);
++					reloc1.set_r_symbolnum(symbolNum);
++					reloc1.set_r_pcrel(false);
++					reloc1.set_r_length(2);
++					reloc1.set_r_extern(external);
++					reloc1.set_r_type(GENERIC_RELOC_VANILLA);
++				}
++				relocs.push_back(reloc1);
++			}
++			break;
++
++		case ld::Fixup::kindStorePPCAbsLow14:
++		case ld::Fixup::kindStorePPCAbsLow16:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(entry.kind==ld::Fixup::kindStorePPCAbsLow16 ? PPC_RELOC_LO16 : PPC_RELOC_LO14);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(entry.kind==ld::Fixup::kindStorePPCAbsLow16 ? PPC_RELOC_LO16 : PPC_RELOC_LO14);
++			}
++			if ( external )
++				reloc2.set_r_address(entry.toAddend >> 16);
++			else
++				reloc2.set_r_address((entry.toTarget->finalAddress()+entry.toAddend) >> 16);
++			reloc2.set_r_symbolnum(0);
++			reloc2.set_r_pcrel(false);
++			reloc2.set_r_length(2);
++			reloc2.set_r_extern(false);
++			reloc2.set_r_type(PPC_RELOC_PAIR);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCAbsHigh16:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_HI16);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_HI16);
++			}
++			if ( external )
++				reloc2.set_r_address(entry.toAddend & 0x0000FFFF);
++			else
++				reloc2.set_r_address((entry.toTarget->finalAddress()+entry.toAddend) & 0x0000FFFF);
++			reloc2.set_r_symbolnum(0);
++			reloc2.set_r_pcrel(false);
++			reloc2.set_r_length(2);
++			reloc2.set_r_extern(false);
++			reloc2.set_r_type(PPC_RELOC_PAIR);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCAbsHigh16AddLow:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_HA16);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_HA16);
++			}
++			if ( external )
++				reloc2.set_r_address(entry.toAddend & 0x0000FFFF);
++			else
++				reloc2.set_r_address((entry.toTarget->finalAddress()+entry.toAddend) & 0x0000FFFF);
++			reloc2.set_r_symbolnum(0);
++			reloc2.set_r_pcrel(false);
++			reloc2.set_r_length(2);
++			reloc2.set_r_extern(false);
++			reloc2.set_r_type(PPC_RELOC_PAIR);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCPicLow14:
++		case ld::Fixup::kindStorePPCPicLow16:
++			fromAddr = entry.fromTarget->finalAddress() + entry.fromAddend;
++			toAddr = entry.toTarget->finalAddress() + entry.toAddend;
++			sreloc1->set_r_scattered(true);
++			sreloc1->set_r_pcrel(false);
++			sreloc1->set_r_length(2);
++			sreloc1->set_r_type(entry.kind == ld::Fixup::kindStorePPCPicLow16 ? PPC_RELOC_LO16_SECTDIFF : PPC_RELOC_LO14_SECTDIFF);
++			sreloc1->set_r_address(address);
++			sreloc1->set_r_value(entry.toTarget->finalAddress());
++			sreloc2->set_r_scattered(true);
++			sreloc2->set_r_pcrel(false);
++			sreloc2->set_r_length(2);
++			sreloc2->set_r_type(PPC_RELOC_PAIR);
++			sreloc2->set_r_address(((toAddr-fromAddr) >> 16) & 0xFFFF);
++			sreloc2->set_r_value(fromAddr);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCPicHigh16AddLow:
++			fromAddr = entry.fromTarget->finalAddress() + entry.fromAddend;
++			toAddr = entry.toTarget->finalAddress() + entry.toAddend;
++			sreloc1->set_r_scattered(true);
++			sreloc1->set_r_pcrel(false);
++			sreloc1->set_r_length(2);
++			sreloc1->set_r_type(PPC_RELOC_HA16_SECTDIFF);
++			sreloc1->set_r_address(address);
++			sreloc1->set_r_value(entry.toTarget->finalAddress());
++			sreloc2->set_r_scattered(true);
++			sreloc2->set_r_pcrel(false);
++			sreloc2->set_r_length(2);
++			sreloc2->set_r_type(PPC_RELOC_PAIR);
++			sreloc2->set_r_address((toAddr-fromAddr) & 0xFFFF);
++			sreloc2->set_r_value(fromAddr);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		default:
++			assert(0 && "need to handle -r reloc");
++
++	}
++}
++#endif
++
++#if SUPPORT_ARCH_ppc64
++template <>
++void SectionRelocationsAtom<ppc64>::encodeSectionReloc(ld::Internal::FinalSection* sect,
++													const Entry& entry, std::vector<macho_relocation_info<P> >& relocs)
++{
++	macho_relocation_info<P> reloc1;
++	macho_relocation_info<P> reloc2;
++	macho_scattered_relocation_info<P>* sreloc1 = (macho_scattered_relocation_info<P>*)&reloc1;
++	macho_scattered_relocation_info<P>* sreloc2 = (macho_scattered_relocation_info<P>*)&reloc2;
++	uint64_t address = entry.inAtom->finalAddress()+entry.offsetInAtom - sect->address;
++	bool external = entry.toTargetUsesExternalReloc;
++	uint32_t symbolNum = sectSymNum(external, entry.toTarget);
++	bool fromExternal = false;
++	uint32_t fromSymbolNum = 0;
++	if ( entry.fromTarget != NULL ) {
++		fromExternal = entry.fromTargetUsesExternalReloc;
++		fromSymbolNum= sectSymNum(fromExternal, entry.fromTarget);
++	}
++	uint32_t toAddr;
++	uint32_t fromAddr;
++
++	switch ( entry.kind ) {
++
++		case ld::Fixup::kindStorePPCBranch24:
++		case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++		case ld::Fixup::kindStorePPCDtraceCallSiteNop:
++		case ld::Fixup::kindStorePPCDtraceIsEnableSiteClear:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(true);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_BR24);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(true);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_BR24);
++			}
++			relocs.push_back(reloc1);
++			break;
++
++		case ld::Fixup::kindStorePPCBranch14:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(true);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_BR14);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(true);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_BR14);
++			}
++			relocs.push_back(reloc1);
++			break;
++
++		case ld::Fixup::kindStoreBigEndian32:
++		case ld::Fixup::kindStoreTargetAddressBigEndian32:
++			if ( entry.fromTarget != NULL ) {
++				// this is a pointer-diff
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				if ( entry.toTarget->scope() == ld::Atom::scopeTranslationUnit )
++					sreloc1->set_r_type(PPC_RELOC_LOCAL_SECTDIFF);
++				else
++					sreloc1->set_r_type(PPC_RELOC_SECTDIFF);
++				sreloc1->set_r_address(address);
++				if ( entry.toTarget == entry.inAtom )
++					sreloc1->set_r_value(entry.toTarget->finalAddress()+entry.toAddend);
++				else
++					sreloc1->set_r_value(entry.toTarget->finalAddress());
++				sreloc2->set_r_scattered(true);
++				sreloc2->set_r_pcrel(false);
++				sreloc2->set_r_length(2);
++				sreloc2->set_r_type(PPC_RELOC_PAIR);
++				sreloc2->set_r_address(0);
++				if ( entry.fromTarget == entry.inAtom ) {
++					if ( entry.fromAddend > entry.fromTarget->size() )
++						sreloc2->set_r_value(entry.fromTarget->finalAddress()+entry.offsetInAtom);
++					else
++						sreloc2->set_r_value(entry.fromTarget->finalAddress()+entry.fromAddend);
++				}
++				else
++					sreloc2->set_r_value(entry.fromTarget->finalAddress());
++				relocs.push_back(reloc1);
++				relocs.push_back(reloc2);
++			}
++			else {
++				// regular pointer
++				if ( !external && (entry.toAddend != 0) ) {
++					// use scattered reloc is target offset is non-zero
++					sreloc1->set_r_scattered(true);
++					sreloc1->set_r_pcrel(false);
++					sreloc1->set_r_length(2);
++					sreloc1->set_r_type(GENERIC_RELOC_VANILLA);
++					sreloc1->set_r_address(address);
++					sreloc1->set_r_value(entry.toTarget->finalAddress());
++				}
++				else {
++					reloc1.set_r_address(address);
++					reloc1.set_r_symbolnum(symbolNum);
++					reloc1.set_r_pcrel(false);
++					reloc1.set_r_length(2);
++					reloc1.set_r_extern(external);
++					reloc1.set_r_type(GENERIC_RELOC_VANILLA);
++				}
++				relocs.push_back(reloc1);
++			}
++			break;
++
++		case ld::Fixup::kindStoreBigEndian64:
++		case ld::Fixup::kindStoreTargetAddressBigEndian64:
++			if ( entry.fromTarget != NULL ) {
++				// this is a pointer-diff
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(3);
++				if ( entry.toTarget->scope() == ld::Atom::scopeTranslationUnit )
++					sreloc1->set_r_type(PPC_RELOC_LOCAL_SECTDIFF);
++				else
++					sreloc1->set_r_type(PPC_RELOC_SECTDIFF);
++				sreloc1->set_r_address(address);
++				if ( entry.toTarget == entry.inAtom )
++					sreloc1->set_r_value(entry.toTarget->finalAddress()+entry.toAddend);
++				else
++					sreloc1->set_r_value(entry.toTarget->finalAddress());
++				sreloc2->set_r_scattered(true);
++				sreloc2->set_r_pcrel(false);
++				sreloc2->set_r_length(3);
++				sreloc2->set_r_type(PPC_RELOC_PAIR);
++				sreloc2->set_r_address(0);
++				if ( entry.fromTarget == entry.inAtom ) {
++					if ( entry.fromAddend > entry.fromTarget->size() )
++						sreloc2->set_r_value(entry.fromTarget->finalAddress()+entry.offsetInAtom);
++					else
++						sreloc2->set_r_value(entry.fromTarget->finalAddress()+entry.fromAddend);
++				}
++				else
++					sreloc2->set_r_value(entry.fromTarget->finalAddress());
++				relocs.push_back(reloc1);
++				relocs.push_back(reloc2);
++			}
++			else {
++				// regular pointer
++				if ( !external && (entry.toAddend != 0) ) {
++					// use scattered reloc is target offset is non-zero
++					sreloc1->set_r_scattered(true);
++					sreloc1->set_r_pcrel(false);
++					sreloc1->set_r_length(3);
++					sreloc1->set_r_type(GENERIC_RELOC_VANILLA);
++					sreloc1->set_r_address(address);
++					sreloc1->set_r_value(entry.toTarget->finalAddress());
++				}
++				else {
++					reloc1.set_r_address(address);
++					reloc1.set_r_symbolnum(symbolNum);
++					reloc1.set_r_pcrel(false);
++					reloc1.set_r_length(3);
++					reloc1.set_r_extern(external);
++					reloc1.set_r_type(GENERIC_RELOC_VANILLA);
++				}
++				relocs.push_back(reloc1);
++			}
++			break;
++
++		case ld::Fixup::kindStorePPCAbsLow14:
++		case ld::Fixup::kindStorePPCAbsLow16:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(entry.kind==ld::Fixup::kindStorePPCAbsLow16 ? PPC_RELOC_LO16 : PPC_RELOC_LO14);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(entry.kind==ld::Fixup::kindStorePPCAbsLow16 ? PPC_RELOC_LO16 : PPC_RELOC_LO14);
++			}
++			if ( external )
++				reloc2.set_r_address(entry.toAddend >> 16);
++			else
++				reloc2.set_r_address((entry.toTarget->finalAddress()+entry.toAddend) >> 16);
++			reloc2.set_r_symbolnum(0);
++			reloc2.set_r_pcrel(false);
++			reloc2.set_r_length(2);
++			reloc2.set_r_extern(false);
++			reloc2.set_r_type(PPC_RELOC_PAIR);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCAbsHigh16:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_HI16);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_HI16);
++			}
++			if ( external )
++				reloc2.set_r_address(entry.toAddend & 0x0000FFFF);
++			else
++				reloc2.set_r_address((entry.toTarget->finalAddress()+entry.toAddend) & 0x0000FFFF);
++			reloc2.set_r_symbolnum(0);
++			reloc2.set_r_pcrel(false);
++			reloc2.set_r_length(2);
++			reloc2.set_r_extern(false);
++			reloc2.set_r_type(PPC_RELOC_PAIR);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCAbsHigh16AddLow:
++			if ( !external && (entry.toAddend != 0) ) {
++				// use scattered reloc if target offset is non-zero
++				sreloc1->set_r_scattered(true);
++				sreloc1->set_r_pcrel(false);
++				sreloc1->set_r_length(2);
++				sreloc1->set_r_type(PPC_RELOC_HA16);
++				sreloc1->set_r_address(address);
++				sreloc1->set_r_value(entry.toTarget->finalAddress());
++			}
++			else {
++				reloc1.set_r_address(address);
++				reloc1.set_r_symbolnum(symbolNum);
++				reloc1.set_r_pcrel(false);
++				reloc1.set_r_length(2);
++				reloc1.set_r_extern(external);
++				reloc1.set_r_type(PPC_RELOC_HA16);
++			}
++			if ( external )
++				reloc2.set_r_address(entry.toAddend & 0x0000FFFF);
++			else
++				reloc2.set_r_address((entry.toTarget->finalAddress()+entry.toAddend) & 0x0000FFFF);
++			reloc2.set_r_symbolnum(0);
++			reloc2.set_r_pcrel(false);
++			reloc2.set_r_length(2);
++			reloc2.set_r_extern(false);
++			reloc2.set_r_type(PPC_RELOC_PAIR);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCPicLow14:
++		case ld::Fixup::kindStorePPCPicLow16:
++			fromAddr = entry.fromTarget->finalAddress() + entry.fromAddend;
++			toAddr = entry.toTarget->finalAddress() + entry.toAddend;
++			sreloc1->set_r_scattered(true);
++			sreloc1->set_r_pcrel(false);
++			sreloc1->set_r_length(2);
++			sreloc1->set_r_type(entry.kind == ld::Fixup::kindStorePPCPicLow16 ? PPC_RELOC_LO16_SECTDIFF : PPC_RELOC_LO14_SECTDIFF);
++			sreloc1->set_r_address(address);
++			sreloc1->set_r_value(entry.toTarget->finalAddress());
++			sreloc2->set_r_scattered(true);
++			sreloc2->set_r_pcrel(false);
++			sreloc2->set_r_length(2);
++			sreloc2->set_r_type(PPC_RELOC_PAIR);
++			sreloc2->set_r_address(((toAddr-fromAddr) >> 16) & 0xFFFF);
++			sreloc2->set_r_value(fromAddr);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		case ld::Fixup::kindStorePPCPicHigh16AddLow:
++			fromAddr = entry.fromTarget->finalAddress() + entry.fromAddend;
++			toAddr = entry.toTarget->finalAddress() + entry.toAddend;
++			sreloc1->set_r_scattered(true);
++			sreloc1->set_r_pcrel(false);
++			sreloc1->set_r_length(2);
++			sreloc1->set_r_type(PPC_RELOC_HA16_SECTDIFF);
++			sreloc1->set_r_address(address);
++			sreloc1->set_r_value(entry.toTarget->finalAddress());
++			sreloc2->set_r_scattered(true);
++			sreloc2->set_r_pcrel(false);
++			sreloc2->set_r_length(2);
++			sreloc2->set_r_type(PPC_RELOC_PAIR);
++			sreloc2->set_r_address((toAddr-fromAddr) & 0xFFFF);
++			sreloc2->set_r_value(fromAddr);
++			relocs.push_back(reloc1);
++			relocs.push_back(reloc2);
++			break;
++
++		default:
++			assert(0 && "need to handle -r reloc");
++
++	}
++}
++#endif
+ 
+ template <typename A>
+ void SectionRelocationsAtom<A>::addSectionReloc(ld::Internal::FinalSection*	sect, ld::Fixup::Kind kind, 
+diff --git a/src/ld/Options.cpp b/src/ld/Options.cpp
+index 629903f..0ed0720 100644
+--- a/src/ld/Options.cpp
++++ b/src/ld/Options.cpp
+@@ -31,7 +31,6 @@
+ 
+ #include <vector>
+ 
+-#include "configure.h"
+ #include "Options.h"
+ #include "Architectures.hpp"
+ #include "MachOFileAbstraction.hpp"
+@@ -482,6 +481,54 @@ void Options::setArchitecture(cpu_type_t type, cpu_subtype_t subtype)
+ 	fArchitecture = type;
+ 	fSubArchitecture = subtype;
+ 	switch ( type ) {
++#if SUPPORT_ARCH_ppc
++	case CPU_TYPE_POWERPC:
++		switch ( subtype ) {
++		case CPU_SUBTYPE_POWERPC_750:
++			fArchitectureName = "ppc750";
++			fHasPreferredSubType = true;
++			break;
++		case CPU_SUBTYPE_POWERPC_7400:
++			fArchitectureName = "ppc7400";
++			fHasPreferredSubType = true;
++			break;
++		case CPU_SUBTYPE_POWERPC_7450:
++			fArchitectureName = "ppc7450";
++			fHasPreferredSubType = true;
++			break;
++		case CPU_SUBTYPE_POWERPC_970:
++			fArchitectureName = "ppc970";
++			fHasPreferredSubType = true;
++			break;
++		case CPU_SUBTYPE_POWERPC_ALL:
++			fArchitectureName = "ppc";
++			fHasPreferredSubType = false;
++			break;
++		default:
++			assert(0 && "unknown ppc subtype");
++			fArchitectureName = "ppc";
++			break;
++		}
++		if ( (fMacVersionMin == ld::macVersionUnset) && (fOutputKind != Options::kObjectFile) ) {
++	#ifdef DEFAULT_MACOSX_MIN_VERSION
++			warning("-macosx_version_min not specificed, assuming " DEFAULT_MACOSX_MIN_VERSION);
++			setMacOSXVersionMin(DEFAULT_MACOSX_MIN_VERSION);
++	#else
++			warning("-macosx_version_min not specificed, assuming 10.5");
++			fMacVersionMin = ld::mac10_5;
++	#endif
++		}
++		break;
++#endif
++#if SUPPORT_ARCH_ppc64
++	case CPU_TYPE_POWERPC64:
++		fArchitectureName = "ppc64";
++		if ( (fMacVersionMin == ld::macVersionUnset) && (fOutputKind != Options::kObjectFile) ) {
++			warning("-macosx_version_min not specificed, assuming 10.5");
++			fMacVersionMin = ld::mac10_5;
++		}
++		break;
++#endif
+ 	case CPU_TYPE_I386:
+ 		fArchitectureName = "i386";
+ 		if ( (fMacVersionMin == ld::macVersionUnset) && (fOutputKind != Options::kObjectFile) ) {
+@@ -510,6 +557,7 @@ void Options::setArchitecture(cpu_type_t type, cpu_subtype_t subtype)
+ 		if ( !fMakeCompressedDyldInfo && (fMacVersionMin >= ld::mac10_6) && !fMakeCompressedDyldInfoForceOff )
+ 			fMakeCompressedDyldInfo = true;
+ 		break;
++#if SUPPORT_ARCH_arm_any
+ 	case CPU_TYPE_ARM:
+ 		fHasPreferredSubType = true;
+ 		for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+@@ -535,6 +583,7 @@ void Options::setArchitecture(cpu_type_t type, cpu_subtype_t subtype)
+ 		if ( !fMakeCompressedDyldInfo && minOS(ld::mac10_6, ld::iOS_3_1) && !fMakeCompressedDyldInfoForceOff )
+ 			fMakeCompressedDyldInfo = true;
+ 		break;
++#endif
+ 	default:
+ 		fArchitectureName = "unknown architecture";
+ 		break;
+@@ -550,15 +599,53 @@ void Options::parseArch(const char* arch)
+ 		fArchitecture = CPU_TYPE_I386;
+ 		fSubArchitecture = CPU_SUBTYPE_I386_ALL;
+ 	}
++#if SUPPORT_ARCH_ppc
++	else if ( strcmp(arch, "ppc") == 0 ) {
++		fArchitecture = CPU_TYPE_POWERPC;
++		fSubArchitecture = CPU_SUBTYPE_POWERPC_ALL;
++	}
++#endif
++#if SUPPORT_ARCH_ppc64
++	else if ( strcmp(arch, "ppc64") == 0 ) {
++		fArchitecture = CPU_TYPE_POWERPC64;
++		fSubArchitecture = CPU_SUBTYPE_POWERPC_ALL;
++	}
++#endif
+ 	else if ( strcmp(arch, "x86_64") == 0 ) {
+ 		fArchitecture = CPU_TYPE_X86_64;
+ 		fSubArchitecture = CPU_SUBTYPE_X86_64_ALL;
+ 	}
++#if SUPPORT_ARCH_arm_any
+ 	else if ( strcmp(arch, "arm") == 0 ) {
+ 		fArchitecture = CPU_TYPE_ARM;
+ 		fSubArchitecture = CPU_SUBTYPE_ARM_ALL;
+ 	}
++#endif
++#if SUPPORT_ARCH_ppc
++	// compatibility support for cpu-sub-types
++	else if ( strcmp(arch, "ppc750") == 0 ) {
++		fArchitecture = CPU_TYPE_POWERPC;
++		fSubArchitecture = CPU_SUBTYPE_POWERPC_750;
++		fHasPreferredSubType = true;
++	}
++	else if ( strcmp(arch, "ppc7400") == 0 ) {
++		fArchitecture = CPU_TYPE_POWERPC;
++		fSubArchitecture = CPU_SUBTYPE_POWERPC_7400;
++		fHasPreferredSubType = true;
++	}
++	else if ( strcmp(arch, "ppc7450") == 0 ) {
++		fArchitecture = CPU_TYPE_POWERPC;
++		fSubArchitecture = CPU_SUBTYPE_POWERPC_7450;
++		fHasPreferredSubType = true;
++	}
++	else if ( strcmp(arch, "ppc970") == 0 ) {
++		fArchitecture = CPU_TYPE_POWERPC;
++		fSubArchitecture = CPU_SUBTYPE_POWERPC_970;
++		fHasPreferredSubType = true;
++	}
++#endif
+ 	else {
++#if SUPPORT_ARCH_arm_any
+ 		for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+ 			if ( strcmp(t->subTypeName,arch) == 0 ) {
+ 				fArchitecture = CPU_TYPE_ARM;
+@@ -568,6 +655,7 @@ void Options::parseArch(const char* arch)
+ 				return;
+ 			}
+ 		}
++#endif
+ 		throwf("unknown/unsupported architecture name for: -arch %s", arch);
+ 	}
+ }
+@@ -1552,9 +1640,19 @@ void Options::parseOrderFile(const char* path, bool cstring)
+ 				}
+ 				// if there is an architecture prefix, only use this symbol it if matches current arch
+ 				if ( strncmp(symbolStart, "ppc:", 4) == 0 ) {
++#if SUPPORT_ARCH_ppc
++					if ( fArchitecture == CPU_TYPE_POWERPC )
++						symbolStart = &symbolStart[4];
++					else
++#endif
+ 					symbolStart = NULL;
+ 				}
+ 				else if ( strncmp(symbolStart, "ppc64:", 6) == 0 ) {
++#if SUPPORT_ARCH_ppc64
++					if ( fArchitecture == CPU_TYPE_POWERPC64 )
++						symbolStart = &symbolStart[6];
++					else
++#endif
+ 					symbolStart = NULL;
+ 				}
+ 				else if ( strncmp(symbolStart, "i386:", 5) == 0 ) {
+@@ -1570,9 +1668,11 @@ void Options::parseOrderFile(const char* path, bool cstring)
+ 						symbolStart = NULL;
+ 				}
+ 				else if ( strncmp(symbolStart, "arm:", 4) == 0 ) {
++#if SUPPORT_ARCH_arm_any
+ 					if ( fArchitecture == CPU_TYPE_ARM )
+ 						symbolStart = &symbolStart[4];
+ 					else
++#endif
+ 						symbolStart = NULL;
+ 				}
+ 				if ( symbolStart != NULL ) {
+@@ -3027,6 +3127,25 @@ void Options::reconfigureDefaults()
+ 			#endif		
+ 					}
+ 					break;
++#if SUPPORT_ARCH_ppc
++				case CPU_TYPE_POWERPC:
++#endif
++#if SUPPORT_ARCH_ppc64
++				case CPU_TYPE_POWERPC64:
++#endif
++#if SUPPORT_ARCH_ppc || SUPPORT_ARCH_ppc64
++					if ( (fOutputKind != Options::kObjectFile) && (fOutputKind != Options::kPreload) ) {
++			#ifdef DEFAULT_MACOSX_MIN_VERSION
++						warning("-macosx_version_min not specificed, assuming " DEFAULT_MACOSX_MIN_VERSION);
++						setMacOSXVersionMin(DEFAULT_MACOSX_MIN_VERSION);
++			#else
++						warning("-macosx_version_min not specificed, assuming 10.5");
++						fMacVersionMin = ld::mac10_5;
++			#endif
++					}
++					break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 				case CPU_TYPE_ARM:
+ 					if ( (fOutputKind != Options::kObjectFile) && (fOutputKind != Options::kPreload) ) {
+ 			#if defined(DEFAULT_IPHONEOS_MIN_VERSION)
+@@ -3041,6 +3160,7 @@ void Options::reconfigureDefaults()
+ 			#endif
+ 					}
+ 					break;
++#endif
+ 				default:
+ 					// architecture will be infered ;ater by examining .o files
+ 					break;
+@@ -3057,6 +3177,27 @@ void Options::reconfigureDefaults()
+ 				fMacVersionMin = ld::mac10_4;
+ 			}
+ 			break;
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			/* no OS X for PPC later than 10.5 */
++			if ( fMacVersionMin > ld::mac10_5 ) {
++				//warning("-macosx_version_min should be 10.5 or earlier for ppc");
++				fMacVersionMin = ld::mac10_5;
++			}
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			if ( fMacVersionMin < ld::mac10_4 ) {
++				//warning("-macosx_version_min should be 10.4 or later for ppc64");
++				fMacVersionMin = ld::mac10_4;
++			}
++			if ( fMacVersionMin > ld::mac10_5 ) {
++				//warning("-macosx_version_min should be 10.5 or earlier for ppc64");
++				fMacVersionMin = ld::mac10_5;
++			}
++			break;
++#endif
+ 		case CPU_TYPE_X86_64:
+ 			if ( fMacVersionMin < ld::mac10_4 ) {
+ 				//warning("-macosx_version_min should be 10.4 or later for x86_64");
+@@ -3075,6 +3216,7 @@ void Options::reconfigureDefaults()
+ 				fAllowTextRelocs = true;
+ 				fUndefinedTreatment = kUndefinedDynamicLookup;
+ 				break;
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				if ( fIOSVersionMin >= ld::iOS_5_0 ) {
+                     // iOS 5.0 and later use new MH_KEXT_BUNDLE type
+@@ -3085,6 +3227,10 @@ void Options::reconfigureDefaults()
+ 					break;
+ 				}
+ 				// else use object file
++#endif
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++#endif
+ 			case CPU_TYPE_I386:
+ 				// use .o files
+ 				fOutputKind = kObjectFile;
+@@ -3127,8 +3273,11 @@ void Options::reconfigureDefaults()
+ 	
+ 	// split segs only allowed for dylibs
+ 	if ( fSplitSegs ) {
+-        // split seg only supported for i386, and arm.
++        // split seg only supported for ppc, i386, and arm.
+         switch ( fArchitecture ) {
++#if SUPPORT_ARCH_ppc
++            case CPU_TYPE_POWERPC:
++#endif
+             case CPU_TYPE_I386:
+                 if ( fOutputKind != Options::kDynamicLibrary )
+                     fSplitSegs = false;
+@@ -3136,6 +3285,7 @@ void Options::reconfigureDefaults()
+                 if ( fSplitSegs && (fBaseWritableAddress-fBaseAddress != 0x10000000) )
+                     fBaseWritableAddress = fBaseAddress + 0x10000000;
+                 break;
++#if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
+                 if ( fOutputKind != Options::kDynamicLibrary ) {
+                     fSplitSegs = false;
+@@ -3146,6 +3296,7 @@ void Options::reconfigureDefaults()
+ 						fBaseWritableAddress = fBaseAddress + 0x08000000;
+ 				}
+                 break;
++#endif
+             default:
+                 fSplitSegs = false;
+                 fBaseAddress = 0;
+@@ -3155,11 +3306,18 @@ void Options::reconfigureDefaults()
+ 
+ 	// set too-large size
+ 	switch ( fArchitecture ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++#endif
+ 		case CPU_TYPE_I386:
+ 			fMaxAddress = 0xFFFFFFFF;
+ 			break;
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++#endif
+ 		case CPU_TYPE_X86_64:
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			switch ( fOutputKind ) {
+ 				case Options::kDynamicExecutable:
+@@ -3182,6 +3340,7 @@ void Options::reconfigureDefaults()
+ 				fBaseAddress = 0;
+ 			}
+ 			break;
++#endif
+ 	}
+ 
+ 	// <rdar://problem/6138961> -r implies no prebinding for all architectures
+@@ -3191,6 +3350,9 @@ void Options::reconfigureDefaults()
+ 	// disable prebinding depending on arch and min OS version
+ 	if ( fPrebind ) {
+ 		switch ( fArchitecture ) {
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++#endif
+ 			case CPU_TYPE_I386:
+ 				if ( fMacVersionMin == ld::mac10_4 ) {
+ 					// in 10.4 only split seg dylibs are prebound
+@@ -3224,9 +3386,13 @@ void Options::reconfigureDefaults()
+ 					}
+ 				}
+ 				break;
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++#endif
+ 			case CPU_TYPE_X86_64:
+ 				fPrebind = false;
+ 				break;
++#if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
+ 				switch ( fOutputKind ) {
+ 					case Options::kDynamicExecutable:
+@@ -3244,6 +3410,7 @@ void Options::reconfigureDefaults()
+ 						break;
+ 				}
+ 				break;
++#endif
+ 		}
+ 	}
+ 
+@@ -3270,10 +3437,18 @@ void Options::reconfigureDefaults()
+ 			case CPU_TYPE_I386:
+ 				if ( fIOSVersionMin != ld::iOSVersionUnset ) // simulator never needs modules
+ 					break;
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:	// 10.3 and earlier dyld requires a module table
++				if ( fMacVersionMin <= ld::mac10_5 )
++					fNeedsModuleTable = true;
++				break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				if ( fPrebind )
+ 					fNeedsModuleTable = true; // redo_prebinding requires a module table
+ 				break;
++#endif
+ 		}
+ 	}
+ 	
+@@ -3301,10 +3476,20 @@ void Options::reconfigureDefaults()
+ 					break;
+ 			}
+ 			break;
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++#endif
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
++#endif
++#if SUPPORT_ARCH_ppc || SUPPORT_ARCH_ppc64 || SUPPORT_ARCH_arm_any
+ 			fAddCompactUnwindEncoding = false;
+ 			fRemoveDwarfUnwindIfCompactExists = false;
+ 			break;
++#endif
+ 		case 0:
+ 			// if -arch is missing, assume we don't want compact unwind info
+ 			fAddCompactUnwindEncoding = false;
+@@ -3314,7 +3499,9 @@ void Options::reconfigureDefaults()
+ 	// only ARM main executables can be encrypted
+ 	if ( fOutputKind != Options::kDynamicExecutable )
+ 		fEncryptable = false;
++#if SUPPORT_ARCH_arm_any
+ 	if ( fArchitecture != CPU_TYPE_ARM )
++#endif
+ 		fEncryptable = false;
+ 
+ 	// don't move inits in dyld because dyld wants certain
+@@ -3368,18 +3555,28 @@ void Options::reconfigureDefaults()
+ 				if ( fMacVersionMin < ld::mac10_6 ) 
+ 					fMakeCompressedDyldInfo = false;
+ 				break;
++#if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
+ 				if ( !minOS(ld::mac10_6, ld::iOS_3_1) )
+ 					fMakeCompressedDyldInfo = false;
+ 				break;
++#endif
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++#endif
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++#endif
+ 			default:
+ 				fMakeCompressedDyldInfo = false;
+ 		}
+ 	}
+ 
+ 		
++#if SUPPORT_ARCH_arm_any
+ 	// only ARM enforces that cpu-sub-types must match
+ 	if ( fArchitecture != CPU_TYPE_ARM )
++#endif
+ 		fAllowCpuSubtypeMismatches = true;
+ 		
+ 	// only final linked images can not optimize zero fill sections
+@@ -3422,6 +3619,7 @@ void Options::reconfigureDefaults()
+ 			fPositionIndependentExecutable = true;
+ 	}
+ 
++#if SUPPORT_ARCH_arm_any
+ 	// armv7 for iOS4.3 defaults to PIE
+ 	if ( (fArchitecture == CPU_TYPE_ARM) 
+ 		&& fArchSupportsThumb2
+@@ -3429,6 +3627,7 @@ void Options::reconfigureDefaults()
+ 		&& (fIOSVersionMin >= ld::iOS_4_3) ) {
+ 			fPositionIndependentExecutable = true;
+ 	}
++#endif
+ 
+ 	// -no_pie anywhere on command line disable PIE
+ 	if ( fDisablePositionIndependentExecutable )
+@@ -3597,10 +3796,18 @@ void Options::checkIllegalOptionCombinations()
+ 	if ( fStackAddr != 0 ) {
+ 		switch (fArchitecture) {
+ 			case CPU_TYPE_I386:
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++#endif
++#if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
++#endif
+ 				if ( fStackAddr > 0xFFFFFFFF )
+ 					throw "-stack_addr must be < 4G for 32-bit processes";
+ 				break;
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++#endif
+ 			case CPU_TYPE_X86_64:
+ 				break;
+ 		}
+@@ -3614,6 +3821,9 @@ void Options::checkIllegalOptionCombinations()
+ 	if ( fStackSize != 0 ) {
+ 		switch (fArchitecture) {
+ 			case CPU_TYPE_I386:
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++#endif
+ 				if ( fStackSize > 0xFFFFFFFF )
+ 					throw "-stack_size must be < 4G for 32-bit processes";
+ 				if ( fStackAddr == 0 ) {
+@@ -3622,6 +3832,7 @@ void Options::checkIllegalOptionCombinations()
+ 				if ( (fStackAddr > 0xB0000000) && ((fStackAddr-fStackSize) < 0xB0000000)  )
+ 					warning("custom stack placement overlaps and will disable shared region");
+ 				break;
++#if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
+ 				if ( fStackSize > 0x2F000000 )
+ 					throw "-stack_size must be < 752MB";
+@@ -3629,6 +3840,11 @@ void Options::checkIllegalOptionCombinations()
+ 					fStackAddr = 0x2F000000;
+                 if ( fStackAddr > 0x30000000)
+                     throw "-stack_addr must be < 0x30000000 for arm";
++				break;
++#endif
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++#endif
+ 			case CPU_TYPE_X86_64:
+ 				if ( fStackAddr == 0 ) {
+ 					fStackAddr = 0x00007FFF5C000000LL;
+@@ -3738,8 +3954,13 @@ void Options::checkIllegalOptionCombinations()
+ 			if ( fObjCABIVersion2Override )
+ 				alterObjC1ClassNamesToObjC2 = true;
+ 			break;
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++#endif
+ 		case CPU_TYPE_X86_64:
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
++#endif
+ 			alterObjC1ClassNamesToObjC2 = true;
+ 			break;
+ 	}
+@@ -3831,10 +4052,24 @@ void Options::checkIllegalOptionCombinations()
+ 		// zero page size not specified on command line, set default
+ 		switch (fArchitecture) {
+ 			case CPU_TYPE_I386:
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++#endif
++#if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
++#endif
+ 				// first 4KB for 32-bit architectures
+ 				fZeroPageSize = 0x1000;
+ 				break;
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++				// first 4GB for ppc64 on 10.5
++				if ( fMacVersionMin >= ld::mac10_5 )
++					fZeroPageSize = 0x100000000ULL;
++				else
++					fZeroPageSize = 0x1000;	// 10.4 dyld may not be able to handle >4GB zero page
++				break;
++#endif
+ 			case CPU_TYPE_X86_64:
+ 				// first 4GB for x86_64 on all OS's
+ 				fZeroPageSize = 0x100000000ULL;
+@@ -3935,9 +4170,11 @@ void Options::checkIllegalOptionCombinations()
+ 	
+ 	// -force_cpusubtype_ALL is not supported for ARM
+ 	if ( fForceSubtypeAll ) {
++#if SUPPORT_ARCH_arm_any
+ 		if ( fArchitecture == CPU_TYPE_ARM ) {
+ 			warning("-force_cpusubtype_ALL will become unsupported for ARM architectures");
+ 		}
++#endif
+ 	}
+ 	
+ 	// -reexported_symbols_list can only be used with -dynamiclib
+@@ -4026,6 +4263,9 @@ void Options::checkForClassic(int argc, const char* argv[])
+ 	if( archFound ) {
+ 		switch ( fArchitecture ) {
+ 		case CPU_TYPE_I386:
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++#endif
+ 			if ( (staticFound || kextFound) && !newLinker ) {
+ 				// this environment variable will disable use of ld_classic for -static links
+ 				if ( getenv("LD_NO_CLASSIC_LINKER_STATIC") == NULL ) {
+diff --git a/src/ld/OutputFile.cpp b/src/ld/OutputFile.cpp
+index f217eb0..b74a142 100644
+--- a/src/ld/OutputFile.cpp
++++ b/src/ld/OutputFile.cpp
+@@ -679,6 +679,7 @@ static const char* referenceTargetAtomName(ld::Internal& state, const ld::Fixup*
+ 	return "BAD BINDING";
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ bool OutputFile::targetIsThumb(ld::Internal& state, const ld::Fixup* fixup)
+ {
+ 	switch ( fixup->binding ) {
+@@ -692,6 +693,7 @@ bool OutputFile::targetIsThumb(ld::Internal& state, const ld::Fixup* fixup)
+ 	}
+ 	throw "unexpected binding";
+ }
++#endif
+ 
+ uint64_t OutputFile::addressOf(const ld::Internal& state, const ld::Fixup* fixup, const ld::Atom** target)
+ {
+@@ -843,7 +845,11 @@ void OutputFile::rangeCheckAbsolute32(int64_t displacement, ld::Internal& state,
+ 		// is encoded in mach-o the same as:
+ 		//  .long _foo + 0x40000000
+ 		// so if _foo lays out to 0xC0000100, the first is ok, but the second is not.  
+-		if ( (_options.architecture() == CPU_TYPE_ARM) || (_options.architecture() == CPU_TYPE_I386) ) {
++		if (0 ||
++#if SUPPORT_ARCH_arm_any
++			(_options.architecture() == CPU_TYPE_ARM) ||
++#endif
++			(_options.architecture() == CPU_TYPE_I386) ) {
+ 			// Unlikely userland code does funky stuff like this, so warn for them, but not warn for -preload
+ 			if ( _options.outputKind() != Options::kPreload ) {
+ 				warning("32-bit absolute address out of range (0x%08llX max is 4GB): from %s + 0x%08X (0x%08llX) to 0x%08llX", 
+@@ -880,6 +886,7 @@ void OutputFile::rangeCheckRIP32(int64_t displacement, ld::Internal& state, cons
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ void OutputFile::rangeCheckARM12(int64_t displacement, ld::Internal& state, const ld::Atom* atom, const ld::Fixup* fixup)
+ {
+ 	if ( (displacement > 4092LL) || (displacement < (-4092LL)) ) {
+@@ -933,7 +940,37 @@ void OutputFile::rangeCheckThumbBranch22(int64_t displacement, ld::Internal& sta
+ 		}
+ 	}
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc
++void OutputFile::rangeCheckPPCBranch24(int64_t displacement, ld::Internal& state, const ld::Atom* atom, const ld::Fixup* fixup)
++{
++	const int64_t bl_eightMegLimit = 0x00FFFFFF;
++	if ( (displacement > bl_eightMegLimit) || (displacement < (-bl_eightMegLimit)) ) {
++		// show layout of final image
++		printSectionLayout(state);
++
++		const ld::Atom* target;
++		throwf("bl PPC branch out of range (%lld max is +/-16MB): from %s (0x%08llX) to %s (0x%08llX)",
++				displacement, atom->name(), atom->finalAddress(), referenceTargetAtomName(state, fixup),
++				addressOf(state, fixup, &target));
++	}
++}
++
++void OutputFile::rangeCheckPPCBranch14(int64_t displacement, ld::Internal& state, const ld::Atom* atom, const ld::Fixup* fixup)
++{
++	const int64_t b_sixtyFourKiloLimit = 0x0000FFFF;
++	if ( (displacement > b_sixtyFourKiloLimit) || (displacement < (-b_sixtyFourKiloLimit)) ) {
++		// show layout of final image
++		printSectionLayout(state);
++
++		const ld::Atom* target;
++		throwf("bcc PPC branch out of range (%lld max is +/-64KB): from %s (0x%08llX) to %s (0x%08llX)",
++				displacement, atom->name(), atom->finalAddress(), referenceTargetAtomName(state, fixup),
++				addressOf(state, fixup, &target));
++	}
++}
++#endif
+ 
+ 
+ 
+@@ -965,10 +1002,13 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 	int64_t delta;
+ 	uint32_t instruction;
+ 	uint32_t newInstruction;
++	uint16_t instructionLowHalf;
+ 	bool is_bl;
+ 	bool is_blx;
+ 	bool is_b;
++#if SUPPORT_ARCH_arm_any
+ 	bool thumbTarget = false;
++#endif
+ 	for (ld::Fixup::iterator fit = atom->fixupsBegin(), end=atom->fixupsEnd(); fit != end; ++fit) {
+ 		uint8_t* fixUpLocation = &buffer[fit->offsetInAtom];
+ 		switch ( (ld::Fixup::Kind)(fit->kind) ) { 
+@@ -981,9 +1021,11 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 				break;
+ 			case ld::Fixup::kindSetTargetAddress:
+ 				accumulator = addressOf(state, fit, &toTarget);			
++#if SUPPORT_ARCH_arm_any
+ 				thumbTarget = targetIsThumb(state, fit);
+ 				if ( thumbTarget ) 
+ 					accumulator |= 1;
++#endif
+ 				if ( fit->contentAddendOnly || fit->contentDetlaToAddendOnly )
+ 					accumulator = 0;
+ 				break;
+@@ -993,6 +1035,7 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 					accumulator -= delta;
+ 				break;
+ 			case ld::Fixup::kindAddAddend:
++#if SUPPORT_ARCH_arm_any
+ 				// <rdar://problem/8342028> ARM main executables main contain .long constants pointing
+ 				// into themselves such as jump tables.  These .long should not have thumb bit set
+ 				// even though the target is a thumb instruction. We can tell it is an interior pointer
+@@ -1002,6 +1045,7 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 					//warning("removing thumb bit from intra-atom pointer in %s %s+0x%0X", 
+ 					//		atom->section().sectionName(), atom->name(), fit->offsetInAtom);
+ 				}
++#endif
+ 				accumulator += fit->u.addend;
+ 				break;
+ 			case ld::Fixup::kindSubtractAddend:
+@@ -1136,6 +1180,7 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 				rangeCheckRIP32(delta, state, atom, fit);
+ 				set32LE(fixUpLocation, delta);
+ 				break;
++#if SUPPORT_ARCH_arm_any
+ 			case ld::Fixup::kindStoreTargetAddressARMLoad12:
+ 				accumulator = addressOf(state, fit, &toTarget);
+ 				// fall into kindStoreARMLoad12 case
+@@ -1153,6 +1198,44 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 				}
+ 				set32LE(fixUpLocation, newInstruction);
+ 				break;
++#endif
++#if SUPPORT_ARCH_ppc
++			case ld::Fixup::kindStorePPCBranch14:
++				delta = accumulator - (atom->finalAddress() + fit->offsetInAtom);
++				rangeCheckPPCBranch14(delta, state, atom, fit);
++				instruction = get32BE(fixUpLocation);
++				newInstruction = (instruction & 0xFFFF0003) | ((uint32_t)delta & 0x0000FFFC);
++				set32BE(fixUpLocation, newInstruction);
++				break;
++			case ld::Fixup::kindStorePPCPicLow14:
++			case ld::Fixup::kindStorePPCAbsLow14:
++				instruction = get32BE(fixUpLocation);
++				if ( (accumulator & 0x3) != 0 )
++					throwf("bad offset (0x%08X) for lo14 instruction pic-base fix-up", (uint32_t)accumulator);
++				newInstruction = (instruction & 0xFFFF0003) | (accumulator & 0xFFFC);
++				set32BE(fixUpLocation, newInstruction);
++				break;
++			case ld::Fixup::kindStorePPCAbsLow16:
++			case ld::Fixup::kindStorePPCPicLow16:
++				instruction = get32BE(fixUpLocation);
++				newInstruction = (instruction & 0xFFFF0000) | (accumulator & 0xFFFF);
++				set32BE(fixUpLocation, newInstruction);
++				break;
++			case ld::Fixup::kindStorePPCAbsHigh16AddLow:
++			case ld::Fixup::kindStorePPCPicHigh16AddLow:
++				instructionLowHalf = (accumulator >> 16) & 0xFFFF;
++				if ( accumulator & 0x00008000 )
++					++instructionLowHalf;
++				instruction = get32BE(fixUpLocation);
++				newInstruction = (instruction & 0xFFFF0000) | instructionLowHalf;
++				set32BE(fixUpLocation, newInstruction);
++				break;
++			case ld::Fixup::kindStorePPCAbsHigh16:
++				instruction = get32BE(fixUpLocation);
++				newInstruction = (instruction & 0xFFFF0000) | ((accumulator >> 16) & 0xFFFF);
++				set32BE(fixUpLocation, newInstruction);
++				break;
++#endif
+ 			case ld::Fixup::kindDtraceExtra:
+ 				break;
+ 			case ld::Fixup::kindStoreX86DtraceCallSiteNop:
+@@ -1175,6 +1258,21 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 					fixUpLocation[3] = 0x90;		// 1-byte nop
+ 				}
+ 				break;
++#if SUPPORT_ARCH_ppc
++			case ld::Fixup::kindStorePPCDtraceCallSiteNop:
++				if ( _options.outputKind() != Options::kObjectFile ) {
++					// change call site to a NOP
++					set32BE(fixUpLocation, 0x60000000);
++				}
++				break;
++			case ld::Fixup::kindStorePPCDtraceIsEnableSiteClear:
++				if ( _options.outputKind() != Options::kObjectFile ) {
++					// change call site to a li r3,0
++					set32BE(fixUpLocation, 0x38600000);
++				}
++				break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 			case ld::Fixup::kindStoreARMDtraceCallSiteNop:
+ 				if ( _options.outputKind() != Options::kObjectFile ) {
+ 					// change call site to a NOP
+@@ -1199,6 +1297,7 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 					set32LE(fixUpLocation, 0x46C04040);
+ 				}
+ 				break;
++#endif
+ 			case ld::Fixup::kindLazyTarget:
+ 				break;
+ 			case ld::Fixup::kindSetLazyOffset:
+@@ -1207,9 +1306,11 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 				break;
+ 			case ld::Fixup::kindStoreTargetAddressLittleEndian32:
+ 				accumulator = addressOf(state, fit, &toTarget);
++#if SUPPORT_ARCH_arm_any
+ 				thumbTarget = targetIsThumb(state, fit);
+ 				if ( thumbTarget ) 
+ 					accumulator |= 1;
++#endif
+ 				if ( fit->contentAddendOnly )
+ 					accumulator = 0;
+ 				rangeCheckAbsolute32(accumulator, state, atom, fit);
+@@ -1286,6 +1387,7 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 				rangeCheckRIP32(delta, state, atom, fit);
+ 				set32LE(fixUpLocation, delta);
+ 				break;
++#if SUPPORT_ARCH_arm_any
+ 			case ld::Fixup::kindStoreTargetAddressARMBranch24:
+ 				accumulator = addressOf(state, fit, &toTarget);
+ 				thumbTarget = targetIsThumb(state, fit);
+@@ -1467,6 +1569,21 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ 					set32LE(fixUpLocation, newInstruction);		
+ 				}
+ 				break;
++#endif
++#if SUPPORT_ARCH_ppc
++			case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++				accumulator = addressOf(state, fit, &toTarget);
++				if ( fit->contentDetlaToAddendOnly )
++					accumulator = 0;
++				// fall into kindStorePPCBranch24 case
++			case ld::Fixup::kindStorePPCBranch24:
++				delta = accumulator - (atom->finalAddress() + fit->offsetInAtom);
++				rangeCheckPPCBranch24(delta, state, atom, fit);
++				instruction = get32BE(fixUpLocation);
++				newInstruction = (instruction & 0xFC000003) | ((uint32_t)delta & 0x03FFFFFC);
++				set32BE(fixUpLocation, newInstruction);
++				break;
++#endif
+ 		}
+ 	}
+ }
+@@ -1474,11 +1591,18 @@ void OutputFile::applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::
+ void OutputFile::copyNoOps(uint8_t* from, uint8_t* to, bool thumb)
+ {
+ 	switch ( _options.architecture() ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			for (uint8_t* p=from; p < to; p += 4)
++				OSWriteBigInt32((uint32_t*)p, 0, 0x60000000);
++			break;
++#endif
+ 		case CPU_TYPE_I386:
+ 		case CPU_TYPE_X86_64:
+ 			for (uint8_t* p=from; p < to; ++p)
+ 				*p = 0x90;
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( thumb ) {
+ 				for (uint8_t* p=from; p < to; p += 2)
+@@ -1489,6 +1613,7 @@ void OutputFile::copyNoOps(uint8_t* from, uint8_t* to, bool thumb)
+ 					OSWriteLittleInt32((uint32_t*)p, 0, 0xe1a00000);
+ 			}
+ 			break;
++#endif
+ 		default:
+ 			for (uint8_t* p=from; p < to; ++p)
+ 				*p = 0x00;
+@@ -1588,7 +1713,9 @@ void OutputFile::writeOutputFile(ld::Internal& state)
+ 				this->applyFixUps(state, mhAddress, atom, &wholeBuffer[fileOffset]);
+ 				fileOffsetOfEndOfLastAtom = fileOffset+atom->size();
+ 				lastAtomUsesNoOps = sectionUsesNops;
++#if SUPPORT_ARCH_arm_any
+ 				lastAtomWasThumb = atom->isThumb();
++#endif
+ 			}
+ 			catch (const char* msg) {
+ 				if ( atom->file() != NULL )
+@@ -1915,6 +2042,7 @@ void OutputFile::addPreloadLinkEdit(ld::Internal& state)
+ 				stringPoolSection = state.addAtom(*_stringPoolAtom);
+ 			}
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( _hasLocalRelocations ) {
+ 				_localRelocsAtom = new LocalRelocationsAtom<arm>(_options, state, *this);
+@@ -1933,6 +2061,7 @@ void OutputFile::addPreloadLinkEdit(ld::Internal& state)
+ 				stringPoolSection = state.addAtom(*_stringPoolAtom);
+ 			}
+ 			break;
++#endif
+ 		default:
+ 			throw "architecture not supported for -preload";
+ 	}
+@@ -1947,6 +2076,56 @@ void OutputFile::addLinkEdit(ld::Internal& state)
+ 		return addPreloadLinkEdit(state);
+ 	
+ 	switch ( _options.architecture() ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			if ( _hasSectionRelocations ) {
++				_sectionsRelocationsAtom = new SectionRelocationsAtom<ppc>(_options, state, *this);
++				sectionRelocationsSection = state.addAtom(*_sectionsRelocationsAtom);
++			}
++			if ( _hasDyldInfo ) {
++				_rebasingInfoAtom = new RebaseInfoAtom<ppc>(_options, state, *this);
++				rebaseSection = state.addAtom(*_rebasingInfoAtom);
++
++				_bindingInfoAtom = new BindingInfoAtom<ppc>(_options, state, *this);
++				bindingSection = state.addAtom(*_bindingInfoAtom);
++
++				_weakBindingInfoAtom = new WeakBindingInfoAtom<ppc>(_options, state, *this);
++				weakBindingSection = state.addAtom(*_weakBindingInfoAtom);
++
++				_lazyBindingInfoAtom = new LazyBindingInfoAtom<ppc>(_options, state, *this);
++				lazyBindingSection = state.addAtom(*_lazyBindingInfoAtom);
++
++				_exportInfoAtom = new ExportInfoAtom<ppc>(_options, state, *this);
++				exportSection = state.addAtom(*_exportInfoAtom);
++			}
++			if ( _hasLocalRelocations ) {
++				_localRelocsAtom = new LocalRelocationsAtom<ppc>(_options, state, *this);
++				localRelocationsSection = state.addAtom(*_localRelocsAtom);
++			}
++			if ( _hasSplitSegInfo ) {
++				_splitSegInfoAtom = new SplitSegInfoAtom<ppc>(_options, state, *this);
++				splitSegInfoSection = state.addAtom(*_splitSegInfoAtom);
++			}
++			if ( _hasFunctionStartsInfo ) {
++				_functionStartsAtom = new FunctionStartsAtom<ppc>(_options, state, *this);
++				functionStartsSection = state.addAtom(*_functionStartsAtom);
++			}
++			if ( _hasSymbolTable ) {
++				_symbolTableAtom = new SymbolTableAtom<ppc>(_options, state, *this);
++				symbolTableSection = state.addAtom(*_symbolTableAtom);
++			}
++			if ( _hasExternalRelocations ) {
++				_externalRelocsAtom = new ExternalRelocationsAtom<ppc>(_options, state, *this);
++				externalRelocationsSection = state.addAtom(*_externalRelocsAtom);
++			}
++			if ( _hasSymbolTable ) {
++				_indirectSymbolTableAtom = new IndirectSymbolTableAtom<ppc>(_options, state, *this);
++				indirectSymbolTableSection = state.addAtom(*_indirectSymbolTableAtom);
++				_stringPoolAtom = new StringPoolAtom(_options, state, *this, 4);
++				stringPoolSection = state.addAtom(*_stringPoolAtom);
++			}
++			break;
++#endif
+ 		case CPU_TYPE_I386:
+ 			if ( _hasSectionRelocations ) {
+ 				_sectionsRelocationsAtom = new SectionRelocationsAtom<x86>(_options, state, *this);
+@@ -2043,6 +2222,7 @@ void OutputFile::addLinkEdit(ld::Internal& state)
+ 				stringPoolSection = state.addAtom(*_stringPoolAtom);
+ 			}
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( _hasSectionRelocations ) {
+ 				_sectionsRelocationsAtom = new SectionRelocationsAtom<arm>(_options, state, *this);
+@@ -2091,6 +2271,57 @@ void OutputFile::addLinkEdit(ld::Internal& state)
+ 				stringPoolSection = state.addAtom(*_stringPoolAtom);
+ 			}
+ 			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			if ( _hasSectionRelocations ) {
++				_sectionsRelocationsAtom = new SectionRelocationsAtom<ppc64>(_options, state, *this);
++				sectionRelocationsSection = state.addAtom(*_sectionsRelocationsAtom);
++			}
++			if ( _hasDyldInfo ) {
++				_rebasingInfoAtom = new RebaseInfoAtom<ppc64>(_options, state, *this);
++				rebaseSection = state.addAtom(*_rebasingInfoAtom);
++
++				_bindingInfoAtom = new BindingInfoAtom<ppc64>(_options, state, *this);
++				bindingSection = state.addAtom(*_bindingInfoAtom);
++
++				_weakBindingInfoAtom = new WeakBindingInfoAtom<ppc64>(_options, state, *this);
++				weakBindingSection = state.addAtom(*_weakBindingInfoAtom);
++
++				_lazyBindingInfoAtom = new LazyBindingInfoAtom<ppc64>(_options, state, *this);
++				lazyBindingSection = state.addAtom(*_lazyBindingInfoAtom);
++
++				_exportInfoAtom = new ExportInfoAtom<ppc64>(_options, state, *this);
++				exportSection = state.addAtom(*_exportInfoAtom);
++			}
++			if ( _hasLocalRelocations ) {
++				_localRelocsAtom = new LocalRelocationsAtom<ppc64>(_options, state, *this);
++				localRelocationsSection = state.addAtom(*_localRelocsAtom);
++			}
++			if  ( _hasSplitSegInfo ) {
++				_splitSegInfoAtom = new SplitSegInfoAtom<ppc64>(_options, state, *this);
++				splitSegInfoSection = state.addAtom(*_splitSegInfoAtom);
++			}
++			if ( _hasFunctionStartsInfo ) {
++				_functionStartsAtom = new FunctionStartsAtom<ppc64>(_options, state, *this);
++				functionStartsSection = state.addAtom(*_functionStartsAtom);
++			}
++			if ( _hasSymbolTable ) {
++				_symbolTableAtom = new SymbolTableAtom<ppc64>(_options, state, *this);
++				symbolTableSection = state.addAtom(*_symbolTableAtom);
++			}
++			if ( _hasExternalRelocations ) {
++				_externalRelocsAtom = new ExternalRelocationsAtom<ppc64>(_options, state, *this);
++				externalRelocationsSection = state.addAtom(*_externalRelocsAtom);
++			}
++			if ( _hasSymbolTable ) {
++				_indirectSymbolTableAtom = new IndirectSymbolTableAtom<ppc64>(_options, state, *this);
++				indirectSymbolTableSection = state.addAtom(*_indirectSymbolTableAtom);
++				_stringPoolAtom = new StringPoolAtom(_options, state, *this, 4);
++				stringPoolSection = state.addAtom(*_stringPoolAtom);
++			}
++			break;
++#endif
+ 		default:
+ 			throw "unknown architecture";
+ 	}
+@@ -2103,14 +2334,28 @@ void OutputFile::addLoadCommands(ld::Internal& state)
+ 			_headersAndLoadCommandAtom = new HeaderAndLoadCommandsAtom<x86_64>(_options, state, *this);
+ 			headerAndLoadCommandsSection = state.addAtom(*_headersAndLoadCommandAtom);
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			_headersAndLoadCommandAtom = new HeaderAndLoadCommandsAtom<arm>(_options, state, *this);
+ 			headerAndLoadCommandsSection = state.addAtom(*_headersAndLoadCommandAtom);
+ 			break;
++#endif
+ 		case CPU_TYPE_I386:
+ 			_headersAndLoadCommandAtom = new HeaderAndLoadCommandsAtom<x86>(_options, state, *this);
+ 			headerAndLoadCommandsSection = state.addAtom(*_headersAndLoadCommandAtom);
+ 			break;
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			_headersAndLoadCommandAtom = new HeaderAndLoadCommandsAtom<ppc>(_options, state, *this);
++			headerAndLoadCommandsSection = state.addAtom(*_headersAndLoadCommandAtom);
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			_headersAndLoadCommandAtom = new HeaderAndLoadCommandsAtom<ppc64>(_options, state, *this);
++			headerAndLoadCommandsSection = state.addAtom(*_headersAndLoadCommandAtom);
++			break;
++#endif
+ 		default:
+ 			throw "unknown architecture";
+ 	}
+@@ -2263,15 +2508,29 @@ bool OutputFile::isPcRelStore(ld::Fixup::Kind kind)
+ 		case ld::Fixup::kindStoreX86PCRel32GOT:
+ 		case ld::Fixup::kindStoreX86PCRel32TLVLoad:
+ 		case ld::Fixup::kindStoreX86PCRel32TLVLoadNowLEA:
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreARMBranch24:
+ 		case ld::Fixup::kindStoreThumbBranch22:
+ 		case ld::Fixup::kindStoreARMLoad12:
++#endif
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCBranch24:
++		case ld::Fixup::kindStorePPCBranch14:
++		case ld::Fixup::kindStorePPCPicLow14:
++		case ld::Fixup::kindStorePPCPicLow16:
++		case ld::Fixup::kindStorePPCPicHigh16AddLow:
++#endif
+ 		case ld::Fixup::kindStoreTargetAddressX86PCRel32:
+ 		case ld::Fixup::kindStoreTargetAddressX86PCRel32GOTLoad:
+ 		case ld::Fixup::kindStoreTargetAddressX86PCRel32GOTLoadNowLEA:
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreTargetAddressARMBranch24:
+ 		case ld::Fixup::kindStoreTargetAddressThumbBranch22:
+ 		case ld::Fixup::kindStoreTargetAddressARMLoad12:
++#endif
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++#endif
+ 			return true;
+ 		case ld::Fixup::kindStoreTargetAddressX86BranchPCRel32:
+ 			return (_options.outputKind() != Options::kKextBundle);
+@@ -2317,16 +2576,27 @@ bool OutputFile::setsTarget(ld::Fixup::Kind kind)
+ 		case ld::Fixup::kindStoreTargetAddressX86BranchPCRel32:
+ 		case ld::Fixup::kindStoreTargetAddressX86PCRel32GOTLoad:
+ 		case ld::Fixup::kindStoreTargetAddressX86PCRel32GOTLoadNowLEA:
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreTargetAddressARMBranch24:
+ 		case ld::Fixup::kindStoreTargetAddressThumbBranch22:
+ 		case ld::Fixup::kindStoreTargetAddressARMLoad12:
++#endif
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++#endif
+ 			return true;
+ 		case ld::Fixup::kindStoreX86DtraceCallSiteNop:
+ 		case ld::Fixup::kindStoreX86DtraceIsEnableSiteClear:
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreARMDtraceCallSiteNop:
+ 		case ld::Fixup::kindStoreARMDtraceIsEnableSiteClear:
+ 		case ld::Fixup::kindStoreThumbDtraceCallSiteNop:
+ 		case ld::Fixup::kindStoreThumbDtraceIsEnableSiteClear:
++#endif
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCDtraceCallSiteNop:
++		case ld::Fixup::kindStorePPCDtraceIsEnableSiteClear:
++#endif
+ 			return (_options.outputKind() == Options::kObjectFile);
+ 		default:
+ 			break;
+@@ -2858,6 +3128,27 @@ void OutputFile::addClassicRelocs(ld::Internal& state, ld::Internal::FinalSectio
+ 				sect->hasLocalRelocs = true;
+ 			}
+ 			break;
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCAbsLow14:
++		case ld::Fixup::kindStorePPCAbsLow16:
++		case ld::Fixup::kindStorePPCAbsHigh16AddLow:
++		case ld::Fixup::kindStorePPCAbsHigh16:
++			{
++				assert(target != NULL);
++				if ( target->definition() == ld::Atom::definitionProxy )
++					throwf("half word text relocs not supported in %s", atom->name());
++				if ( _options.outputSlidable() ) {
++					if ( inReadOnlySeg )
++						noteTextReloc(atom, target);
++					uint32_t machoSectionIndex = (target->definition() == ld::Atom::definitionAbsolute)
++						? R_ABS : target->machoSection();
++					_localRelocsAtom->addTextReloc(relocAddress, fixupWithTarget->kind,
++						target->finalAddress(), machoSectionIndex);
++					sect->hasLocalRelocs = true;
++				}
++			}
++			break;
++#endif
+ 		case ld::Fixup::kindStoreTargetAddressX86BranchPCRel32:
+ 			if ( _options.outputKind() == Options::kKextBundle ) {
+ 				assert(target != NULL);
+@@ -2868,6 +3159,7 @@ void OutputFile::addClassicRelocs(ld::Internal& state, ld::Internal::FinalSectio
+ 			}
+ 			break;
+ 		
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreARMLow16:
+ 		case ld::Fixup::kindStoreThumbLow16:
+ 			// no way to encode rebasing of binding for these instructions
+@@ -2881,6 +3173,7 @@ void OutputFile::addClassicRelocs(ld::Internal& state, ld::Internal::FinalSectio
+ 			if ( _options.outputSlidable() || (target->definition() == ld::Atom::definitionProxy) )
+ 				throwf("no supported runtime hi16 relocation in %s from %s to %s", atom->name(), atom->file()->path(), target->name());
+ 			break;
++#endif
+ 
+ 		default:
+ 			break;
+@@ -2895,6 +3188,7 @@ bool OutputFile::useExternalSectionReloc(const ld::Atom* atom, const ld::Atom* t
+ 		return ( target->symbolTableInclusion() != ld::Atom::symbolTableNotIn );
+ 	}
+ 	
++#if SUPPORT_ARCH_arm_any
+ 	// <rdar://problem/9513487> support arm branch interworking in -r mode 
+ 	if ( (_options.architecture() == CPU_TYPE_ARM) && (_options.outputKind() == Options::kObjectFile) ) {
+ 		if ( atom->isThumb() != target->isThumb() ) {
+@@ -2909,6 +3203,7 @@ bool OutputFile::useExternalSectionReloc(const ld::Atom* atom, const ld::Atom* t
+ 			}
+ 		}
+ 	}
++#endif
+ 
+ 	// most architectures use external relocations only for references
+ 	// to a symbol in another translation unit or for references to "weak symbols" or tentative definitions
+@@ -3002,16 +3297,20 @@ void OutputFile::makeSplitSegInfo(ld::Internal& state)
+ 			const ld::Atom* target = NULL;
+ 			const ld::Atom* fromTarget = NULL;
+             uint64_t accumulator = 0;
++#if SUPPORT_ARCH_arm_any
+             bool thumbTarget;
++#endif
+ 			bool hadSubtract = false;
+ 			for (ld::Fixup::iterator fit = atom->fixupsBegin(), end=atom->fixupsEnd(); fit != end; ++fit) {
+ 				if ( fit->firstInCluster() ) 
+ 					target = NULL;
+ 				if ( this->setsTarget(fit->kind) ) {
+ 					accumulator = addressOf(state, fit, &target);			
++#if SUPPORT_ARCH_arm_any
+ 					thumbTarget = targetIsThumb(state, fit);
+ 					if ( thumbTarget ) 
+ 						accumulator |= 1;
++#endif
+ 				}
+ 				switch ( fit->kind ) {
+ 					case ld::Fixup::kindSubtractTargetAddress:
+@@ -3041,16 +3340,22 @@ void OutputFile::makeSplitSegInfo(ld::Internal& state)
+ 					case ld::Fixup::kindStoreX86PCRel32GOTLoad:
+ 					case ld::Fixup::kindStoreX86PCRel32GOTLoadNowLEA:
+ 					case ld::Fixup::kindStoreX86PCRel32GOT:
++#if SUPPORT_ARCH_ppc
++					case ld::Fixup::kindStorePPCPicHigh16AddLow:
++#endif
+ 					case ld::Fixup::kindStoreTargetAddressX86PCRel32:
+ 					case ld::Fixup::kindStoreTargetAddressX86PCRel32GOTLoad:
+ 					case ld::Fixup::kindStoreTargetAddressX86PCRel32GOTLoadNowLEA:
++#if SUPPORT_ARCH_arm_any
+                     case ld::Fixup::kindStoreARMLow16:
+                     case ld::Fixup::kindStoreThumbLow16: 
++#endif
+ 						assert(target != NULL);
+ 						if ( strcmp(sect->segmentName(), target->section().segmentName()) != 0 ) {	
+ 							_splitSegInfos.push_back(SplitSegInfoEntry(atom->finalAddress()+fit->offsetInAtom,fit->kind));
+ 						}
+ 						break;
++#if SUPPORT_ARCH_arm_any
+                     case ld::Fixup::kindStoreARMHigh16: 
+                     case ld::Fixup::kindStoreThumbHigh16: 
+ 						assert(target != NULL);
+@@ -3060,6 +3365,7 @@ void OutputFile::makeSplitSegInfo(ld::Internal& state)
+  							_splitSegInfos.push_back(SplitSegInfoEntry(atom->finalAddress()+fit->offsetInAtom,fit->kind, extra));
+ 						}
+ 						break;
++#endif
+ 					case ld::Fixup::kindSetTargetImageOffset:
+ 						accumulator = addressOf(state, fit, &target);			
+ 						assert(target != NULL);
+diff --git a/src/ld/OutputFile.h b/src/ld/OutputFile.h
+index 8401716..2035da3 100644
+--- a/src/ld/OutputFile.h
++++ b/src/ld/OutputFile.h
+@@ -174,7 +174,9 @@ private:
+ 	void						updateLINKEDITAddresses(ld::Internal& state);
+ 	void						applyFixUps(ld::Internal& state, uint64_t mhAddress, const ld::Atom*  atom, uint8_t* buffer);
+ 	uint64_t					addressOf(const ld::Internal& state, const ld::Fixup* fixup, const ld::Atom** target);
++#if SUPPORT_ARCH_arm_any
+ 	bool						targetIsThumb(ld::Internal& state, const ld::Fixup* fixup);
++#endif
+ 	uint32_t					lazyBindingInfoOffsetForLazyPointerAddress(uint64_t lpAddress);
+ 	void						copyNoOps(uint8_t* from, uint8_t* to, bool thumb);
+ 	bool						isPointerToTarget(ld::Fixup::Kind kind);
+@@ -204,12 +206,20 @@ private:
+ 																							const ld::Fixup* fixup);
+ 	void						rangeCheckRIP32(int64_t delta, ld::Internal& state, const ld::Atom* atom, 
+ 																							const ld::Fixup* fixup);
++#if SUPPORT_ARCH_arm_any
+ 	void						rangeCheckARM12(int64_t delta, ld::Internal& state, const ld::Atom* atom, 
+ 																							const ld::Fixup* fixup);
+ 	void						rangeCheckARMBranch24(int64_t delta, ld::Internal& state, const ld::Atom* atom, 
+ 																							const ld::Fixup* fixup);
+ 	void						rangeCheckThumbBranch22(int64_t delta, ld::Internal& state, const ld::Atom* atom, 
+ 																							const ld::Fixup* fixup);
++#endif
++#if SUPPORT_ARCH_ppc
++	void	rangeCheckPPCBranch24(int64_t delta, ld::Internal& state, const ld::Atom* atom,
++		const ld::Fixup* fixup);
++	void	rangeCheckPPCBranch14(int64_t delta, ld::Internal& state, const ld::Atom* atom,
++		const ld::Fixup* fixup);
++#endif
+ 	uint64_t					sectionOffsetOf(const ld::Internal& state, const ld::Fixup* fixup);
+ 	uint64_t					tlvTemplateOffsetOf(const ld::Internal& state, const ld::Fixup* fixup);
+ 	void						dumpAtomsBySection(ld::Internal& state, bool);
+diff --git a/src/ld/Resolver.cpp b/src/ld/Resolver.cpp
+index 2502820..fa23421 100644
+--- a/src/ld/Resolver.cpp
++++ b/src/ld/Resolver.cpp
+@@ -109,7 +109,12 @@ public:
+ 											ld::Atom(target.section(), target.definition(), ld::Atom::combineNever,
+ 													ld::Atom::scopeGlobal, target.contentType(), 
+ 													target.symbolTableInclusion(), target.dontDeadStrip(), 
+-													target.isThumb(), true, target.alignment()),
++#if SUPPORT_ARCH_arm_any
++													target.isThumb(),
++#else
++													false,
++#endif
++													true, target.alignment()),
+ 											_name(nm), 
+ 											_aliasOf(target),
+ 											_fixup(0, ld::Fixup::k1of1, ld::Fixup::kindNoneFollowOn, &target) { }
+@@ -297,6 +302,28 @@ void Resolver::buildAtomList()
+ 	//_symbolTable.printStatistics();
+ }
+ 
++#if SUPPORT_ARCH_ppc
++unsigned int Resolver::ppcSubTypeIndex(uint32_t subtype)
++{
++	switch ( subtype ) {
++		case CPU_SUBTYPE_POWERPC_ALL:
++			return 0;
++		case CPU_SUBTYPE_POWERPC_750:
++			// G3
++			return 1;
++		case CPU_SUBTYPE_POWERPC_7400:
++		case CPU_SUBTYPE_POWERPC_7450:
++			// G4
++			return 2;
++		case CPU_SUBTYPE_POWERPC_970:
++			// G5 can run everything
++			return 3;
++		default:
++			throw "Unhandled PPC cpu subtype!";
++			break;
++	}
++}
++#endif
+ 
+ void Resolver::doFile(const ld::File& file)
+ {
+@@ -343,6 +370,32 @@ void Resolver::doFile(const ld::File& file)
+ 		// update cpu-sub-type
+ 		cpu_subtype_t nextObjectSubType = file.cpuSubType();
+ 		switch ( _options.architecture() ) {
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++				// no checking when -force_cpusubtype_ALL is used
++				if ( _options.forceCpuSubtypeAll() )
++					return;
++				if ( _options.preferSubArchitecture() ) {
++					// warn if some .o file is not compatible with desired output sub-type
++					if ( _options.subArchitecture() != nextObjectSubType ) {
++						if ( ppcSubTypeIndex(nextObjectSubType) > ppcSubTypeIndex(_options.subArchitecture()) ) {
++							if ( !_inputFiles.inferredArch() )
++								warning("cpu-sub-type of %s is not compatible with command line cpu-sub-type", file.path());
++							_internal.cpuSubType = nextObjectSubType;
++						}
++					}
++				}
++				else {
++					// command line to linker just had -arch ppc
++					// figure out final sub-type based on sub-type of all .o files
++					if ( ppcSubTypeIndex(nextObjectSubType) > ppcSubTypeIndex(_internal.cpuSubType) ) {
++						_internal.cpuSubType = nextObjectSubType;
++					}
++				}
++				break;
++#endif
++
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				if ( _options.subArchitecture() != nextObjectSubType ) {
+ 					if ( (_options.subArchitecture() == CPU_SUBTYPE_ARM_ALL) && _options.forceCpuSubtypeAll() ) {
+@@ -361,7 +414,13 @@ void Resolver::doFile(const ld::File& file)
+ 					}
+ 				}
+ 				break;
++#endif
+ 			
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++				break;
++#endif
++
+ 			case CPU_TYPE_I386:
+ 				_internal.cpuSubType = CPU_SUBTYPE_I386_ALL;
+ 				break;
+@@ -517,10 +576,16 @@ bool Resolver::isDtraceProbe(ld::Fixup::Kind kind)
+ 	switch (kind) {
+ 		case ld::Fixup::kindStoreX86DtraceCallSiteNop:
+ 		case ld::Fixup::kindStoreX86DtraceIsEnableSiteClear:
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreARMDtraceCallSiteNop:
+ 		case ld::Fixup::kindStoreARMDtraceIsEnableSiteClear:
+ 		case ld::Fixup::kindStoreThumbDtraceCallSiteNop:
+ 		case ld::Fixup::kindStoreThumbDtraceIsEnableSiteClear:
++#endif
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCDtraceCallSiteNop:
++		case ld::Fixup::kindStorePPCDtraceIsEnableSiteClear:
++#endif
+ 		case ld::Fixup::kindDtraceExtra:
+ 			return true;
+ 		default: 
+@@ -720,8 +785,13 @@ void Resolver::markLive(const ld::Atom& atom, WhyLiveBackChain* previous)
+ 			case ld::Fixup::kindStoreTargetAddressX86PCRel32TLVLoadNowLEA:
+ 			case ld::Fixup::kindStoreTargetAddressX86Abs32TLVLoad:
+ 			case ld::Fixup::kindStoreTargetAddressX86Abs32TLVLoadNowLEA:
++#if SUPPORT_ARCH_arm_any
+ 			case ld::Fixup::kindStoreTargetAddressARMBranch24:
+ 			case ld::Fixup::kindStoreTargetAddressThumbBranch22:
++#endif
++#if SUPPORT_ARCH_ppc
++			case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++#endif
+ 				if ( fit->binding == ld::Fixup::bindingByContentBound ) {
+ 					// normally this was done in convertReferencesToIndirect()
+ 					// but a archive loaded .o file may have a forward reference
+diff --git a/src/ld/Resolver.h b/src/ld/Resolver.h
+index 65e2006..1223107 100644
+--- a/src/ld/Resolver.h
++++ b/src/ld/Resolver.h
+@@ -94,6 +94,7 @@ private:
+ 	void					markLive(const ld::Atom& atom, WhyLiveBackChain* previous);
+ 	bool					isDtraceProbe(ld::Fixup::Kind kind);
+ 	void					liveUndefines(std::vector<const char*>&);
++	static unsigned int			ppcSubTypeIndex(uint32_t subtype);
+ 	bool					printReferencedBy(const char* name, SymbolTable::IndirectBindingSlot slot);
+ 			
+ 
+diff --git a/src/ld/ld.hpp b/src/ld/ld.hpp
+index b615046..6669f9d 100644
+--- a/src/ld/ld.hpp
++++ b/src/ld/ld.hpp
+@@ -313,16 +313,29 @@ struct Fixup
+ 					kindStoreX86PCRel32GOTLoad, kindStoreX86PCRel32GOTLoadNowLEA, kindStoreX86PCRel32GOT, 
+ 					kindStoreX86PCRel32TLVLoad, kindStoreX86PCRel32TLVLoadNowLEA,
+ 					kindStoreX86Abs32TLVLoad, kindStoreX86Abs32TLVLoadNowLEA,
++#if SUPPORT_ARCH_arm_any
+ 					// ARM specific store kinds
+ 					kindStoreARMBranch24, kindStoreThumbBranch22, 
+ 					kindStoreARMLoad12,
+ 					kindStoreARMLow16, kindStoreARMHigh16, 
+ 					kindStoreThumbLow16, kindStoreThumbHigh16, 
++#endif
++#if SUPPORT_ARCH_ppc
++					// PowerPC specific store kinds
++					kindStorePPCBranch24, kindStorePPCBranch14,
++					kindStorePPCPicLow14, kindStorePPCPicLow16, kindStorePPCPicHigh16AddLow,
++					kindStorePPCAbsLow14, kindStorePPCAbsLow16, kindStorePPCAbsHigh16AddLow, kindStorePPCAbsHigh16,
++#endif
+ 					// dtrace probes
+ 					kindDtraceExtra,
+ 					kindStoreX86DtraceCallSiteNop, kindStoreX86DtraceIsEnableSiteClear,
++#if SUPPORT_ARCH_arm_any
+ 					kindStoreARMDtraceCallSiteNop, kindStoreARMDtraceIsEnableSiteClear,
+ 					kindStoreThumbDtraceCallSiteNop, kindStoreThumbDtraceIsEnableSiteClear,
++#endif
++#if SUPPORT_ARCH_ppc
++					kindStorePPCDtraceCallSiteNop, kindStorePPCDtraceIsEnableSiteClear,
++#endif
+ 					// lazy binding
+ 					kindLazyTarget, kindSetLazyOffset,
+ 					// pointer store combinations
+@@ -341,10 +354,16 @@ struct Fixup
+ 					kindStoreTargetAddressX86PCRel32TLVLoadNowLEA, // kindSetTargetAddress + kindStoreX86PCRel32TLVLoadNowLEA
+ 					kindStoreTargetAddressX86Abs32TLVLoad,		// kindSetTargetAddress + kindStoreX86Abs32TLVLoad
+ 					kindStoreTargetAddressX86Abs32TLVLoadNowLEA,	// kindSetTargetAddress + kindStoreX86Abs32TLVLoadNowLEA
++#if SUPPORT_ARCH_arm_any
+ 					// ARM value calculation and store combinations
+ 					kindStoreTargetAddressARMBranch24,		// kindSetTargetAddress + kindStoreARMBranch24
+ 					kindStoreTargetAddressThumbBranch22,	// kindSetTargetAddress + kindStoreThumbBranch22
+ 					kindStoreTargetAddressARMLoad12,		// kindSetTargetAddress + kindStoreARMLoad12
++#endif
++#if SUPPORT_ARCH_ppc
++					// PowerPC value calculation and store combinations
++					kindStoreTargetAddressPPCBranch24,		// kindSetTargetAddress + kindStorePPCBranch24
++#endif
+ 			};
+ 
+ 	union {
+@@ -553,7 +572,9 @@ public:
+ 	ContentType								contentType() const			{ return _contentType; }
+ 	SymbolTableInclusion					symbolTableInclusion() const{ return _symbolTableInclusion; }
+ 	bool									dontDeadStrip() const		{ return _dontDeadStrip; }
++#if SUPPORT_ARCH_arm_any
+ 	bool									isThumb() const				{ return _thumb; }
++#endif
+ 	bool									isAlias() const				{ return _alias; }
+ 	Alignment								alignment() const			{ return Alignment(_alignmentPowerOf2, _alignmentModulus); }
+ 	bool									overridesDylibsWeakDef() const	{ return _overridesADylibsWeakDef; }
+diff --git a/src/ld/lto_file.hpp b/src/ld/lto_file.hpp
+index 24d3f58..01d8df3 100644
+--- a/src/ld/lto_file.hpp
++++ b/src/ld/lto_file.hpp
+@@ -206,16 +206,22 @@ std::vector<File*> Parser::_s_files;
+ const char* Parser::tripletPrefixForArch(cpu_type_t arch)
+ {
+ 	switch (arch) {
++#if SUPPORT_ARCH_ppc
+ 		case CPU_TYPE_POWERPC:
+ 			return "powerpc-";
++#endif
++#if SUPPORT_ARCH_ppc64
+ 		case CPU_TYPE_POWERPC64:
+ 			return "powerpc64-";
++#endif
+ 		case CPU_TYPE_I386:
+ 			return "i386-";
+ 		case CPU_TYPE_X86_64:
+ 			return "x86_64-";
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			return "arm";
++#endif
+ 	}
+ 	return "";
+ }
+@@ -230,14 +236,18 @@ const char* Parser::fileKind(const uint8_t* p)
+ 	if ( (p[0] == 0xDE) && (p[1] == 0xC0) && (p[2] == 0x17) && (p[3] == 0x0B) ) {
+ 		uint32_t arch = LittleEndian::get32(*((uint32_t*)(&p[16])));
+ 		switch (arch) {
++#if SUPPORT_ARCH_ppc
+ 			case CPU_TYPE_POWERPC:
+ 				return "ppc";
++#endif
+ 			case CPU_TYPE_I386:
+ 				return "i386";
+ 			case CPU_TYPE_X86_64:
+ 				return "x86_64";
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				return "arm";
++#endif
+ 		}
+ 		return "unknown bitcode architecture";
+ 	}
+@@ -256,14 +266,18 @@ File* Parser::parse(const uint8_t* fileContent, uint64_t fileLength, const char*
+ ld::relocatable::File* Parser::parseMachOFile(const uint8_t* p, size_t len, uint32_t nextInputOrdinal, cpu_type_t arch) 
+ {
+ 	switch ( arch ) {
++#if SUPPORT_ARCH_ppc
+ 		case CPU_TYPE_POWERPC:
+ 			if ( mach_o::relocatable::Parser<ppc>::validFile(p) )
+ 				return mach_o::relocatable::Parser<ppc>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
+ 			break;
++#endif
++#if SUPPORT_ARCH_ppc64
+ 		case CPU_TYPE_POWERPC64:
+ 			if ( mach_o::relocatable::Parser<ppc64>::validFile(p) )
+ 				return mach_o::relocatable::Parser<ppc64>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
+ 			break;
++#endif
+ 		case CPU_TYPE_I386:
+ 			if ( mach_o::relocatable::Parser<x86>::validFile(p) )
+ 				return mach_o::relocatable::Parser<x86>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
+@@ -272,10 +286,12 @@ ld::relocatable::File* Parser::parseMachOFile(const uint8_t* p, size_t len, uint
+ 			if ( mach_o::relocatable::Parser<x86_64>::validFile(p) )
+ 				return mach_o::relocatable::Parser<x86_64>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( mach_o::relocatable::Parser<arm>::validFile(p) )
+ 				return mach_o::relocatable::Parser<arm>::parse(p, len, "/tmp/lto.o", 0, nextInputOrdinal);
+ 			break;
++#endif
+ 	}
+ 	throw "LLVM LTO, file is not of required architecture";
+ }
+diff --git a/src/ld/parsers/archive_file.cpp b/src/ld/parsers/archive_file.cpp
+index cf0a058..1587b82 100644
+--- a/src/ld/parsers/archive_file.cpp
++++ b/src/ld/parsers/archive_file.cpp
+@@ -226,9 +226,17 @@ const class File<A>::Entry* File<A>::Entry::next() const
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <> cpu_type_t File<ppc>::architecture()    { return CPU_TYPE_POWERPC; }
++#endif
++#if SUPPORT_ARCH_ppc64
++template <> cpu_type_t File<ppc64>::architecture()  { return CPU_TYPE_POWERPC64; }
++#endif
+ template <> cpu_type_t File<x86>::architecture()    { return CPU_TYPE_I386; }
+ template <> cpu_type_t File<x86_64>::architecture() { return CPU_TYPE_X86_64; }
++#if SUPPORT_ARCH_arm_any
+ template <> cpu_type_t File<arm>::architecture()    { return CPU_TYPE_ARM; }
++#endif
+ 
+ 
+ template <typename A>
+@@ -312,6 +320,14 @@ bool File<x86>::memberHasObjCCategories(const Entry* member) const
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++bool File<ppc>::memberHasObjCCategories(const Entry* member) const
++{
++	// ppc uses ObjC1 ABI which has .objc_category* global symbols
++	return false;
++}
++#endif
+ 
+ 
+ template <typename A>
+@@ -569,10 +585,24 @@ ld::archive::File* parse(const uint8_t* fileContent, uint64_t fileLength,
+ 			if ( archive::Parser<x86>::validFile(fileContent, fileLength, opts.objOpts) )
+ 				return archive::Parser<x86>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( archive::Parser<arm>::validFile(fileContent, fileLength, opts.objOpts) )
+ 				return archive::Parser<arm>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
+ 			break;
++#endif
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			if ( archive::Parser<ppc>::validFile(fileContent, fileLength, opts.objOpts) )
++				return archive::Parser<ppc>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			if ( archive::Parser<ppc64>::validFile(fileContent, fileLength, opts.objOpts) )
++				return archive::Parser<ppc64>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
++			break;
++#endif
+ 	}
+ 	return NULL;
+ }
+diff --git a/src/ld/parsers/libunwind/DwarfInstructions.hpp b/src/ld/parsers/libunwind/DwarfInstructions.hpp
+index b04582d..bdb8e23 100644
+--- a/src/ld/parsers/libunwind/DwarfInstructions.hpp
++++ b/src/ld/parsers/libunwind/DwarfInstructions.hpp
+@@ -144,6 +144,7 @@ private:
+ 												const Registers_x86_64&, const typename CFI_Parser<A>::PrologInfo& prolog,
+ 												char warningBuffer[1024]);
+ 	
++#if SUPPORT_ARCH_ppc
+ 	// ppc specific variants
+ 	static int    lastRestoreReg(const Registers_ppc&);
+ 	static bool   isReturnAddressRegister(int regNum, const Registers_ppc&);
+@@ -152,6 +153,7 @@ private:
+ 	static compact_unwind_encoding_t createCompactEncodingFromProlog(A& addressSpace, pint_t funcAddr,
+ 												const Registers_ppc&, const typename CFI_Parser<A>::PrologInfo& prolog,
+ 												char warningBuffer[1024]);
++#endif
+ };
+ 
+ 
+@@ -1668,6 +1670,7 @@ compact_unwind_encoding_t DwarfInstructions<A,R>::createCompactEncodingFromProlo
+ 
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ //
+ //	ppc specific functions
+ //
+@@ -1712,6 +1715,7 @@ compact_unwind_encoding_t DwarfInstructions<A,R>::createCompactEncodingFromProlo
+ 	warningBuffer[0] = '\0';
+ 	return UNWIND_X86_MODE_DWARF;
+ }
++#endif
+ 
+ 
+ 
+diff --git a/src/ld/parsers/libunwind/Registers.hpp b/src/ld/parsers/libunwind/Registers.hpp
+index 7d39fd7..181f17b 100644
+--- a/src/ld/parsers/libunwind/Registers.hpp
++++ b/src/ld/parsers/libunwind/Registers.hpp
+@@ -459,6 +459,7 @@ inline void Registers_x86_64::setVectorRegister(int num, v128 value)
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ ///
+ /// Registers_ppc holds the register state of a thread in a 32-bit PowerPC process.  
+ ///
+@@ -1037,6 +1038,7 @@ inline const char* Registers_ppc::getRegisterName(int regNum)
+ 
+ 
+ }
++#endif
+ 
+ 
+ } // namespace libunwind 
+diff --git a/src/ld/parsers/lto_file.cpp b/src/ld/parsers/lto_file.cpp
+index 3a11c18..3bf07c3 100644
+--- a/src/ld/parsers/lto_file.cpp
++++ b/src/ld/parsers/lto_file.cpp
+@@ -251,12 +251,18 @@ bool Parser::validFile(const uint8_t* fileContent, uint64_t fileLength, cpu_type
+ 			return ::lto_module_is_object_file_in_memory_for_target(fileContent, fileLength, "i386-");
+ 		case CPU_TYPE_X86_64:
+ 			return ::lto_module_is_object_file_in_memory_for_target(fileContent, fileLength, "x86_64-");
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+ 				if ( subarch == t->subType )
+ 					return ::lto_module_is_object_file_in_memory_for_target(fileContent, fileLength, t->llvmTriplePrefix);
+ 			}
+ 			break;
++#endif
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			return ::lto_module_is_object_file_in_memory_for_target(fileContent, fileLength, "powerpc-");
++#endif
+ 	}
+ 	return false;
+ }
+@@ -266,16 +272,22 @@ const char* Parser::fileKind(const uint8_t* p, uint64_t fileLength)
+ 	if ( (p[0] == 0xDE) && (p[1] == 0xC0) && (p[2] == 0x17) && (p[3] == 0x0B) ) {
+ 		uint32_t arch = LittleEndian::get32(*((uint32_t*)(&p[16])));
+ 		switch (arch) {
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++				return "ppc";
++#endif
+ 			case CPU_TYPE_I386:
+ 				return "i386";
+ 			case CPU_TYPE_X86_64:
+ 				return "x86_64";
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+ 					if ( ::lto_module_is_object_file_in_memory_for_target(p, fileLength, t->llvmTriplePrefix) )
+ 						return t->subTypeName;
+ 				}
+ 				return "arm";
++#endif
+ 		}
+ 		return "unknown bitcode architecture";
+ 	}
+diff --git a/src/ld/parsers/macho_dylib_file.cpp b/src/ld/parsers/macho_dylib_file.cpp
+index 39cebfb..694428f 100644
+--- a/src/ld/parsers/macho_dylib_file.cpp
++++ b/src/ld/parsers/macho_dylib_file.cpp
+@@ -232,11 +232,15 @@ template <typename A>
+ bool File<A>::_s_logHashtable = false;
+ 
+ template <> const char* File<x86_64>::objCInfoSegmentName() { return "__DATA"; }
++#if SUPPORT_ARCH_arm_any
+ template <> const char* File<arm>::objCInfoSegmentName() { return "__DATA"; }
++#endif
+ template <typename A> const char* File<A>::objCInfoSegmentName() { return "__OBJC"; }
+ 
+ template <> const char* File<x86_64>::objCInfoSectionName() { return "__objc_imageinfo"; }
++#if SUPPORT_ARCH_arm_any
+ template <> const char* File<arm>::objCInfoSectionName() { return "__objc_imageinfo"; }
++#endif
+ template <typename A> const char* File<A>::objCInfoSectionName() { return "__image_info"; }
+ 
+ template <typename A>
+@@ -855,6 +859,64 @@ public:
+ 
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++bool Parser<ppc>::validFile(const uint8_t* fileContent, bool executableOrDyliborBundle)
++{
++	const macho_header<P>* header = (const macho_header<P>*)fileContent;
++	if ( header->magic() != MH_MAGIC )
++		return false;
++	if ( header->cputype() != CPU_TYPE_POWERPC )
++		return false;
++	switch ( header->filetype() ) {
++		case MH_DYLIB:
++		case MH_DYLIB_STUB:
++			return true;
++		case MH_BUNDLE:
++			if ( executableOrDyliborBundle )
++				return true;
++			else
++				throw "can't link with bundle (MH_BUNDLE) only dylibs (MH_DYLIB)";
++		case MH_EXECUTE:
++			if ( executableOrDyliborBundle )
++				return true;
++			else
++				throw "can't link with a main executable";
++		default:
++			return false;
++	}
++}
++#endif
++
++#if SUPPORT_ARCH_ppc64
++template <>
++bool Parser<ppc64>::validFile(const uint8_t* fileContent, bool executableOrDyliborBundle)
++{
++	const macho_header<P>* header = (const macho_header<P>*)fileContent;
++	if ( header->magic() != MH_MAGIC_64 )
++		return false;
++	if ( header->cputype() != CPU_TYPE_POWERPC64 )
++		return false;
++	switch ( header->filetype() ) {
++		case MH_DYLIB:
++		case MH_DYLIB_STUB:
++			return true;
++		case MH_BUNDLE:
++			if ( executableOrDyliborBundle )
++				return true;
++			else
++				throw "can't link with bundle (MH_BUNDLE) only dylibs (MH_DYLIB)";
++		case MH_EXECUTE:
++			if ( executableOrDyliborBundle )
++				return true;
++			else
++				throw "can't link with a main executable";
++		default:
++			return false;
++	}
++}
++#endif
++
+ template <>
+ bool Parser<x86>::validFile(const uint8_t* fileContent, bool executableOrDyliborBundle)
+ {
+@@ -909,6 +971,7 @@ bool Parser<x86_64>::validFile(const uint8_t* fileContent, bool executableOrDyli
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ bool Parser<arm>::validFile(const uint8_t* fileContent, bool executableOrDyliborBundle)
+ {
+@@ -935,6 +998,7 @@ bool Parser<arm>::validFile(const uint8_t* fileContent, bool executableOrDylibor
+ 			return false;
+ 	}
+ }
++#endif
+ 
+ 
+ 
+@@ -954,10 +1018,24 @@ ld::dylib::File* parse(const uint8_t* fileContent, uint64_t fileLength,
+ 			if ( Parser<x86>::validFile(fileContent, bundleLoader) )
+ 				return Parser<x86>::parse(fileContent, fileLength, path, modTime, ordinal, opts, indirectDylib);
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( Parser<arm>::validFile(fileContent, bundleLoader) )
+ 				return Parser<arm>::parse(fileContent, fileLength, path, modTime, ordinal, opts, indirectDylib);
+ 			break;
++#endif
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			if ( Parser<ppc>::validFile(fileContent, bundleLoader) )
++				return Parser<ppc>::parse(fileContent, fileLength, path, modTime, ordinal, opts, indirectDylib);
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			if ( Parser<ppc64>::validFile(fileContent, bundleLoader) )
++				return Parser<ppc64>::parse(fileContent, fileLength, path, modTime, ordinal, opts, indirectDylib);
++			break;
++#endif
+ 	}
+ 	return NULL;
+ }
+diff --git a/src/ld/parsers/macho_relocatable_file.cpp b/src/ld/parsers/macho_relocatable_file.cpp
+index e79d261..e9dd376 100644
+--- a/src/ld/parsers/macho_relocatable_file.cpp
++++ b/src/ld/parsers/macho_relocatable_file.cpp
+@@ -168,6 +168,9 @@ protected:
+ 								_beginAtoms(NULL), _endAtoms(NULL), _hasAliases(false) { }
+ 
+ 
++#if SUPPORT_ARCH_ppc || SUPPORT_ARCH_ppc64
++	bool	addRelocFixup_powerpc(class Parser<A>& parser,const macho_relocation_info<typename A::P>* reloc);
++#endif
+ 	Atom<A>*						findContentAtomByAddress(pint_t addr, class Atom<A>* start, class Atom<A>* end);
+ 	uint32_t						x86_64PcRelOffset(uint8_t r_type);
+ 	static const char*				makeSegmentName(const macho_section<typename A::P>* s);
+@@ -838,6 +841,7 @@ void Atom<A>::copyRawContent(uint8_t buffer[]) const
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void Atom<arm>::verifyAlignment() const
+ {
+@@ -846,6 +850,7 @@ void Atom<arm>::verifyAlignment() const
+ 			warning("ARM function not 4-byte aligned: %s from %s", this->name(), this->file()->path());
+ 	}
+ }
++#endif
+ 
+ template <typename A>
+ void Atom<A>::verifyAlignment() const
+@@ -1127,6 +1132,35 @@ Parser<A>::Parser(const uint8_t* fileContent, uint64_t fileLength, const char* p
+ {
+ }
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++bool Parser<ppc>::validFile(const uint8_t* fileContent, bool, cpu_subtype_t)
++{
++	const macho_header<P>* header = (const macho_header<P>*)fileContent;
++	if ( header->magic() != MH_MAGIC )
++		return false;
++	if ( header->cputype() != CPU_TYPE_POWERPC )
++		return false;
++	if ( header->filetype() != MH_OBJECT )
++		return false;
++	return true;
++}
++#endif
++
++#if SUPPORT_ARCH_ppc64
++template <>
++bool Parser<ppc64>::validFile(const uint8_t* fileContent, bool, cpu_subtype_t)
++{
++	const macho_header<P>* header = (const macho_header<P>*)fileContent;
++	if ( header->magic() != MH_MAGIC_64 )
++		return false;
++	if ( header->cputype() != CPU_TYPE_POWERPC64 )
++		return false;
++	if ( header->filetype() != MH_OBJECT )
++		return false;
++	return true;
++}
++#endif
+ 
+ template <>
+ bool Parser<x86>::validFile(const uint8_t* fileContent, bool, cpu_subtype_t)
+@@ -1154,6 +1188,7 @@ bool Parser<x86_64>::validFile(const uint8_t* fileContent, bool, cpu_subtype_t)
+ 	return true;
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ bool Parser<arm>::validFile(const uint8_t* fileContent, bool subtypeMustMatch, cpu_subtype_t subtype)
+ {
+@@ -1174,8 +1209,46 @@ bool Parser<arm>::validFile(const uint8_t* fileContent, bool subtypeMustMatch, c
+ 	}
+ 	return true;
+ }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++const char* Parser<ppc>::fileKind(const uint8_t* fileContent)
++{
++	const macho_header<P>* header = (const macho_header<P>*)fileContent;
++	if ( header->magic() != MH_MAGIC )
++		return NULL;
++	if ( header->cputype() != CPU_TYPE_POWERPC )
++		return NULL;
++	switch ( header->cpusubtype() ) {
++		case CPU_SUBTYPE_POWERPC_750:
++			return "ppc750";
++		case CPU_SUBTYPE_POWERPC_7400:
++			return "ppc7400";
++		case CPU_SUBTYPE_POWERPC_7450:
++			return "ppc7450";
++		case CPU_SUBTYPE_POWERPC_970:
++			return "ppc970";
++		case CPU_SUBTYPE_POWERPC_ALL:
++			return "ppc";
++	}
++	return "ppc???";
++}
++#endif
++
++#if SUPPORT_ARCH_ppc64
++template <>
++const char* Parser<ppc64>::fileKind(const uint8_t* fileContent)
++{
++	const macho_header<P>* header = (const macho_header<P>*)fileContent;
++	if ( header->magic() != MH_MAGIC )
++		return NULL;
++	if ( header->cputype() != CPU_TYPE_POWERPC64 )
++		return NULL;
++	return "ppc64";
++}
++#endif
+ 
+ template <>
+ const char* Parser<x86>::fileKind(const uint8_t* fileContent)
+@@ -1199,6 +1272,7 @@ const char* Parser<x86_64>::fileKind(const uint8_t* fileContent)
+ 	return "x86_64";
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ const char* Parser<arm>::fileKind(const uint8_t* fileContent)
+ {
+@@ -1214,6 +1288,7 @@ const char* Parser<arm>::fileKind(const uint8_t* fileContent)
+ 	}
+ 	return "arm???";
+ }
++#endif
+ 
+ 
+ template <typename A>
+@@ -1629,9 +1704,17 @@ ld::relocatable::File* Parser<A>::parse(const ParserOptions& opts)
+ 
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <> uint8_t Parser<ppc>::loadCommandSizeMask()		{ return 0x03; }
++#endif
++#if SUPPORT_ARCH_ppc64
++template <> uint8_t Parser<ppc64>::loadCommandSizeMask()	{ return 0x07; }
++#endif
+ template <> uint8_t Parser<x86>::loadCommandSizeMask()		{ return 0x03; }
+ template <> uint8_t Parser<x86_64>::loadCommandSizeMask()	{ return 0x07; }
++#if SUPPORT_ARCH_arm_any
+ template <> uint8_t Parser<arm>::loadCommandSizeMask()		{ return 0x03; }
++#endif
+ 
+ template <typename A>
+ bool Parser<A>::parseLoadCommands()
+@@ -2457,12 +2540,19 @@ void Parser<A>::addFixups(const SourceLocation& src, ld::Fixup::Kind setKind, co
+ 			case ld::Fixup::kindStoreX86Abs32TLVLoad:
+ 				firstKind = ld::Fixup::kindStoreTargetAddressX86Abs32TLVLoad;
+ 				break;
++#if SUPPORT_ARCH_arm_any
+ 			case ld::Fixup::kindStoreARMBranch24:
+ 				firstKind = ld::Fixup::kindStoreTargetAddressARMBranch24;
+ 				break;
+ 			case ld::Fixup::kindStoreThumbBranch22:
+ 				firstKind = ld::Fixup::kindStoreTargetAddressThumbBranch22;
+ 				break;
++#endif
++#if SUPPORT_ARCH_ppc
++			case ld::Fixup::kindStorePPCBranch24:
++				firstKind = ld::Fixup::kindStoreTargetAddressPPCBranch24;
++				break;
++#endif
+ 			default:
+ 				combined = false;
+ 				cl = ld::Fixup::k1of2;
+@@ -2745,7 +2835,11 @@ bool Parser<A>::dontDeadStripFromSymbol(const macho_nlist<P>& sym)
+ template <typename A>
+ bool Parser<A>::isThumbFromSymbol(const macho_nlist<P>& sym)
+ {
++#if SUPPORT_ARCH_arm_any
+ 	return ( sym.n_desc() & N_ARM_THUMB_DEF );
++#else
++	return false;
++#endif
+ }
+ 
+ template <typename A>
+@@ -3643,8 +3737,14 @@ uint32_t Section<A>::sectionNum(class Parser<A>& parser) const
+ 		return 1 + (this->_machOSection - parser.firstMachOSection());
+ }
+ 
++#if SUPPORT_ARCH_ppc64
++// libunwind does not support ppc64
++template <> uint32_t CFISection<ppc64>::cfiCount() { return 0; }
++#endif
++#if SUPPORT_ARCH_arm_any
+ // arm does not have zero cost exceptions
+ template <> uint32_t CFISection<arm>::cfiCount() { return 0; }
++#endif
+ 
+ template <typename A>
+ uint32_t CFISection<A>::cfiCount()
+@@ -3763,8 +3863,38 @@ void CFISection<x86>::cfiParse(class Parser<x86>& parser, uint8_t* buffer,
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
++// need to change libunwind parseCFIs() to work for ppc
++template <>
++void CFISection<ppc>::cfiParse(class Parser<ppc>& parser, uint8_t* buffer,
++	libunwind::CFI_Atom_Info<CFISection<ppc>::OAS>::CFI_Atom_Info cfiArray[],
++	uint32_t count)
++{
++	// create ObjectAddressSpace object for use by libunwind
++	OAS oas(*this, (uint8_t*)this->file().fileContent()+this->_machOSection->offset());
+ 
++	// use libuwind to parse __eh_frame data into array of CFI_Atom_Info
++	const char* msg;
++	msg = libunwind::DwarfInstructions<OAS, libunwind::Registers_ppc>::parseCFIs(
++		oas, this->_machOSection->addr(), this->_machOSection->size(),
++		cfiArray, count, (void*)&parser, warnFunc);
++	if ( msg != NULL )
++		throwf("malformed __eh_frame section: %s", msg);
++}
++#endif
++
++#if SUPPORT_ARCH_ppc64
++template <>
++void CFISection<ppc64>::cfiParse(class Parser<ppc64>& parser, uint8_t* buffer,
++	libunwind::CFI_Atom_Info<CFISection<ppc64>::OAS>::CFI_Atom_Info cfiArray[],
++	uint32_t count)
++{
++	// libunwind does not support ppc64
++	assert(count == 0);
++}
++#endif
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void CFISection<arm>::cfiParse(class Parser<arm>& parser, uint8_t* buffer, 
+ 									libunwind::CFI_Atom_Info<CFISection<arm>::OAS>::CFI_Atom_Info cfiArray[], 
+@@ -3773,6 +3903,7 @@ void CFISection<arm>::cfiParse(class Parser<arm>& parser, uint8_t* buffer,
+ 	// arm does not use zero cost exceptions
+ 	assert(count == 0);
+ }
++#endif
+ 
+ 
+ 
+@@ -3810,7 +3941,15 @@ uint32_t CFISection<A>::appendAtoms(class Parser<A>& parser, uint8_t* p,
+ 
+ template <> bool CFISection<x86_64>::bigEndian() { return false; }
+ template <> bool CFISection<x86>::bigEndian() { return false; }
++#if SUPPORT_ARCH_arm_any
+ template <> bool CFISection<arm>::bigEndian() { return false; }
++#endif
++#if SUPPORT_ARCH_ppc
++template <> bool CFISection<ppc>::bigEndian() { return true; }
++#endif
++#if SUPPORT_ARCH_ppc64
++template <> bool CFISection<ppc64>::bigEndian() { return true; }
++#endif
+ 
+ 
+ template <>
+@@ -3860,6 +3999,32 @@ void CFISection<x86>::addCiePersonalityFixups(class Parser<x86>& parser, const C
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++void CFISection<ppc>::addCiePersonalityFixups(class Parser<ppc>& parser, const CFI_Atom_Info* cieInfo)
++{
++	uint8_t personalityEncoding = cieInfo->u.cieInfo.personality.encodingOfTargetAddress;
++	if ( (personalityEncoding == 0x9B) || (personalityEncoding == 0x90) ) {
++		uint32_t offsetInCFI = cieInfo->u.cieInfo.personality.offsetInCFI;
++		uint32_t nlpAddr = cieInfo->u.cieInfo.personality.targetAddress;
++		Atom<ppc>* cieAtom = this->findAtomByAddress(cieInfo->address);
++		Atom<ppc>* nlpAtom = parser.findAtomByAddress(nlpAddr);
++		assert(nlpAtom->contentType() == ld::Atom::typeNonLazyPointer);
++		Parser<ppc>::SourceLocation src(cieAtom, cieInfo->u.cieInfo.personality.offsetInCFI);
++
++		parser.addFixup(src, ld::Fixup::k1of4, ld::Fixup::kindSetTargetAddress, ld::Fixup::bindingByContentBound, nlpAtom);
++		parser.addFixup(src, ld::Fixup::k2of4, ld::Fixup::kindSubtractTargetAddress, cieAtom);
++		parser.addFixup(src, ld::Fixup::k3of4, ld::Fixup::kindSubtractAddend, offsetInCFI);
++		parser.addFixup(src, ld::Fixup::k4of4, ld::Fixup::kindStoreBigEndian32);
++	}
++	else if ( personalityEncoding != 0 ) {
++		throwf("unsupported address encoding (%02X) of personality function in CIE",
++			personalityEncoding);
++	}
++}
++#endif
++
++
+ template <typename A>
+ void CFISection<A>::addCiePersonalityFixups(class Parser<A>& parser, const CFI_Atom_Info* cieInfo)
+ {
+@@ -4595,12 +4760,29 @@ ld::Fixup::Kind NonLazyPointerSection<x86>::fixupKind()
+ 	return ld::Fixup::kindStoreLittleEndian32;
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ ld::Fixup::Kind NonLazyPointerSection<arm>::fixupKind()
+ {
+ 	return ld::Fixup::kindStoreLittleEndian32;
+ }
++#endif
++
++#if SUPPORT_ARCH_ppc
++template <>
++ld::Fixup::Kind NonLazyPointerSection<ppc>::fixupKind()
++{
++	return ld::Fixup::kindStoreBigEndian32;
++}
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
++template <>
++ld::Fixup::Kind NonLazyPointerSection<ppc64>::fixupKind()
++{
++	return ld::Fixup::kindStoreBigEndian64;
++}
++#endif
+ 
+ template <>
+ void NonLazyPointerSection<x86_64>::makeFixups(class Parser<x86_64>& parser, const struct Parser<x86_64>::CFI_CU_InfoArrays&)
+@@ -4631,9 +4813,11 @@ void NonLazyPointerSection<A>::makeFixups(class Parser<A>& parser, const struct
+ 			target.atom = parser.findAtomByAddress(targetAddr);
+ 			target.weakImport = false;
+ 			target.addend = (targetAddr - target.atom->objectAddress());
++#if SUPPORT_ARCH_arm_any
+ 			// <rdar://problem/8385011> if pointer to thumb function, mask of thumb bit (not an addend of +1)
+ 			if ( target.atom->isThumb() )
+ 				target.addend &= (-2); 
++#endif
+ 			assert(src.atom->combine() == ld::Atom::combineNever);
+ 		}
+ 		else {
+@@ -5530,8 +5714,415 @@ bool Section<x86>::addRelocFixup(class Parser<x86>& parser, const macho_relocati
+ 
+ 
+ 	
++#if SUPPORT_ARCH_ppc || SUPPORT_ARCH_ppc64
++//
++// ppc and ppc64 both use the same relocations, so process them in one common routine
++//
++template <typename A>
++bool Section<A>::addRelocFixup_powerpc(class Parser<A>& parser,
++	const macho_relocation_info<typename A::P>* reloc)
++{
++	const macho_section<P>* sect = this->machoSection();
++	bool result = false;
++	uint32_t srcAddr;
++	uint32_t dstAddr;
++	uint32_t* fixUpPtr;
++	int32_t displacement = 0;
++	uint32_t instruction = 0;
++	int16_t lowBits;
++	pint_t contentValue = 0;
++	typename Parser<A>::SourceLocation	src;
++	typename Parser<A>::TargetDesc		target;
++
++	if ( (reloc->r_address() & R_SCATTERED) == 0 ) {
++		srcAddr = sect->addr() + reloc->r_address();
++		src.atom = this->findAtomByAddress(srcAddr);
++		src.offsetInAtom = srcAddr - src.atom->_objAddress;
++		const macho_relocation_info<P>* nextReloc = &reloc[1];
++		fixUpPtr = (uint32_t*)(file().fileContent() + sect->offset() + reloc->r_address());
++		if ( reloc->r_type() != PPC_RELOC_PAIR )
++			instruction = BigEndian::get32(*fixUpPtr);
++		if ( reloc->r_extern() ) {
++			target.atom = NULL;
++			const macho_nlist<P>& targetSymbol = parser.symbolFromIndex(reloc->r_symbolnum());
++			target.name = parser.nameFromSymbol(targetSymbol);
++			target.weakImport = parser.weakImportFromSymbol(targetSymbol);
++		}
++		switch ( reloc->r_type() ) {
++			case PPC_RELOC_BR24:
++				assert((instruction & 0x4C000000) == 0x48000000);
++				displacement = (instruction & 0x03FFFFFC);
++				if ( (displacement & 0x02000000) != 0 )
++					displacement |= 0xFC000000;
++				if ( reloc->r_extern() ) {
++					target.addend = srcAddr + displacement;
++				}
++				else {
++					dstAddr = srcAddr + displacement;
++					parser.findTargetFromAddressAndSectionNum(dstAddr, reloc->r_symbolnum(), target);
++				}
++				// special case "calls" for dtrace
++				if ( (target.name != NULL) && (strncmp(target.name, "___dtrace_probe$", 16) == 0) ) {
++					parser.addFixup(src, ld::Fixup::k1of1,
++						ld::Fixup::kindStorePPCDtraceCallSiteNop, false, target.name);
++					parser.addDtraceExtraInfos(src, &target.name[16]);
++				}
++				else if ( (target.name != NULL) && (strncmp(target.name, "___dtrace_isenabled$", 20) == 0) ) {
++					parser.addFixup(src, ld::Fixup::k1of1,
++						ld::Fixup::kindStorePPCDtraceIsEnableSiteClear, false, target.name);
++					parser.addDtraceExtraInfos(src, &target.name[20]);
++				}
++				else {
++					parser.addFixups(src, ld::Fixup::kindStorePPCBranch24, target);
++				}
++				break;
++			case PPC_RELOC_BR14:
++				displacement = (instruction & 0x0000FFFC);
++				if ( (displacement & 0x00008000) != 0 )
++					displacement |= 0xFFFF0000;
++				if ( reloc->r_extern() ) {
++					target.addend = srcAddr + displacement;
++				}
++				else {
++					dstAddr = srcAddr + displacement;
++					parser.findTargetFromAddressAndSectionNum(dstAddr, reloc->r_symbolnum(), target);
++				}
++				parser.addFixups(src, ld::Fixup::kindStorePPCBranch14, target);
++				break;
++			case PPC_RELOC_PAIR:
++				// skip, processed by a previous look ahead
++				break;
++			case PPC_RELOC_LO16:
++				if ( nextReloc->r_type() != PPC_RELOC_PAIR )
++					throw "PPC_RELOC_LO16 missing following pair";
++				result = true;
++				lowBits = (instruction & 0x0000FFFF);
++				dstAddr = (nextReloc->r_address() << 16) + ((uint32_t)lowBits & 0x0000FFFF);
++				if ( reloc->r_extern() ) {
++					target.addend = dstAddr;
++				}
++				else {
++					parser.findTargetFromAddressAndSectionNum(dstAddr, reloc->r_symbolnum(), target);
++				}
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsLow16, target);
++				break;
++			case PPC_RELOC_LO14:
++				if ( nextReloc->r_type() != PPC_RELOC_PAIR )
++					throw "PPC_RELOC_LO14 missing following pair";
++				result = true;
++				lowBits = (instruction & 0xFFFC);
++				dstAddr = (nextReloc->r_address() << 16) + ((uint32_t)lowBits & 0x0000FFFF);
++				if ( reloc->r_extern() ) {
++					target.addend = dstAddr;
++				}
++				else {
++					parser.findTargetFromAddressAndSectionNum(dstAddr, reloc->r_symbolnum(), target);
++				}
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsLow14, target);
++				break;
++			case PPC_RELOC_HI16:
++				if ( nextReloc->r_type() != PPC_RELOC_PAIR )
++					throw "PPC_RELOC_HI16 missing following pair";
++				result = true;
++				lowBits = (nextReloc->r_address() & 0xFFFF);
++				dstAddr = ((instruction & 0xFFFF) << 16) | (lowBits & 0x0000FFFF);
++				if ( reloc->r_extern() ) {
++					target.addend = dstAddr;
++				}
++				else {
++					parser.findTargetFromAddressAndSectionNum(dstAddr, reloc->r_symbolnum(), target);
++				}
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsHigh16, target);
++				break;
++			case PPC_RELOC_HA16:
++				if ( nextReloc->r_type() != PPC_RELOC_PAIR )
++					throw "PPC_RELOC_HA16 missing following pair";
++				result = true;
++				lowBits = (nextReloc->r_address() & 0x0000FFFF);
++				dstAddr = ((instruction & 0xFFFF) << 16) + (int32_t)lowBits;
++				if ( reloc->r_extern() ) {
++					target.addend = dstAddr;
++				}
++				else {
++					parser.findTargetFromAddressAndSectionNum(dstAddr, reloc->r_symbolnum(), target);
++				}
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsHigh16AddLow, target);
++				break;
++			case PPC_RELOC_VANILLA:
++				contentValue = P::getP(*((pint_t*)fixUpPtr));
++				if ( reloc->r_extern() ) {
++					target.addend = contentValue;
++				}
++				else {
++					parser.findTargetFromAddressAndSectionNum(contentValue, reloc->r_symbolnum(), target);
++				}
++				switch ( reloc->r_length() ) {
++					case 0:
++					case 1:
++						throw "bad r_length in PPC_RELOC_VANILLA";
++					case 2:
++						parser.addFixups(src, ld::Fixup::kindStoreBigEndian32, target);
++						break;
++					case 3:
++						parser.addFixups(src, ld::Fixup::kindStoreBigEndian64, target);
++						break;
++				}
++				break;
++			case PPC_RELOC_JBSR:
++				// this is from -mlong-branch codegen.  We ignore the jump island and make reference to the real target
++				if ( nextReloc->r_type() != PPC_RELOC_PAIR )
++					throw "PPC_RELOC_JBSR missing following pair";
++				if ( !parser._hasLongBranchStubs )
++					warning("object file compiled with -mlong-branch which is no longer needed. "
++							"To remove this warning, recompile without -mlong-branch: %s", parser._path);
++				parser._hasLongBranchStubs = true;
++				result = true;
++				if ( reloc->r_extern() ) {
++					throw "PPC_RELOC_JBSR should not be using an external relocation";
++				}
++				parser.findTargetFromAddressAndSectionNum(nextReloc->r_address(), reloc->r_symbolnum(), target);
++				parser.addFixups(src, ld::Fixup::kindStorePPCBranch24, target);
++				break;
++			default:
++				warning("unknown relocation type %d", reloc->r_type());
++		}
++	}
++	else {
++		const macho_scattered_relocation_info<P>* sreloc = (macho_scattered_relocation_info<P>*)reloc;
++		// file format allows pair to be scattered or not
++		const macho_scattered_relocation_info<P>* nextSReloc = &sreloc[1];
++		const macho_relocation_info<P>* nextReloc = &reloc[1];
++		srcAddr = sect->addr() + sreloc->r_address();
++		dstAddr = sreloc->r_value();
++		fixUpPtr = (uint32_t*)(file().fileContent() + sect->offset() + sreloc->r_address());
++		instruction = BigEndian::get32(*fixUpPtr);
++		src.atom = this->findAtomByAddress(srcAddr);
++		src.offsetInAtom = srcAddr - src.atom->_objAddress;
++		typename Parser<A>::TargetDesc		picBase;
++		bool nextRelocIsPair = false;
++		uint32_t nextRelocAddress = 0;
++		uint32_t nextRelocValue = 0;
++		if ( (nextReloc->r_address() & R_SCATTERED) == 0 ) {
++			if ( nextReloc->r_type() == PPC_RELOC_PAIR ) {
++				nextRelocIsPair = true;
++				nextRelocAddress = nextReloc->r_address();
++				result = true;
++			}
++		}
++		else {
++			if ( nextSReloc->r_type() == PPC_RELOC_PAIR ) {
++				nextRelocIsPair = true;
++				nextRelocAddress = nextSReloc->r_address();
++				nextRelocValue = nextSReloc->r_value();
++				result = true;
++			}
++		}
++		switch ( sreloc->r_type() ) {
++			case PPC_RELOC_VANILLA:
++				// with a scattered relocation we get both the target (sreloc->r_value()) and the target+offset (*fixUpPtr)
++				target.atom = parser.findAtomByAddress(sreloc->r_value());
++				switch ( sreloc->r_length() ) {
++					case 0:
++					case 1:
++						throw "unsuppored r_length < 2 for scattered PPC_RELOC_VANILLA";
++					case 2:
++						contentValue = BigEndian::get32(*(uint32_t*)fixUpPtr);
++						target.addend = contentValue - target.atom->_objAddress;
++						parser.addFixups(src, ld::Fixup::kindStoreBigEndian32, target);
++						break;
++					case 3:
++						contentValue = BigEndian::get64(*(uint64_t*)fixUpPtr);
++						target.addend = contentValue - target.atom->_objAddress;
++						parser.addFixups(src, ld::Fixup::kindStoreBigEndian64, target);
++						break;
++				}
++				break;
++			case PPC_RELOC_BR14:
++				displacement = (instruction & 0x0000FFFC);
++				if ( (displacement & 0x00008000) != 0 )
++					displacement |= 0xFFFF0000;
++				target.atom = parser.findAtomByAddress(sreloc->r_value());
++				target.addend = (srcAddr + displacement) - target.atom->_objAddress;
++				parser.addFixups(src, ld::Fixup::kindStorePPCBranch14, target);
++				break;
++			case PPC_RELOC_BR24:
++				assert((instruction & 0x4C000000) == 0x48000000);
++				displacement = (instruction & 0x03FFFFFC);
++				if ( (displacement & 0x02000000) != 0 )
++					displacement |= 0xFC000000;
++				target.atom = parser.findAtomByAddress(sreloc->r_value());
++				target.addend = (srcAddr + displacement) - target.atom->_objAddress;
++				parser.addFixups(src, ld::Fixup::kindStorePPCBranch24, target);
++				break;
++			case PPC_RELOC_LO16_SECTDIFF:
++				if ( ! nextRelocIsPair )
++					throw "PPC_RELOC_LO16_SECTDIFF missing following pair";
++				lowBits = (instruction & 0xFFFF);
++				dstAddr = nextRelocValue + ((nextRelocAddress << 16) | ((uint32_t)lowBits & 0x0000FFFF));
++				parser.findTargetFromAddress(sreloc->r_value(), target);
++				if ( target.atom != NULL )
++					target.addend = dstAddr - target.atom->_objAddress;
++				picBase.atom = parser.findAtomByAddress(nextRelocValue);
++				picBase.addend = nextRelocValue - picBase.atom->_objAddress;
++				picBase.weakImport = false;
++				picBase.name = NULL;
++				parser.addFixups(src, ld::Fixup::kindStorePPCPicLow16, target, picBase);
++				break;
++			case PPC_RELOC_LO14_SECTDIFF:
++				if ( ! nextRelocIsPair )
++					throw "PPC_RELOC_LO14_SECTDIFF missing following pair";
++				lowBits = (instruction & 0xFFFC);
++				dstAddr = nextRelocValue + ((nextRelocAddress << 16) | ((uint32_t)lowBits & 0x0000FFFF));
++				parser.findTargetFromAddress(sreloc->r_value(), target);
++				if ( target.atom != NULL )
++					target.addend = dstAddr - target.atom->_objAddress;
++				picBase.atom = parser.findAtomByAddress(nextRelocValue);
++				picBase.addend = nextRelocValue - picBase.atom->_objAddress;
++				picBase.weakImport = false;
++				picBase.name = NULL;
++				parser.addFixups(src, ld::Fixup::kindStorePPCPicLow14, target, picBase);
++				break;
++			case PPC_RELOC_HA16_SECTDIFF:
++				if ( ! nextRelocIsPair )
++					throw "PPC_RELOC_HA16_SECTDIFF missing following pair";
++				lowBits = (nextRelocAddress & 0x0000FFFF);
++				dstAddr = nextRelocValue + (((instruction & 0x0000FFFF) << 16) + (int32_t)lowBits);
++				parser.findTargetFromAddress(sreloc->r_value(), target);
++				if ( target.atom != NULL )
++					target.addend = dstAddr - target.atom->_objAddress;
++				picBase.atom = parser.findAtomByAddress(nextRelocValue);
++				picBase.addend = nextRelocValue - picBase.atom->_objAddress;
++				picBase.weakImport = false;
++				picBase.name = NULL;
++				parser.addFixups(src, ld::Fixup::kindStorePPCPicHigh16AddLow, target, picBase);
++				break;
++			case PPC_RELOC_LO14:
++				if ( ! nextRelocIsPair )
++					throw "PPC_RELOC_LO14 missing following pair";
++				lowBits = (instruction & 0xFFFC);
++				dstAddr = ((nextRelocAddress << 16) + ((uint32_t)lowBits & 0x0000FFFF));
++				parser.findTargetFromAddress(sreloc->r_value(), dstAddr, target);
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsLow14, target);
++				break;
++			case PPC_RELOC_LO16:
++				if ( ! nextRelocIsPair )
++					throw "PPC_RELOC_LO16 missing following pair";
++				lowBits = (instruction & 0xFFFF);
++				dstAddr = ((nextRelocAddress << 16) + ((uint32_t)lowBits & 0x0000FFFF));
++				parser.findTargetFromAddress(sreloc->r_value(), dstAddr, target);
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsLow16, target);
++				break;
++			case PPC_RELOC_HA16:
++				if ( ! nextRelocIsPair )
++					throw "PPC_RELOC_HA16 missing following pair";
++				lowBits = (nextRelocAddress & 0xFFFF);
++				dstAddr = (((instruction & 0xFFFF) << 16) + (int32_t)lowBits);
++				parser.findTargetFromAddress(sreloc->r_value(), dstAddr, target);
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsHigh16AddLow, target);
++				break;
++			case PPC_RELOC_HI16:
++				if ( ! nextRelocIsPair )
++					throw "PPC_RELOC_HI16 missing following pair";
++				lowBits = (nextRelocAddress & 0xFFFF);
++				dstAddr = ((instruction & 0xFFFF) << 16) | (lowBits & 0x0000FFFF);
++				parser.findTargetFromAddress(sreloc->r_value(), dstAddr, target);
++				parser.addFixups(src, ld::Fixup::kindStorePPCAbsHigh16, target);
++				break;
++			case PPC_RELOC_SECTDIFF:
++			case PPC_RELOC_LOCAL_SECTDIFF:
++				{
++					if ( ! nextRelocIsPair )
++						throw "PPC_RELOC_SECTDIFF missing following pair";
++					ld::Fixup::Kind kind = ld::Fixup::kindNone;
++					switch ( sreloc->r_length() ) {
++						case 0:
++							throw "bad length for PPC_RELOC_SECTDIFF";
++						case 1:
++							contentValue = (int32_t)(int16_t)BigEndian::get16(*((uint16_t*)fixUpPtr));
++							kind = ld::Fixup::kindStoreBigEndian16;
++							break;
++						case 2:
++							contentValue = BigEndian::get32(*((uint32_t*)fixUpPtr));
++							kind = ld::Fixup::kindStoreBigEndian32;
++							break;
++						case 3:
++							contentValue = BigEndian::get64(*((uint64_t*)fixUpPtr));
++							kind = ld::Fixup::kindStoreBigEndian64;
++							break;
++						break;
++					}
++					Atom<A>* fromAtom  = parser.findAtomByAddress(nextRelocValue);
++					Atom<A>* targetAtom = parser.findAtomByAddress(sreloc->r_value());
++					uint32_t offsetInFrom = nextRelocValue - fromAtom->_objAddress;
++					uint32_t offsetInTarget = sreloc->r_value() - targetAtom->_objAddress;
++					// check for addend encoded in the section content
++					int32_t addend = contentValue - (sreloc->r_value() - nextRelocValue);
++					if ( addend < 0 ) {
++						if ( targetAtom->scope() == ld::Atom::scopeTranslationUnit ) {
++							parser.addFixup(src, ld::Fixup::k1of5, ld::Fixup::kindSetTargetAddress, targetAtom);
++						}
++						else if ( (targetAtom->combine() == ld::Atom::combineByNameAndContent) || (targetAtom->combine() == ld::Atom::combineByNameAndReferences) ) {
++							parser.addFixup(src, ld::Fixup::k1of5, ld::Fixup::kindSetTargetAddress, ld::Fixup::bindingByContentBound, targetAtom);
++						}
++						else {
++							parser.addFixup(src, ld::Fixup::k1of5, ld::Fixup::kindSetTargetAddress, false, targetAtom->name());
++						}
++						parser.addFixup(src, ld::Fixup::k2of5, ld::Fixup::kindAddAddend, offsetInTarget);
++						parser.addFixup(src, ld::Fixup::k3of5, ld::Fixup::kindSubtractTargetAddress, fromAtom);
++						parser.addFixup(src, ld::Fixup::k4of5, ld::Fixup::kindSubtractAddend, offsetInFrom-addend);
++						parser.addFixup(src, ld::Fixup::k5of5, kind);
++					}
++					else {
++						if ( targetAtom->scope() == ld::Atom::scopeTranslationUnit ) {
++							parser.addFixup(src, ld::Fixup::k1of5, ld::Fixup::kindSetTargetAddress, targetAtom);
++						}
++						else if ( (targetAtom->combine() == ld::Atom::combineByNameAndContent) || (targetAtom->combine() == ld::Atom::combineByNameAndReferences) ) {
++							parser.addFixup(src, ld::Fixup::k1of5, ld::Fixup::kindSetTargetAddress, ld::Fixup::bindingByContentBound, targetAtom);
++						}
++						else {
++							parser.addFixup(src, ld::Fixup::k1of5, ld::Fixup::kindSetTargetAddress, false, targetAtom->name());
++						}
++						parser.addFixup(src, ld::Fixup::k2of5, ld::Fixup::kindAddAddend, offsetInTarget+addend);
++						parser.addFixup(src, ld::Fixup::k3of5, ld::Fixup::kindSubtractTargetAddress, fromAtom);
++						parser.addFixup(src, ld::Fixup::k4of5, ld::Fixup::kindSubtractAddend, offsetInFrom);
++						parser.addFixup(src, ld::Fixup::k5of5, kind);
++					}
++				}
++				break;
++			case PPC_RELOC_PAIR:
++				break;
++			case PPC_RELOC_HI16_SECTDIFF:
++				warning("unexpected scattered relocation type PPC_RELOC_HI16_SECTDIFF");
++				break;
++			default:
++				warning("unknown scattered relocation type %d", sreloc->r_type());
++		}
++	}
++	return result;
++}
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++bool Section<ppc>::addRelocFixup(class Parser<ppc>& parser, const macho_relocation_info<P>* reloc)
++{
++	return addRelocFixup_powerpc(parser, reloc);
++}
++#endif
++
++
++#if SUPPORT_ARCH_ppc64
++template <>
++bool Section<ppc64>::addRelocFixup(class Parser<ppc64>& parser, const macho_relocation_info<P>* reloc)
++{
++	return addRelocFixup_powerpc(parser, reloc);
++}
++#endif
++
++
++
++#if SUPPORT_ARCH_arm_any
+ template <>
+ bool Section<arm>::addRelocFixup(class Parser<arm>& parser, const macho_relocation_info<P>* reloc)
+ {
+@@ -5984,6 +6575,7 @@ bool Section<arm>::addRelocFixup(class Parser<arm>& parser, const macho_relocati
+ 	}
+ 	return result;
+ }
++#endif
+ 
+ 
+ 
+@@ -6032,6 +6624,43 @@ bool ObjC1ClassSection<x86>::addRelocFixup(class Parser<x86>& parser, const mach
+ 	return FixedSizeSection<x86>::addRelocFixup(parser, reloc);
+ }
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++bool ObjC1ClassSection<ppc>::addRelocFixup(class Parser<ppc>& parser, const macho_relocation_info<ppc::P>* reloc)
++{
++	// if this is the reloc for the super class name string, add implicit reference to super class
++	if ( ((reloc->r_address() & R_SCATTERED) == 0) && (reloc->r_type() == PPC_RELOC_VANILLA) ) {
++		assert( reloc->r_length() == 2 );
++		assert( ! reloc->r_pcrel() );
++
++		const macho_section<P>* sect = this->machoSection();
++		Parser<ppc>::SourceLocation	src;
++		uint32_t srcAddr = sect->addr() + reloc->r_address();
++		src.atom = this->findAtomByAddress(srcAddr);
++		src.offsetInAtom = srcAddr - src.atom->objectAddress();
++		if ( src.offsetInAtom == 4 ) {
++			Parser<ppc>::TargetDesc		stringTarget;
++			const uint8_t* fixUpPtr = file().fileContent() + sect->offset() + reloc->r_address();
++			uint32_t contentValue = BigEndian::get32(*((uint32_t*)fixUpPtr));
++			parser.findTargetFromAddressAndSectionNum(contentValue, reloc->r_symbolnum(), stringTarget);
++
++			assert(stringTarget.atom != NULL);
++			assert(stringTarget.atom->contentType() == ld::Atom::typeCString);
++			const char* superClassBaseName = (char*)stringTarget.atom->rawContentPointer();
++			char* superClassName = new char[strlen(superClassBaseName) + 20];
++			strcpy(superClassName, ".objc_class_name_");
++			strcat(superClassName, superClassBaseName);
++
++			parser.addFixup(src, ld::Fixup::k1of1, ld::Fixup::kindSetTargetAddress, false, superClassName);
++		}
++	}
++
++	// inherited
++	return FixedSizeSection<ppc>::addRelocFixup(parser, reloc);
++}
++#endif
++
++
+ 
+ 
+ template <typename A>
+@@ -6045,6 +6674,40 @@ bool Objc1ClassReferences<A>::addRelocFixup(class Parser<A>& parser, const macho
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>
++bool Objc1ClassReferences<ppc>::addRelocFixup(class Parser<ppc>& parser, const macho_relocation_info<ppc::P>* reloc)
++{
++	// add implict class refs, fixups not usable yet, so look at relocations
++	assert( (reloc->r_address() & R_SCATTERED) == 0 );
++	assert( reloc->r_type() == PPC_RELOC_VANILLA );
++	assert( reloc->r_length() == 2 );
++	assert( ! reloc->r_pcrel() );
++
++	const macho_section<P>* sect = this->machoSection();
++	Parser<ppc>::SourceLocation	src;
++	uint32_t srcAddr = sect->addr() + reloc->r_address();
++	src.atom = this->findAtomByAddress(srcAddr);
++	src.offsetInAtom = srcAddr - src.atom->objectAddress();
++	Parser<ppc>::TargetDesc		stringTarget;
++	const uint8_t* fixUpPtr = file().fileContent() + sect->offset() + reloc->r_address();
++	uint32_t contentValue = BigEndian::get32(*((uint32_t*)fixUpPtr));
++	parser.findTargetFromAddressAndSectionNum(contentValue, reloc->r_symbolnum(), stringTarget);
++
++	assert(stringTarget.atom != NULL);
++	assert(stringTarget.atom->contentType() == ld::Atom::typeCString);
++	const char* baseClassName = (char*)stringTarget.atom->rawContentPointer();
++	char* objcClassName = new char[strlen(baseClassName) + 20];
++	strcpy(objcClassName, ".objc_class_name_");
++	strcat(objcClassName, baseClassName);
++
++	parser.addFixup(src, ld::Fixup::k1of1, ld::Fixup::kindSetTargetAddress, false, objcClassName);
++
++	// inherited
++	return PointerToCStringSection<ppc>::addRelocFixup(parser, reloc);
++}
++#endif
++
+ 
+ template <>
+ bool Objc1ClassReferences<x86>::addRelocFixup(class Parser<x86>& parser, const macho_relocation_info<x86::P>* reloc)
+@@ -6147,10 +6810,24 @@ ld::relocatable::File* parse(const uint8_t* fileContent, uint64_t fileLength,
+ 			if ( mach_o::relocatable::Parser<x86>::validFile(fileContent) )
+ 				return mach_o::relocatable::Parser<x86>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( mach_o::relocatable::Parser<arm>::validFile(fileContent, opts.objSubtypeMustMatch, opts.subType) )
+ 				return mach_o::relocatable::Parser<arm>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
+ 			break;
++#endif
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			if ( mach_o::relocatable::Parser<ppc>::validFile(fileContent) )
++				return mach_o::relocatable::Parser<ppc>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			if ( mach_o::relocatable::Parser<ppc64>::validFile(fileContent) )
++				return mach_o::relocatable::Parser<ppc64>::parse(fileContent, fileLength, path, modTime, ordinal, opts);
++			break;
++#endif
+ 	}
+ 	return NULL;
+ }
+@@ -6165,8 +6842,18 @@ bool isObjectFile(const uint8_t* fileContent, uint64_t fileLength, const ParserO
+ 			return ( mach_o::relocatable::Parser<x86_64>::validFile(fileContent) );
+ 		case CPU_TYPE_I386:
+ 			return ( mach_o::relocatable::Parser<x86>::validFile(fileContent) );
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			return ( mach_o::relocatable::Parser<arm>::validFile(fileContent, opts.objSubtypeMustMatch, opts.subType) );
++#endif
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			return ( mach_o::relocatable::Parser<ppc>::validFile(fileContent) );
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			return ( mach_o::relocatable::Parser<ppc64>::validFile(fileContent) );
++#endif
+ 	}
+ 	return false;
+ }
+@@ -6186,12 +6873,29 @@ bool isObjectFile(const uint8_t* fileContent, cpu_type_t* result, cpu_subtype_t*
+ 		*subResult = CPU_SUBTYPE_X86_ALL;
+ 		return true;
+ 	}
++#if SUPPORT_ARCH_arm_any
+ 	if ( mach_o::relocatable::Parser<arm>::validFile(fileContent, false, 0) ) {
+ 		*result = CPU_TYPE_ARM;
+ 		const macho_header<Pointer32<LittleEndian> >* header = (const macho_header<Pointer32<LittleEndian> >*)fileContent;
+ 		*subResult = header->cpusubtype();
+ 		return true;
+ 	}
++#endif
++#if SUPPORT_ARCH_ppc
++	if ( mach_o::relocatable::Parser<ppc>::validFile(fileContent) ) {
++		*result = CPU_TYPE_POWERPC;
++		const macho_header<Pointer32<BigEndian> >* header = (const macho_header<Pointer32<BigEndian> >*)fileContent;
++		*subResult = header->cpusubtype();
++		return true;
++	}
++#endif
++#if SUPPORT_ARCH_ppc64
++	if ( mach_o::relocatable::Parser<ppc64>::validFile(fileContent) ) {
++		*result = CPU_TYPE_POWERPC64;
++		*subResult = CPU_SUBTYPE_POWERPC_ALL;
++		return true;
++	}
++#endif
+ 	return false;
+ }					
+ 
+@@ -6206,9 +6910,21 @@ const char* archName(const uint8_t* fileContent)
+ 	if ( mach_o::relocatable::Parser<x86>::validFile(fileContent) ) {
+ 		return mach_o::relocatable::Parser<x86>::fileKind(fileContent);
+ 	}
++#if SUPPORT_ARCH_arm_any
+ 	if ( mach_o::relocatable::Parser<arm>::validFile(fileContent, false, 0) ) {
+ 		return mach_o::relocatable::Parser<arm>::fileKind(fileContent);
+ 	}
++#endif
++#if SUPPORT_ARCH_ppc
++	if ( mach_o::relocatable::Parser<ppc>::validFile(fileContent) ) {
++		return mach_o::relocatable::Parser<ppc>::fileKind(fileContent);
++	}
++#endif
++#if SUPPORT_ARCH_ppc64
++	if ( mach_o::relocatable::Parser<ppc64>::validFile(fileContent) ) {
++		return mach_o::relocatable::Parser<ppc64>::fileKind(fileContent);
++	}
++#endif
+ 	return NULL;
+ }
+ 
+@@ -6220,9 +6936,11 @@ bool hasObjC2Categories(const uint8_t* fileContent)
+ 	if ( mach_o::relocatable::Parser<x86_64>::validFile(fileContent) ) {
+ 		return mach_o::relocatable::Parser<x86_64>::hasObjC2Categories(fileContent);
+ 	}
++#if SUPPORT_ARCH_arm_any
+ 	else if ( mach_o::relocatable::Parser<arm>::validFile(fileContent, false, 0) ) {
+ 		return mach_o::relocatable::Parser<arm>::hasObjC2Categories(fileContent);
+ 	}
++#endif
+ 	else if ( mach_o::relocatable::Parser<x86>::validFile(fileContent, false, 0) ) {
+ 		return mach_o::relocatable::Parser<x86>::hasObjC2Categories(fileContent);
+ 	}
+diff --git a/src/ld/passes/branch_island.cpp b/src/ld/passes/branch_island.cpp
+index 773031e..f69f48e 100644
+--- a/src/ld/passes/branch_island.cpp
++++ b/src/ld/passes/branch_island.cpp
+@@ -59,8 +59,47 @@ public:
+ static bool _s_log = false;
+ static ld::Section _s_text_section("__TEXT", "__text", ld::Section::typeCode);
+ 
++#if SUPPORT_ARCH_ppc
++class PPCBranchIslandAtom : public ld::Atom {
++public:
++	PPCBranchIslandAtom(const char* nm, const ld::Atom* target, TargetAndOffset finalTarget)
++		: ld::Atom(_s_text_section, ld::Atom::definitionRegular, ld::Atom::combineNever,
++			ld::Atom::scopeLinkageUnit, ld::Atom::typeBranchIsland,
++			ld::Atom::symbolTableIn, false, false, false, ld::Atom::Alignment(2)),
++	_name(nm),
++				_target(target),
++				_finalTarget(finalTarget) { }
+ 
++	virtual const ld::File*	file() const	{ return NULL; }
++	virtual bool		translationUnitSource(const char** dir, const char**) const
++		{ return false; }
++	virtual const char*	name() const		{ return _name; }
++	virtual uint64_t	size() const		{ return 4; }
++	virtual uint64_t	objectAddress() const	{ return 0; }
++	virtual void		copyRawContent(uint8_t buffer[]) const {
++		int64_t displacement = _target->finalAddress() - this->finalAddress();
++		const int64_t bl_sixteenMegLimit = 0x00FFFFFF;
++		if ( _target->contentType() == ld::Atom::typeBranchIsland ) {
++			// try optimizing away intermediate islands
++			int64_t skipToFinalDisplacement = _finalTarget.atom->finalAddress() + _finalTarget.offset - this->finalAddress();
++			if ( (skipToFinalDisplacement > bl_sixteenMegLimit) && (skipToFinalDisplacement < (-bl_sixteenMegLimit)) ) {
++				displacement = skipToFinalDisplacement;
++			}
++		}
++		int32_t branchInstruction = 0x48000000 | ((uint32_t)displacement & 0x03FFFFFC);
++		OSWriteBigInt32(buffer, 0, branchInstruction);
++	}
++	virtual void		setScope(Scope)		{ }
+ 
++private:
++	const char*		_name;
++	const ld::Atom*		_target;
++	TargetAndOffset		_finalTarget;
++};
++#endif
++
++
++#if SUPPORT_ARCH_arm_any
+ class ARMtoARMBranchIslandAtom : public ld::Atom {
+ public:
+ 											ARMtoARMBranchIslandAtom(const char* nm, const ld::Atom* target, TargetAndOffset finalTarget)
+@@ -251,6 +290,7 @@ private:
+ 	const ld::Atom*							_target;
+ 	TargetAndOffset							_finalTarget;
+ };
++#endif
+ 
+ 
+ static ld::Atom* makeBranchIsland(const Options& opts, ld::Fixup::Kind kind, int islandRegion, const ld::Atom* nextTarget, TargetAndOffset finalTarget)
+@@ -267,6 +307,13 @@ static ld::Atom* makeBranchIsland(const Options& opts, ld::Fixup::Kind kind, int
+ 	}
+ 
+ 	switch ( kind ) {
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCBranch24:
++		case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++			return new PPCBranchIslandAtom(name, nextTarget, finalTarget);
++			break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreARMBranch24:
+ 		case ld::Fixup::kindStoreThumbBranch22:
+ 		case ld::Fixup::kindStoreTargetAddressARMBranch24:
+@@ -286,6 +333,7 @@ static ld::Atom* makeBranchIsland(const Options& opts, ld::Fixup::Kind kind, int
+ 				return new ARMtoARMBranchIslandAtom(name, nextTarget, finalTarget);
+ 			}
+ 			break;
++#endif
+ 		default:
+ 			assert(0 && "unexpected branch kind");
+ 			break;
+@@ -297,6 +345,17 @@ static ld::Atom* makeBranchIsland(const Options& opts, ld::Fixup::Kind kind, int
+ static uint64_t textSizeWhenMightNeedBranchIslands(const Options& opts, bool seenThumbBranch)
+ {
+ 	switch ( opts.architecture() ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			return 16000000;
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			return 16000000;
++			break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( ! seenThumbBranch )
+ 				return 32000000;  // ARM can branch +/- 32MB
+@@ -305,6 +364,7 @@ static uint64_t textSizeWhenMightNeedBranchIslands(const Options& opts, bool see
+ 			else
+ 				return  4000000;  // thumb1 can branch +/- 4MB
+ 			break;
++#endif
+ 	}
+ 	assert(0 && "unexpected architecture");
+ 	return 0x100000000LL;
+@@ -314,6 +374,17 @@ static uint64_t textSizeWhenMightNeedBranchIslands(const Options& opts, bool see
+ static uint64_t maxDistanceBetweenIslands(const Options& opts, bool seenThumbBranch)
+ {
+ 	switch ( opts.architecture() ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++				return 14*1024*1024;
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++				return 14*1024*1024;
++			break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			if ( ! seenThumbBranch )
+ 				return 30*1024*1024;	// 2MB of branch islands per 32MB
+@@ -322,6 +393,7 @@ static uint64_t maxDistanceBetweenIslands(const Options& opts, bool seenThumbBra
+ 			else
+ 				return 3500000;			// 0.5MB of branch islands per 4MB
+ 			break;
++#endif
+ 	}
+ 	assert(0 && "unexpected architecture");
+ 	return 0x100000000LL;
+@@ -357,10 +429,20 @@ void doPass(const Options& opts, ld::Internal& state)
+ 	if ( opts.outputKind() == Options::kObjectFile )
+ 		return;
+ 
+-	// only ARM needs branch islands
++	// only PowerPC and ARM need branch islands
+ 	switch ( opts.architecture() ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			break;
++#endif
+ 		default:
+ 			return;
+ 	}
+@@ -375,12 +457,15 @@ void doPass(const Options& opts, ld::Internal& state)
+ 	if ( textSection == NULL )
+ 		return;
+ 	
++#if SUPPORT_ARCH_arm_any
+ 	// assign section offsets to each atom in __text section, watch for thumb branches, and find total size
+ 	const bool isARM = (opts.architecture() == CPU_TYPE_ARM);
++#endif
+ 	bool hasThumbBranches = false;
+ 	uint64_t offset = 0;
+ 	for (std::vector<const ld::Atom*>::iterator ait=textSection->atoms.begin();  ait != textSection->atoms.end(); ++ait) {
+ 		const ld::Atom* atom = *ait;
++#if SUPPORT_ARCH_arm_any
+ 		// check for thumb branches
+ 		if ( isARM && ~hasThumbBranches ) {
+ 			for (ld::Fixup::iterator fit = atom->fixupsBegin(), end=atom->fixupsEnd(); fit != end; ++fit) {
+@@ -394,6 +479,7 @@ void doPass(const Options& opts, ld::Internal& state)
+ 				}
+ 			}
+ 		}
++#endif
+ 		// align atom
+ 		ld::Atom::Alignment atomAlign = atom->alignment();
+ 		uint64_t atomAlignP2 = (1 << atomAlign.powerOf2);
+@@ -456,10 +542,16 @@ void doPass(const Options& opts, ld::Internal& state)
+ 				case ld::Fixup::kindAddAddend:
+ 					addend = fit->u.addend;
+ 					break;
++#if SUPPORT_ARCH_ppc
++				case ld::Fixup::kindStorePPCBranch24:
++				case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++#endif
++#if SUPPORT_ARCH_arm_any
+ 				case ld::Fixup::kindStoreARMBranch24:
+ 				case ld::Fixup::kindStoreThumbBranch22:
+ 				case ld::Fixup::kindStoreTargetAddressARMBranch24:
+ 				case ld::Fixup::kindStoreTargetAddressThumbBranch22:
++#endif
+ 					haveBranch = true;
+ 					break;
+                 default:
+diff --git a/src/ld/passes/branch_shim.cpp b/src/ld/passes/branch_shim.cpp
+index 7a2bd50..18c73ce 100644
+--- a/src/ld/passes/branch_shim.cpp
++++ b/src/ld/passes/branch_shim.cpp
+@@ -44,6 +44,7 @@ namespace branch_shim {
+ static bool _s_log = false;
+ 
+ 
++#if SUPPORT_ARCH_arm_any
+ class Thumb2ToArmShimAtom : public ld::Atom {
+ public:
+ 											Thumb2ToArmShimAtom(const ld::Atom* target, const ld::Section& inSect)
+@@ -272,6 +273,7 @@ static void extractTarget(ld::Fixup::iterator fixup, ld::Internal& state, const
+ 			break;
+ 	}
+ }
++#endif
+ 
+ 
+ 
+@@ -286,6 +288,7 @@ static void extractTarget(ld::Fixup::iterator fixup, ld::Internal& state, const
+ //
+ void doPass(const Options& opts, ld::Internal& state)
+ {	
++#if SUPPORT_ARCH_arm_any
+ 	// only make branch shims in final linked images
+ 	if ( opts.outputKind() == Options::kObjectFile )
+ 		return;
+@@ -396,6 +399,9 @@ void doPass(const Options& opts, ld::Internal& state)
+ 		// append all new shims to end of __text
+ 		sect->atoms.insert(sect->atoms.end(), shims.begin(), shims.end());
+ 	}
++#else
++	return;
++#endif
+ }
+ 
+ 
+diff --git a/src/ld/passes/dtrace_dof.cpp b/src/ld/passes/dtrace_dof.cpp
+index 665e3ae..64553ce 100644
+--- a/src/ld/passes/dtrace_dof.cpp
++++ b/src/ld/passes/dtrace_dof.cpp
+@@ -143,13 +143,23 @@ void doPass(const Options& opts, ld::Internal& internal)
+ 			for (ld::Fixup::iterator fit = atom->fixupsBegin(), end=atom->fixupsEnd(); fit != end; ++fit) {
+ 				switch ( fit->kind ) {
+ 					case ld::Fixup::kindStoreX86DtraceCallSiteNop:
++#if SUPPORT_ARCH_ppc
++					case ld::Fixup::kindStorePPCDtraceCallSiteNop:
++#endif
++#if SUPPORT_ARCH_arm_any
+ 					case ld::Fixup::kindStoreARMDtraceCallSiteNop:
+ 					case ld::Fixup::kindStoreThumbDtraceCallSiteNop:
++#endif
+ 						probeSites.push_back(DTraceProbeInfo(atom, fit->offsetInAtom, fit->u.name));
+ 						break;
+ 					case ld::Fixup::kindStoreX86DtraceIsEnableSiteClear:
++#if SUPPORT_ARCH_ppc
++					case ld::Fixup::kindStorePPCDtraceIsEnableSiteClear:
++#endif
++#if SUPPORT_ARCH_arm_any
+ 					case ld::Fixup::kindStoreARMDtraceIsEnableSiteClear:
+ 					case ld::Fixup::kindStoreThumbDtraceIsEnableSiteClear:
++#endif
+ 						isEnabledSites.push_back(DTraceProbeInfo(atom, fit->offsetInAtom, fit->u.name));
+ 						break;
+ 					case ld::Fixup::kindDtraceExtra:
+@@ -168,11 +178,23 @@ void doPass(const Options& opts, ld::Internal& internal)
+ 	
+ 	ld::Fixup::Kind storeKind = ld::Fixup::kindNone;
+ 	switch ( opts.architecture() ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			storeKind = ld::Fixup::kindStoreBigEndian32;
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			storeKind = ld::Fixup::kindStoreBigEndian32;
++			break;
++#endif
+ 		case CPU_TYPE_I386:
+ 		case CPU_TYPE_X86_64:
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			storeKind = ld::Fixup::kindStoreLittleEndian32;
+ 			break;
++#endif
+ 		default:
+ 			throw "unsupported arch for DOF";
+ 	}
+diff --git a/src/ld/passes/objc.cpp b/src/ld/passes/objc.cpp
+index b209b1d..eb80191 100644
+--- a/src/ld/passes/objc.cpp
++++ b/src/ld/passes/objc.cpp
+@@ -474,7 +474,9 @@ private:
+ };
+ 
+ template <> unsigned int Class<x86_64>::class_ro_header_size() { return 16; }
++#if SUPPORT_ARCH_arm_any
+ template <> unsigned int Class<arm>::class_ro_header_size() { return 12;}
++#endif
+ template <> unsigned int Class<x86>::class_ro_header_size() { return 12; }
+ 
+ 
+@@ -611,6 +613,7 @@ void ClassROOverlayAtom<x86_64>::addMethodListFixup()
+ 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of1, ld::Fixup::kindStoreTargetAddressLittleEndian64, targetAtom));
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void ClassROOverlayAtom<arm>::addMethodListFixup()
+ {
+@@ -618,6 +621,7 @@ void ClassROOverlayAtom<arm>::addMethodListFixup()
+ 	uint32_t offset = Class<arm>::class_ro_header_size() + 2*4; // class_ro_t.baseMethods
+ 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of1, ld::Fixup::kindStoreTargetAddressLittleEndian32, targetAtom));
+ }
++#endif
+ 
+ template <>
+ void ClassROOverlayAtom<x86>::addMethodListFixup()
+@@ -637,6 +641,7 @@ void ClassROOverlayAtom<x86_64>::addProtocolListFixup()
+ 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of1, ld::Fixup::kindStoreTargetAddressLittleEndian64, targetAtom));
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void ClassROOverlayAtom<arm>::addProtocolListFixup()
+ {
+@@ -644,6 +649,7 @@ void ClassROOverlayAtom<arm>::addProtocolListFixup()
+ 	uint32_t offset = Class<arm>::class_ro_header_size() + 3*4; // class_ro_t.baseProtocols
+ 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of1, ld::Fixup::kindStoreTargetAddressLittleEndian32, targetAtom));
+ }
++#endif
+ 
+ template <>
+ void ClassROOverlayAtom<x86>::addProtocolListFixup()
+@@ -662,6 +668,7 @@ void ClassROOverlayAtom<x86_64>::addPropertyListFixup()
+ 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of1, ld::Fixup::kindStoreTargetAddressLittleEndian64, targetAtom));
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void ClassROOverlayAtom<arm>::addPropertyListFixup()
+ {
+@@ -669,6 +676,7 @@ void ClassROOverlayAtom<arm>::addPropertyListFixup()
+ 	uint32_t offset = Class<arm>::class_ro_header_size() + 6*4; // class_ro_t.baseProperties
+ 	_fixups.push_back(ld::Fixup(offset, ld::Fixup::k1of1, ld::Fixup::kindStoreTargetAddressLittleEndian32, targetAtom));
+ }
++#endif
+ 
+ template <>
+ void ClassROOverlayAtom<x86>::addPropertyListFixup()
+@@ -1153,10 +1161,24 @@ void doPass(const Options& opts, ld::Internal& state)
+ 				state.addAtom(*new ObjCImageInfoAtom<x86>(state.objcObjectConstraint, compaction, 
+ 							state.hasObjcReplacementClasses, opts.objCABIVersion2POverride() ? true : false));
+ 				break;
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++				state.addAtom(*new ObjCImageInfoAtom<ppc>(state.objcObjectConstraint, compaction,
++							state.hasObjcReplacementClasses, false));
++				break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				state.addAtom(*new ObjCImageInfoAtom<arm>(state.objcObjectConstraint, compaction, 
+ 							state.hasObjcReplacementClasses, true));
+ 				break;
++#endif
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++				state.addAtom(*new ObjCImageInfoAtom<ppc64>(state.objcObjectConstraint, compaction,
++							state.hasObjcReplacementClasses, true));
++				break;
++#endif
+ 			default:
+ 				assert(0 && "unknown objc arch");
+ 		}	
+@@ -1173,10 +1195,20 @@ void doPass(const Options& opts, ld::Internal& state)
+ 				//if ( opts.objCABIVersion2POverride() )
+ 				//	OptimizeCategories<x86>::doit(opts, state);
+ 				break;
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				// disable optimization until fully tested
+ 				//OptimizeCategories<arm>::doit(opts, state);
+ 				break;
++#endif
++#if SUPPORT_ARCH_ppc64
++			case CPU_TYPE_POWERPC64:
++				break;
++#endif
++#if SUPPORT_ARCH_ppc
++			case CPU_TYPE_POWERPC:
++				break;
++#endif
+ 			default:
+ 				assert(0 && "unknown objc arch");
+ 		}	
+diff --git a/src/ld/passes/stubs/stub_arm.hpp b/src/ld/passes/stubs/stub_arm.hpp
+index e8dedda..9cdae4f 100644
+--- a/src/ld/passes/stubs/stub_arm.hpp
++++ b/src/ld/passes/stubs/stub_arm.hpp
+@@ -22,6 +22,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
++#if SUPPORT_ARCH_arm_any
+ // already in ld::passes::stubs namespace
+ namespace arm {
+ 
+@@ -413,4 +414,4 @@ ld::Section StubCloseAtom::_s_section("__TEXT", "__symbolstub1", ld::Section::ty
+ 
+ 
+ } // namespace arm 
+-
++#endif
+diff --git a/src/ld/passes/stubs/stub_arm_classic.hpp b/src/ld/passes/stubs/stub_arm_classic.hpp
+index 50870f4..9ea0f61 100644
+--- a/src/ld/passes/stubs/stub_arm_classic.hpp
++++ b/src/ld/passes/stubs/stub_arm_classic.hpp
+@@ -22,6 +22,7 @@
+  * @APPLE_LICENSE_HEADER_END@
+  */
+ 
++#if SUPPORT_ARCH_arm_any
+ // already in ld::passes::stubs namespace
+ namespace arm {
+ namespace classic {
+@@ -152,4 +153,4 @@ ld::Section StubNoPICAtom::_s_section("__TEXT", "__symbol_stub4", ld::Section::t
+ 
+ } // namespace classic 
+ } // namespace arm 
+-
++#endif
+diff --git a/src/ld/passes/stubs/stub_ppc_classic.hpp b/src/ld/passes/stubs/stub_ppc_classic.hpp
+new file mode 100644
+index 0000000..51c1717
+--- /dev/null
++++ b/src/ld/passes/stubs/stub_ppc_classic.hpp
+@@ -0,0 +1,191 @@
++/* -*- mode: C++; c-basic-offset: 4; tab-width: 4 -*-
++ *
++ * Copyright (c) 2009 Apple Inc. All rights reserved.
++ *
++ * @APPLE_LICENSE_HEADER_START@
++ *
++ * This file contains Original Code and/or Modifications of Original Code
++ * as defined in and that are subject to the Apple Public Source License
++ * Version 2.0 (the 'License'). You may not use this file except in
++ * compliance with the License. Please obtain a copy of the License at
++ * http://www.opensource.apple.com/apsl/ and read it before using this
++ * file.
++ *
++ * The Original Code and all software distributed under the License are
++ * distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
++ * EXPRESS OR IMPLIED, AND APPLE HEREBY DISCLAIMS ALL SUCH WARRANTIES,
++ * INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR NON-INFRINGEMENT.
++ * Please see the License for the specific language governing rights and
++ * limitations under the License.
++ *
++ * @APPLE_LICENSE_HEADER_END@
++ */
++
++
++#if SUPPORT_ARCH_ppc
++// already in ld::passes::stubs namespace
++namespace ppc {
++namespace classic {
++
++
++
++class LazyPointerAtom : public ld::Atom {
++public:
++	LazyPointerAtom(ld::passes::stubs::Pass& pass, const ld::Atom& stubTo,
++		bool forLazyDylib, bool for64, bool weakImport)
++		: ld::Atom( forLazyDylib ? _s_sectionLazy : _s_section,
++				ld::Atom::definitionRegular, ld::Atom::combineNever,
++				ld::Atom::scopeTranslationUnit,
++				forLazyDylib ? ld::Atom::typeLazyDylibPointer : ld::Atom::typeLazyPointer,
++				symbolTableNotIn, false, false, false, for64 ? ld::Atom::Alignment(3) : ld::Atom::Alignment(2)),
++			_stubTo(stubTo),
++			_fixup1(0, ld::Fixup::k1of1,
++			for64 ? ld::Fixup::kindStoreTargetAddressBigEndian64 : ld::Fixup::kindStoreTargetAddressBigEndian32,
++			forLazyDylib ? pass.internal()->lazyBindingHelper : pass.internal()->classicBindingHelper),
++			_fixup2(0, ld::Fixup::k1of1, ld::Fixup::kindLazyTarget, &stubTo),
++			_for64(for64)
++		{  _fixup2.weakImport = weakImport; pass.addAtom(*this);  }
++
++	virtual const ld::File*	file() const	{ return _stubTo.file(); }
++	virtual bool		translationUnitSource(const char** dir, const char** ) const
++		{ return false; }
++	virtual const char*	name() const		{ return _stubTo.name(); }
++	virtual uint64_t	size() const		{ return _for64 ? 8 : 4; }
++	virtual uint64_t	objectAddress() const	{ return 0; }
++	virtual void		copyRawContent(uint8_t buffer[]) const { }
++	virtual void		setScope(Scope)		{ }
++	virtual ld::Fixup::iterator	fixupsBegin() const	{ return &_fixup1; }
++	virtual ld::Fixup::iterator	fixupsEnd() const	{ return &((ld::Fixup*)&_fixup2)[1]; }
++
++private:
++	const ld::Atom&		_stubTo;
++	mutable ld::Fixup	_fixup1;
++	mutable ld::Fixup	_fixup2;
++	const bool		_for64;
++
++	static ld::Section	_s_section;
++	static ld::Section	_s_sectionLazy;
++};
++
++ld::Section LazyPointerAtom::_s_section("__DATA", "__la_symbol_ptr", ld::Section::typeLazyPointer);
++ld::Section LazyPointerAtom::_s_sectionLazy("__DATA", "__ld_symbol_ptr", ld::Section::typeLazyDylibPointer);
++
++
++
++class StubPICAtom : public ld::Atom {
++public:
++	StubPICAtom(ld::passes::stubs::Pass& pass, const ld::Atom& stubTo,
++		bool forLazyDylib, bool for64, bool weakImport)
++		: ld::Atom(_s_section, ld::Atom::definitionRegular, ld::Atom::combineNever,
++				ld::Atom::scopeLinkageUnit, ld::Atom::typeStub,
++				symbolTableNotIn, false, false, false, ld::Atom::Alignment(2)),
++			_stubTo(stubTo),
++			_lazyPointer(pass, stubTo, forLazyDylib, for64, weakImport),
++			_fixup1(12, ld::Fixup::k1of4, ld::Fixup::kindSetTargetAddress, &_lazyPointer),
++			_fixup2(12, ld::Fixup::k2of4, ld::Fixup::kindSubtractTargetAddress, this),
++			_fixup3(12, ld::Fixup::k3of4, ld::Fixup::kindSubtractAddend, 8),
++			_fixup4(12, ld::Fixup::k4of4, ld::Fixup::kindStorePPCPicHigh16AddLow),
++			_fixup5(20, ld::Fixup::k1of4, ld::Fixup::kindSetTargetAddress, &_lazyPointer),
++			_fixup6(20, ld::Fixup::k2of4, ld::Fixup::kindSubtractTargetAddress, this),
++			_fixup7(20, ld::Fixup::k3of4, ld::Fixup::kindSubtractAddend, 8),
++			_fixup8(20, ld::Fixup::k4of4, for64 ? ld::Fixup::kindStorePPCPicLow14 : ld::Fixup::kindStorePPCPicLow16),
++			_for64(for64)
++		{ pass.addAtom(*this); }
++
++	virtual const ld::File*	file() const	{ return _stubTo.file(); }
++	virtual bool		translationUnitSource(const char** dir, const char** ) const
++																			{ return false; }
++	virtual const char*	name() const		{ return _stubTo.name(); }
++	virtual uint64_t	size() const		{ return 32; }
++	virtual uint64_t	objectAddress() const	{ return 0; }
++	virtual void		copyRawContent(uint8_t buffer[]) const {
++		OSWriteBigInt32(&buffer[ 0], 0, 0x7c0802a6);	// mflr r0
++		OSWriteBigInt32(&buffer[ 4], 0, 0x429f0005);	// bcl 20,31,Lpicbase
++		OSWriteBigInt32(&buffer[ 8], 0, 0x7d6802a6);	// Lpicbase: mflr r11
++		OSWriteBigInt32(&buffer[12], 0, 0x3d6b0000);	// addis r11,r11,ha16(L_fwrite$lazy_ptr-Lpicbase)
++		OSWriteBigInt32(&buffer[16], 0, 0x7c0803a6);	// mtlr r0
++		if ( _for64 )
++			OSWriteBigInt32(&buffer[20], 0, 0xe98b0001);// ldu r12,lo16(L_fwrite$lazy_ptr-Lpicbase)(r11)
++		else
++			OSWriteBigInt32(&buffer[20], 0, 0x858b0000);// lwzu r12,lo16(L_fwrite$lazy_ptr-Lpicbase)(r11)
++		OSWriteBigInt32(&buffer[24], 0, 0x7d8903a6);	//  mtctr r12
++		OSWriteBigInt32(&buffer[28], 0, 0x4e800420);	//  bctr
++	}
++	virtual void			setScope(Scope)		{ }
++	virtual ld::Fixup::iterator	fixupsBegin() const	{ return &_fixup1; }
++	virtual ld::Fixup::iterator	fixupsEnd() const	{ return &((ld::Fixup*)&_fixup8)[1]; }
++
++private:
++	const ld::Atom&		_stubTo;
++	LazyPointerAtom		_lazyPointer;
++	mutable ld::Fixup	_fixup1;
++	mutable ld::Fixup	_fixup2;
++	mutable ld::Fixup	_fixup3;
++	mutable ld::Fixup	_fixup4;
++	mutable ld::Fixup	_fixup5;
++	mutable ld::Fixup	_fixup6;
++	mutable ld::Fixup	_fixup7;
++	mutable ld::Fixup	_fixup8;
++	const bool		_for64;
++
++	static ld::Section	_s_section;
++};
++
++ld::Section StubPICAtom::_s_section("__TEXT", "__picsymbolstub1", ld::Section::typeStub);
++
++
++
++class StubNoPICAtom : public ld::Atom {
++public:
++	StubNoPICAtom(ld::passes::stubs::Pass& pass, const ld::Atom& stubTo,
++		bool forLazyDylib, bool for64, bool weakImport)
++			: ld::Atom(_s_section, ld::Atom::definitionRegular, ld::Atom::combineNever,
++				ld::Atom::scopeLinkageUnit, ld::Atom::typeStub,
++				symbolTableNotIn, false, false, false, ld::Atom::Alignment(2)),
++			_stubTo(stubTo),
++			_lazyPointer(pass, stubTo, forLazyDylib, for64, weakImport),
++			_fixup1(0, ld::Fixup::k1of2, ld::Fixup::kindSetTargetAddress, &_lazyPointer),
++			_fixup2(0, ld::Fixup::k2of2, ld::Fixup::kindStorePPCAbsHigh16AddLow),
++			_fixup3(4, ld::Fixup::k1of2, ld::Fixup::kindSetTargetAddress, &_lazyPointer),
++			_fixup4(4, ld::Fixup::k2of2, for64 ? ld::Fixup::kindStorePPCAbsLow14 : ld::Fixup::kindStorePPCAbsLow16),
++			_for64(for64)
++		{ pass.addAtom(*this); }
++
++	virtual const ld::File*	file() const	{ return _stubTo.file(); }
++	virtual bool		translationUnitSource(const char** dir, const char** ) const
++		{ return false; }
++	virtual const char*	name() const		{ return _stubTo.name(); }
++	virtual uint64_t	size() const		{ return 16; }
++	virtual uint64_t	objectAddress() const	{ return 0; }
++	virtual void		copyRawContent(uint8_t buffer[]) const {
++		OSWriteBigInt32(&buffer[ 0], 0, 0x3d600000);	// lis r11,ha16(L_foo$lazy_ptr)
++		if ( _for64 )
++			OSWriteBigInt32(&buffer[ 4], 0, 0xe98b0001);// ldu r12,lo16(L_foo$lazy_ptr)(r11)
++		else
++			OSWriteBigInt32(&buffer[ 4], 0, 0x858b0000);// lwzu r12,lo16(L_foo$lazy_ptr)(r11)
++		OSWriteBigInt32(&buffer[ 8], 0, 0x7d8903a6);	// mtctr r12
++		OSWriteBigInt32(&buffer[12], 0, 0x4e800420);	// bctr
++	}
++	virtual void			setScope(Scope)		{ }
++	virtual ld::Fixup::iterator	fixupsBegin() const	{ return &_fixup1; }
++	virtual ld::Fixup::iterator	fixupsEnd() const	{ return &((ld::Fixup*)&_fixup4)[1]; }
++
++private:
++	const ld::Atom&		_stubTo;
++	LazyPointerAtom		_lazyPointer;
++	mutable ld::Fixup	_fixup1;
++	mutable ld::Fixup	_fixup2;
++	mutable ld::Fixup	_fixup3;
++	mutable ld::Fixup	_fixup4;
++	const bool		_for64;
++
++	static ld::Section	_s_section;
++};
++
++ld::Section StubNoPICAtom::_s_section("__TEXT", "__symbol_stub1", ld::Section::typeStub);
++
++
++} // namespace classic
++} // namespace ppc
++#endif
+diff --git a/src/ld/passes/stubs/stubs.cpp b/src/ld/passes/stubs/stubs.cpp
+index aa4aaf1..c649e25 100644
+--- a/src/ld/passes/stubs/stubs.cpp
++++ b/src/ld/passes/stubs/stubs.cpp
+@@ -89,6 +89,7 @@ private:
+ #include "stub_x86_classic.hpp"
+ #include "stub_arm.hpp"
+ #include "stub_arm_classic.hpp"
++#include "stub_ppc_classic.hpp"
+ 
+ 
+ 
+@@ -115,9 +116,14 @@ const ld::Atom* Pass::stubableFixup(const ld::Fixup* fixup, ld::Internal& state)
+ 	if ( fixup->binding == ld::Fixup::bindingsIndirectlyBound ) {
+ 		const ld::Atom* target = state.indirectBindingTable[fixup->u.bindingIndex];
+ 		switch ( fixup->kind ) {
++#if SUPPORT_ARCH_ppc
++			case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++#endif
+ 			case ld::Fixup::kindStoreTargetAddressX86BranchPCRel32:
++#if SUPPORT_ARCH_arm_any
+ 			case ld::Fixup::kindStoreTargetAddressARMBranch24:
+ 			case ld::Fixup::kindStoreTargetAddressThumbBranch22:
++#endif
+ 				// create stub if target is in a dylib
+ 				if ( target->definition() == ld::Atom::definitionProxy ) 
+ 					return target;
+@@ -175,6 +181,19 @@ ld::Atom* Pass::makeStub(const ld::Atom& target, bool weakImport)
+ 	}
+ 
+ 	switch ( _architecture ) {
++#if SUPPORT_ARCH_ppc
++		case CPU_TYPE_POWERPC:
++			if ( _pic )
++				return new ld::passes::stubs::ppc::classic::StubPICAtom(*this, target, forLazyDylib, false, weakImport);
++			else
++				return new ld::passes::stubs::ppc::classic::StubNoPICAtom(*this, target, forLazyDylib, false, weakImport);
++			break;
++#endif
++#if SUPPORT_ARCH_ppc64
++		case CPU_TYPE_POWERPC64:
++			return new ld::passes::stubs::ppc::classic::StubPICAtom(*this, target, forLazyDylib, true, weakImport);
++			break;
++#endif
+ 		case CPU_TYPE_I386:
+ 			if ( usingCompressedLINKEDIT() && !forLazyDylib )
+ 				return new ld::passes::stubs::x86::StubAtom(*this, target, stubToGlobalWeakDef, stubToResolver, weakImport);
+@@ -187,6 +206,7 @@ ld::Atom* Pass::makeStub(const ld::Atom& target, bool weakImport)
+ 			else
+ 				return new ld::passes::stubs::x86_64::classic::StubAtom(*this, target, forLazyDylib, weakImport);
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM: 
+ 			if ( usingCompressedLINKEDIT() && !forLazyDylib ) {
+ 				if ( (_stubCount < 900) && !_mightBeInSharedRegion && !_largeText )
+@@ -203,6 +223,7 @@ ld::Atom* Pass::makeStub(const ld::Atom& target, bool weakImport)
+ 					return new ld::passes::stubs::arm::classic::StubNoPICAtom(*this, target, forLazyDylib, weakImport);
+ 			}
+ 			break;
++#endif
+ 	}
+ 	throw "unsupported arch for stub";
+ }
+@@ -293,8 +314,15 @@ void Pass::process(ld::Internal& state)
+ 				if ( _options.outputKind() != Options::kDynamicLibrary ) 
+ 					throwf("resolver functions (%s) can only be used in dylibs", atom->name());
+ 				if ( !_options.makeCompressedDyldInfo() ) {
+-					if ( _options.architecture() == CPU_TYPE_ARM )
++					if ( 0 ) { }
++#if SUPPORT_ARCH_arm_any
++					else if ( _options.architecture() == CPU_TYPE_ARM )
+ 						throwf("resolver functions (%s) can only be used when targeting iOS 4.2 or later", atom->name());
++#endif
++#if SUPPORT_ARCH_ppc
++					else if ( _options.architecture() == CPU_TYPE_POWERPC )
++						throwf("resolver functions (%s) not supported for PowerPC", atom->name());
++#endif
+ 					else
+ 						throwf("resolver functions (%s) can only be used when targeting Mac OS X 10.6 or later", atom->name());
+ 				}
+@@ -313,6 +341,7 @@ void Pass::process(ld::Internal& state)
+ 	if ( !_options.makeCompressedDyldInfo() && (state.classicBindingHelper == NULL) ) 
+ 		throw "symbol dyld_stub_binding_helper not found, normally in crt1.o/dylib1.o/bundle1.o";
+ 
++#if SUPPORT_ARCH_arm_any
+ 	// disable arm close stubs in some cases
+ 	if ( _architecture == CPU_TYPE_ARM ) {
+         if ( codeSize > 4*1024*1024 )
+@@ -337,6 +366,7 @@ void Pass::process(ld::Internal& state)
+             }
+         }
+     }
++#endif
+ 	
+ 	// make stub atoms 
+ 	for (std::map<const ld::Atom*,ld::Atom*>::iterator it = stubFor.begin(); it != stubFor.end(); ++it) {
+diff --git a/src/other/ObjectDump.cpp b/src/other/ObjectDump.cpp
+index 44d8f53..6e130a9 100644
+--- a/src/other/ObjectDump.cpp
++++ b/src/other/ObjectDump.cpp
+@@ -276,8 +276,10 @@ static void dumpAtom(ld::Atom* atom)
+ 		printf("attrs:   ");
+ 		if ( atom->dontDeadStrip() )
+ 			printf("dont-dead-strip ");
++#if SUPPORT_ARCH_arm_any
+ 		if ( atom->isThumb() )
+ 			printf("thumb ");
++#endif
+ 		printf("\n");
+ 	}
+ 	
+@@ -548,8 +550,10 @@ const char*	dumper::attributeString(const ld::Atom& atom)
+ 	if ( atom.dontDeadStrip() )
+ 		strcat(buffer, "dont-dead-strip ");
+ 
++#if SUPPORT_ARCH_arm_any
+ 	if ( atom.isThumb() )
+ 		strcat(buffer, "thumb ");
++#endif
+ 		
+ 	if ( atom.isAlias() )
+ 		strcat(buffer, "alias ");
+@@ -738,6 +742,35 @@ void dumper::dumpFixup(const ld::Fixup* ref)
+ 		case ld::Fixup::kindStoreBigEndian64:
+ 			printf(", then store 64-bit big endian");
+ 			break;
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCBranch24:
++			printf(", then store as PPC branch24");
++			break;
++		case ld::Fixup::kindStorePPCBranch14:
++			printf(", then store as PPC branch14");
++			break;
++		case ld::Fixup::kindStorePPCPicLow14:
++			printf(", then store as PPC low14 pic");
++			break;
++		case ld::Fixup::kindStorePPCPicLow16:
++			printf(", then store as PPC low14 pic");
++			break;
++		case ld::Fixup::kindStorePPCPicHigh16AddLow:
++			printf(", then store as PPC high16 pic");
++			break;
++		case ld::Fixup::kindStorePPCAbsLow14:
++			printf(", then store as PPC low14 abs");
++			break;
++		case ld::Fixup::kindStorePPCAbsLow16:
++			printf(", then store as PPC low14 abs");
++			break;
++		case ld::Fixup::kindStorePPCAbsHigh16AddLow:
++			printf(", then store as PPC high16 abs");
++			break;
++		case ld::Fixup::kindStorePPCAbsHigh16:
++			printf(", then store as PPC high16 abs, no carry");
++			break;
++#endif
+ 		case ld::Fixup::kindStoreX86BranchPCRel8:
+ 			printf(", then store as x86 8-bit pcrel branch");
+ 			break;
+@@ -783,6 +816,7 @@ void dumper::dumpFixup(const ld::Fixup* ref)
+ 		case ld::Fixup::kindStoreX86Abs32TLVLoadNowLEA:
+ 			printf(", then store as x86 32-bit absolute TLV load -> LEA");
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreARMBranch24:
+ 			printf(", then store as ARM 24-bit pcrel branch");
+ 			break;
+@@ -804,6 +838,7 @@ void dumper::dumpFixup(const ld::Fixup* ref)
+ 		case ld::Fixup::kindStoreThumbHigh16:
+ 			printf(", then store high-16 in Thumb movt");
+ 			break;
++#endif
+ 		case ld::Fixup::kindDtraceExtra:
+ 			printf("dtrace static probe extra info");
+ 			break;
+@@ -813,6 +848,15 @@ void dumper::dumpFixup(const ld::Fixup* ref)
+ 		case ld::Fixup::kindStoreX86DtraceIsEnableSiteClear:
+ 			printf("x86 dtrace static is-enabled site");
+ 			break;
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStorePPCDtraceCallSiteNop:
++			printf("ppc dtrace static probe site");
++			break;
++		case ld::Fixup::kindStorePPCDtraceIsEnableSiteClear:
++			printf("ppc dtrace static is-enabled site");
++			break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreARMDtraceCallSiteNop:
+ 			printf("ARM dtrace static probe site");
+ 			break;
+@@ -825,6 +869,7 @@ void dumper::dumpFixup(const ld::Fixup* ref)
+ 		case ld::Fixup::kindStoreThumbDtraceIsEnableSiteClear:
+ 			printf("Thumb dtrace static is-enabled site");
+ 			break;
++#endif
+ 		case ld::Fixup::kindLazyTarget:
+ 			printf("lazy reference to external symbol %s", referenceTargetAtomName(ref));
+ 			break;
+@@ -867,6 +912,7 @@ void dumper::dumpFixup(const ld::Fixup* ref)
+ 		case ld::Fixup::kindStoreTargetAddressX86Abs32TLVLoadNowLEA:
+ 			printf("x86 store 32-bit absolute TLV lea of %s", referenceTargetAtomName(ref));
+ 			break;
++#if SUPPORT_ARCH_arm_any
+ 		case ld::Fixup::kindStoreTargetAddressARMBranch24:
+ 			printf("ARM store 24-bit pc-rel branch to %s", referenceTargetAtomName(ref));
+ 			break;
+@@ -876,6 +922,12 @@ void dumper::dumpFixup(const ld::Fixup* ref)
+ 		case ld::Fixup::kindStoreTargetAddressARMLoad12:
+ 			printf("ARM store 12-bit pc-rel branch to %s", referenceTargetAtomName(ref));
+ 			break;
++#endif
++#if SUPPORT_ARCH_ppc
++		case ld::Fixup::kindStoreTargetAddressPPCBranch24:
++			printf("PowerPC store 24-bit pc-rel load of %s", referenceTargetAtomName(ref));
++			break;
++#endif
+ 		case ld::Fixup::kindSetTargetTLVTemplateOffset:
+ 		case ld::Fixup::kindSetTargetTLVTemplateOffsetLittleEndian32:
+ 		case ld::Fixup::kindSetTargetTLVTemplateOffsetLittleEndian64:
+@@ -1186,9 +1238,18 @@ int main(int argc, const char* argv[])
+ 					const char* arch = ++i<argc? argv[i]: "";
+ 					if ( strcmp(arch, "i386") == 0 )
+ 						sPreferredArch = CPU_TYPE_I386;
++#if SUPPORT_ARCH_ppc64
++					else if ( strcmp(arch, "ppc64") == 0 )
++						sPreferredArch = CPU_TYPE_POWERPC64;
++#endif
++#if SUPPORT_ARCH_ppc
++					else if ( strcmp(arch, "ppc") == 0 )
++						sPreferredArch = CPU_TYPE_POWERPC;
++#endif
+ 					else if ( strcmp(arch, "x86_64") == 0 )
+ 						sPreferredArch = CPU_TYPE_X86_64;
+ 					else {
++#if SUPPORT_ARCH_arm_any
+ 						bool found = false;
+ 						for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+ 							if ( strcmp(t->subTypeName,arch) == 0 ) {
+@@ -1199,6 +1260,7 @@ int main(int argc, const char* argv[])
+ 							}
+ 						}
+ 						if ( !found )
++#endif
+ 							throwf("unknown architecture %s", arch);
+ 					}
+ 				}
+diff --git a/src/other/dyldinfo.cpp b/src/other/dyldinfo.cpp
+index 6a63ca1..4ae8d45 100644
+--- a/src/other/dyldinfo.cpp
++++ b/src/other/dyldinfo.cpp
+@@ -155,6 +155,7 @@ private:
+ 
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ bool DyldInfoPrinter<ppc>::validFile(const uint8_t* fileContent)
+ {	
+@@ -172,7 +173,9 @@ bool DyldInfoPrinter<ppc>::validFile(const uint8_t* fileContent)
+ 	}
+ 	return false;
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ bool DyldInfoPrinter<ppc64>::validFile(const uint8_t* fileContent)
+ {	
+@@ -190,6 +193,7 @@ bool DyldInfoPrinter<ppc64>::validFile(const uint8_t* fileContent)
+ 	}
+ 	return false;
+ }
++#endif
+ 
+ template <>
+ bool DyldInfoPrinter<x86>::validFile(const uint8_t* fileContent)
+@@ -227,6 +231,7 @@ bool DyldInfoPrinter<x86_64>::validFile(const uint8_t* fileContent)
+ 	return false;
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ bool DyldInfoPrinter<arm>::validFile(const uint8_t* fileContent)
+ {	
+@@ -244,6 +249,7 @@ bool DyldInfoPrinter<arm>::validFile(const uint8_t* fileContent)
+ 	}
+ 	return false;
+ }
++#endif
+ 
+ template <typename A>
+ DyldInfoPrinter<A>::DyldInfoPrinter(const uint8_t* fileContent, uint32_t fileLength, const char* path, bool printArch)
+@@ -344,9 +350,12 @@ DyldInfoPrinter<A>::DyldInfoPrinter(const uint8_t* fileContent, uint32_t fileLen
+ 			case CPU_TYPE_X86_64:
+ 				printf("for arch x86_64:\n");
+ 				break;
++#if SUPPORT_ARCH_ppc
+ 			case CPU_TYPE_POWERPC:			
+ 				printf("for arch ppc:\n");
+ 				break;
++#endif
++#if SUPPORT_ARCH_arm_any
+ 			case CPU_TYPE_ARM:
+ 				for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+ 					if ( (cpu_subtype_t)fHeader->cpusubtype() == t->subType) {
+@@ -354,6 +363,8 @@ DyldInfoPrinter<A>::DyldInfoPrinter(const uint8_t* fileContent, uint32_t fileLen
+ 						break;
+ 					}
+ 				}
++				break;
++#endif
+ 		}
+ 	}
+ 	
+@@ -1545,6 +1556,7 @@ void DyldInfoPrinter<A>::printSharedRegionInfo()
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void DyldInfoPrinter<arm>::printFunctionStartLine(uint64_t addr)
+ {
+@@ -1553,6 +1565,7 @@ void DyldInfoPrinter<arm>::printFunctionStartLine(uint64_t addr)
+ 	else
+ 		printf("0x%0llX         %s\n", addr, symbolNameForAddress(addr)); 
+ }
++#endif
+ 
+ template <typename A>
+ void DyldInfoPrinter<A>::printFunctionStartLine(uint64_t addr)
+@@ -1618,6 +1631,7 @@ void DyldInfoPrinter<A>::printDylibsInfo()
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ ppc::P::uint_t DyldInfoPrinter<ppc>::relocBase()
+ {
+@@ -1626,7 +1640,9 @@ ppc::P::uint_t DyldInfoPrinter<ppc>::relocBase()
+ 	else
+ 		return fFirstSegment->vmaddr();
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ ppc64::P::uint_t DyldInfoPrinter<ppc64>::relocBase()
+ {
+@@ -1635,6 +1651,7 @@ ppc64::P::uint_t DyldInfoPrinter<ppc64>::relocBase()
+ 	else
+ 		return fFirstSegment->vmaddr();
+ }
++#endif
+ 
+ template <>
+ x86::P::uint_t DyldInfoPrinter<x86>::relocBase()
+@@ -1652,6 +1669,7 @@ x86_64::P::uint_t DyldInfoPrinter<x86_64>::relocBase()
+ 	return fFirstWritableSegment->vmaddr();
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ arm::P::uint_t DyldInfoPrinter<arm>::relocBase()
+ {
+@@ -1660,17 +1678,23 @@ arm::P::uint_t DyldInfoPrinter<arm>::relocBase()
+ 	else
+ 		return fFirstSegment->vmaddr();
+ }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ const char*	DyldInfoPrinter<ppc>::relocTypeName(uint8_t r_type)
+ {
+ 	if ( r_type == GENERIC_RELOC_VANILLA )
+ 		return "pointer";
++	else if ( r_type == PPC_RELOC_PB_LA_PTR )
++		return "pb pointer";
+ 	else
+ 		return "??";
+ }
++#endif
+ 	
++#if SUPPORT_ARCH_ppc64
+ template <>
+ const char*	DyldInfoPrinter<ppc64>::relocTypeName(uint8_t r_type)
+ {
+@@ -1679,6 +1703,7 @@ const char*	DyldInfoPrinter<ppc64>::relocTypeName(uint8_t r_type)
+ 	else
+ 		return "??";
+ }
++#endif
+ 	
+ template <>
+ const char*	DyldInfoPrinter<x86>::relocTypeName(uint8_t r_type)
+@@ -1700,6 +1725,7 @@ const char*	DyldInfoPrinter<x86_64>::relocTypeName(uint8_t r_type)
+ 		return "??";
+ }
+ 	
++#if SUPPORT_ARCH_arm_any
+ template <>
+ const char*	DyldInfoPrinter<arm>::relocTypeName(uint8_t r_type)
+ {
+@@ -1710,6 +1736,7 @@ const char*	DyldInfoPrinter<arm>::relocTypeName(uint8_t r_type)
+ 	else
+ 		return "??";
+ }
++#endif
+ 	
+ 
+ template <typename A>
+@@ -1787,8 +1814,10 @@ void DyldInfoPrinter<A>::printSymbolTableExportInfo()
+ 			if ( sym->n_desc() & N_WEAK_DEF )
+ 				flags = "[weak_def] ";
+ 			pint_t thumb = 0;
++#if SUPPORT_ARCH_arm_any
+ 			if ( sym->n_desc() & N_ARM_THUMB_DEF )
+ 				thumb = 1;
++#endif
+ 			printf("0x%08llX %s%s\n", sym->n_value()+thumb, flags, &fStrings[sym->n_strx()]);
+ 		}
+ 	}
+@@ -1977,36 +2006,42 @@ static void dump(const char* path)
+ 					&& ((sPreferredSubArch==0) || (sPreferredSubArch==cpusubtype)))
+ 					|| (sPreferredArch == 0) ) {	
+ 					switch(cputype) {
++#if SUPPORT_ARCH_ppc
+ 					case CPU_TYPE_POWERPC:
+ 						if ( DyldInfoPrinter<ppc>::validFile(p + offset) )
+ 							DyldInfoPrinter<ppc>::make(p + offset, size, path, (sPreferredArch == 0));
+ 						else
+ 							throw "in universal file, ppc slice does not contain ppc mach-o";
+ 						break;
++#endif
+ 					case CPU_TYPE_I386:
+ 						if ( DyldInfoPrinter<x86>::validFile(p + offset) )
+ 							DyldInfoPrinter<x86>::make(p + offset, size, path, (sPreferredArch == 0));
+ 						else
+ 							throw "in universal file, i386 slice does not contain i386 mach-o";
+ 						break;
++#if SUPPORT_ARCH_ppc64
+ 					case CPU_TYPE_POWERPC64:
+ 						if ( DyldInfoPrinter<ppc64>::validFile(p + offset) )
+ 							DyldInfoPrinter<ppc64>::make(p + offset, size, path, (sPreferredArch == 0));
+ 						else
+ 							throw "in universal file, ppc64 slice does not contain ppc64 mach-o";
+ 						break;
++#endif
+ 					case CPU_TYPE_X86_64:
+ 						if ( DyldInfoPrinter<x86_64>::validFile(p + offset) )
+ 							DyldInfoPrinter<x86_64>::make(p + offset, size, path, (sPreferredArch == 0));
+ 						else
+ 							throw "in universal file, x86_64 slice does not contain x86_64 mach-o";
+ 						break;
++#if SUPPORT_ARCH_arm_any
+ 					case CPU_TYPE_ARM:
+ 						if ( DyldInfoPrinter<arm>::validFile(p + offset) ) 
+ 							DyldInfoPrinter<arm>::make(p + offset, size, path, (sPreferredArch == 0));
+ 						else
+ 							throw "in universal file, arm slice does not contain arm mach-o";
+ 						break;
++#endif
+ 					default:
+ 							throwf("in universal file, unknown architecture slice 0x%x\n", cputype);
+ 					}
+@@ -2016,18 +2051,24 @@ static void dump(const char* path)
+ 		else if ( DyldInfoPrinter<x86>::validFile(p) ) {
+ 			DyldInfoPrinter<x86>::make(p, length, path, false);
+ 		}
++#if SUPPORT_ARCH_ppc
+ 		else if ( DyldInfoPrinter<ppc>::validFile(p) ) {
+ 			DyldInfoPrinter<ppc>::make(p, length, path, false);
+ 		}
++#endif
++#if SUPPORT_ARCH_ppc64
+ 		else if ( DyldInfoPrinter<ppc64>::validFile(p) ) {
+ 			DyldInfoPrinter<ppc64>::make(p, length, path, false);
+ 		}
++#endif
+ 		else if ( DyldInfoPrinter<x86_64>::validFile(p) ) {
+ 			DyldInfoPrinter<x86_64>::make(p, length, path, false);
+ 		}
++#if SUPPORT_ARCH_arm_any
+ 		else if ( DyldInfoPrinter<arm>::validFile(p) ) {
+ 			DyldInfoPrinter<arm>::make(p, length, path, false);
+ 		}
++#endif
+ 		else {
+ 			throw "not a known file type";
+ 		}
+@@ -2067,15 +2108,21 @@ int main(int argc, const char* argv[])
+ 			if ( arg[0] == '-' ) {
+ 				if ( strcmp(arg, "-arch") == 0 ) {
+ 					const char* arch = ++i<argc? argv[i]: "";
+-					if ( strcmp(arch, "ppc64") == 0 )
++					if (0) { }
++#if SUPPORT_ARCH_ppc64
++					else if ( strcmp(arch, "ppc64") == 0 )
+ 						sPreferredArch = CPU_TYPE_POWERPC64;
++#endif
++#if SUPPORT_ARCH_ppc
+ 					else if ( strcmp(arch, "ppc") == 0 )
+ 						sPreferredArch = CPU_TYPE_POWERPC;
++#endif
+ 					else if ( strcmp(arch, "i386") == 0 )
+ 						sPreferredArch = CPU_TYPE_I386;
+ 					else if ( strcmp(arch, "x86_64") == 0 )
+ 						sPreferredArch = CPU_TYPE_X86_64;
+ 					else {
++#if SUPPORT_ARCH_arm_any
+ 						bool found = false;
+ 						for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+ 							if ( strcmp(t->subTypeName,arch) == 0 ) {
+@@ -2086,6 +2133,7 @@ int main(int argc, const char* argv[])
+ 							}
+ 						}
+ 						if ( !found )
++#endif
+ 							throwf("unknown architecture %s", arch);
+ 					}
+ 				}
+diff --git a/src/other/machochecker.cpp b/src/other/machochecker.cpp
+index 54dc560..e852146 100644
+--- a/src/other/machochecker.cpp
++++ b/src/other/machochecker.cpp
+@@ -164,6 +164,7 @@ private:
+ 
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ bool MachOChecker<ppc>::validFile(const uint8_t* fileContent)
+ {	
+@@ -181,7 +182,9 @@ bool MachOChecker<ppc>::validFile(const uint8_t* fileContent)
+ 	}
+ 	return false;
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ bool MachOChecker<ppc64>::validFile(const uint8_t* fileContent)
+ {	
+@@ -199,6 +202,7 @@ bool MachOChecker<ppc64>::validFile(const uint8_t* fileContent)
+ 	}
+ 	return false;
+ }
++#endif
+ 
+ template <>
+ bool MachOChecker<x86>::validFile(const uint8_t* fileContent)
+@@ -236,6 +240,7 @@ bool MachOChecker<x86_64>::validFile(const uint8_t* fileContent)
+ 	return false;
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ bool MachOChecker<arm>::validFile(const uint8_t* fileContent)
+ {	
+@@ -253,25 +258,36 @@ bool MachOChecker<arm>::validFile(const uint8_t* fileContent)
+ 	}
+ 	return false;
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc
+ template <> uint8_t MachOChecker<ppc>::loadCommandSizeMask()	{ return 0x03; }
++#endif
++#if SUPPORT_ARCH_ppc64
+ template <> uint8_t MachOChecker<ppc64>::loadCommandSizeMask()	{ return 0x07; }
++#endif
+ template <> uint8_t MachOChecker<x86>::loadCommandSizeMask()	{ return 0x03; }
+ template <> uint8_t MachOChecker<x86_64>::loadCommandSizeMask() { return 0x07; }
++#if SUPPORT_ARCH_arm_any
+ template <> uint8_t MachOChecker<arm>::loadCommandSizeMask()	{ return 0x03; }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ ppc::P::uint_t MachOChecker<ppc>::getInitialStackPointer(const macho_thread_command<ppc::P>* threadInfo)
+ {
+ 	return threadInfo->thread_register(3);
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ ppc64::P::uint_t MachOChecker<ppc64>::getInitialStackPointer(const macho_thread_command<ppc64::P>* threadInfo)
+ {
+ 	return threadInfo->thread_register(3);
+ }
++#endif
+ 
+ template <>
+ x86::P::uint_t MachOChecker<x86>::getInitialStackPointer(const macho_thread_command<x86::P>* threadInfo)
+@@ -285,27 +301,33 @@ x86_64::P::uint_t MachOChecker<x86_64>::getInitialStackPointer(const macho_threa
+ 	return threadInfo->thread_register(7);
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ arm::P::uint_t MachOChecker<arm>::getInitialStackPointer(const macho_thread_command<arm::P>* threadInfo)
+ {
+ 	return threadInfo->thread_register(13);
+ }
++#endif
+ 
+ 
+ 
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ ppc::P::uint_t MachOChecker<ppc>::getEntryPoint(const macho_thread_command<ppc::P>* threadInfo)
+ {
+ 	return threadInfo->thread_register(0);
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ ppc64::P::uint_t MachOChecker<ppc64>::getEntryPoint(const macho_thread_command<ppc64::P>* threadInfo)
+ {
+ 	return threadInfo->thread_register(0);
+ }
++#endif
+ 
+ template <>
+ x86::P::uint_t MachOChecker<x86>::getEntryPoint(const macho_thread_command<x86::P>* threadInfo)
+@@ -319,11 +341,13 @@ x86_64::P::uint_t MachOChecker<x86_64>::getEntryPoint(const macho_thread_command
+ 	return threadInfo->thread_register(16);
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ arm::P::uint_t MachOChecker<arm>::getEntryPoint(const macho_thread_command<arm::P>* threadInfo)
+ {
+ 	return threadInfo->thread_register(15);
+ }
++#endif
+ 
+ 
+ template <typename A>
+@@ -900,6 +924,7 @@ void MachOChecker<A>::checkInitTerms()
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ ppc::P::uint_t MachOChecker<ppc>::relocBase()
+ {
+@@ -908,7 +933,9 @@ ppc::P::uint_t MachOChecker<ppc>::relocBase()
+ 	else
+ 		return fFirstSegment->vmaddr();
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ ppc64::P::uint_t MachOChecker<ppc64>::relocBase()
+ {
+@@ -917,6 +944,7 @@ ppc64::P::uint_t MachOChecker<ppc64>::relocBase()
+ 	else
+ 		return fFirstSegment->vmaddr();
+ }
++#endif
+ 
+ template <>
+ x86::P::uint_t MachOChecker<x86>::relocBase()
+@@ -934,6 +962,7 @@ x86_64::P::uint_t MachOChecker<x86_64>::relocBase()
+ 	return fFirstWritableSegment->vmaddr();
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ arm::P::uint_t MachOChecker<arm>::relocBase()
+ {
+@@ -942,6 +971,7 @@ arm::P::uint_t MachOChecker<arm>::relocBase()
+ 	else
+ 		return fFirstSegment->vmaddr();
+ }
++#endif
+ 
+ 
+ template <typename A>
+@@ -974,6 +1004,7 @@ bool MachOChecker<A>::addressInWritableSegment(pint_t address)
+ }
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ void MachOChecker<ppc>::checkExternalReloation(const macho_relocation_info<P>* reloc)
+ {
+@@ -989,7 +1020,9 @@ void MachOChecker<ppc>::checkExternalReloation(const macho_relocation_info<P>* r
+ 		throw "external relocation address not in writable segment";
+ 	// FIX: check r_symbol
+ }
++#endif
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ void MachOChecker<ppc64>::checkExternalReloation(const macho_relocation_info<P>* reloc)
+ {
+@@ -1005,6 +1038,7 @@ void MachOChecker<ppc64>::checkExternalReloation(const macho_relocation_info<P>*
+ 		throw "external relocation address not in writable segment";
+ 	// FIX: check r_symbol
+ }
++#endif
+ 
+ template <>
+ void MachOChecker<x86>::checkExternalReloation(const macho_relocation_info<P>* reloc)
+@@ -1039,6 +1073,7 @@ void MachOChecker<x86_64>::checkExternalReloation(const macho_relocation_info<P>
+ 	// FIX: check r_symbol
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void MachOChecker<arm>::checkExternalReloation(const macho_relocation_info<P>* reloc)
+ {
+@@ -1054,8 +1089,10 @@ void MachOChecker<arm>::checkExternalReloation(const macho_relocation_info<P>* r
+ 		throw "external relocation address not in writable segment";
+ 	// FIX: check r_symbol
+ }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ void MachOChecker<ppc>::checkLocalReloation(const macho_relocation_info<P>* reloc)
+ {
+@@ -1066,13 +1103,18 @@ void MachOChecker<ppc>::checkLocalReloation(const macho_relocation_info<P>* relo
+ 	
+ 	}
+ 	else {
++		// ignore pair relocs
++		if ( reloc->r_type() == PPC_RELOC_PAIR )
++			return;
+ 		// FIX
+ 		if ( ! this->addressInWritableSegment(reloc->r_address() + this->relocBase()) )
+ 			throwf("local relocation address 0x%08X not in writable segment", reloc->r_address());
+ 	}
+ }
++#endif
+ 
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ void MachOChecker<ppc64>::checkLocalReloation(const macho_relocation_info<P>* reloc)
+ {
+@@ -1087,6 +1129,7 @@ void MachOChecker<ppc64>::checkLocalReloation(const macho_relocation_info<P>* re
+ 	if ( ! this->addressInWritableSegment(reloc->r_address() + this->relocBase()) )
+ 		throw "local relocation address not in writable segment";
+ }
++#endif
+ 
+ template <>
+ void MachOChecker<x86>::checkLocalReloation(const macho_relocation_info<P>* reloc)
+@@ -1109,6 +1152,7 @@ void MachOChecker<x86_64>::checkLocalReloation(const macho_relocation_info<P>* r
+ 		throw "local relocation address not in writable segment";
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void MachOChecker<arm>::checkLocalReloation(const macho_relocation_info<P>* reloc)
+ {
+@@ -1129,6 +1173,7 @@ void MachOChecker<arm>::checkLocalReloation(const macho_relocation_info<P>* relo
+ 			throw "local relocation address not in writable segment";
+ 	}
+ }
++#endif
+ 
+ template <typename A>
+ void MachOChecker<A>::checkRelocations()
+@@ -1494,36 +1539,42 @@ static void check(const char* path)
+ 				unsigned int cputype = OSSwapBigToHostInt32(archs[i].cputype);
+ 
+ 				switch(cputype) {
++#if SUPPORT_ARCH_ppc
+ 				case CPU_TYPE_POWERPC:
+ 					if ( MachOChecker<ppc>::validFile(p + offset) )
+ 						MachOChecker<ppc>::make(p + offset, size, path);
+ 					else
+ 						throw "in universal file, ppc slice does not contain ppc mach-o";
+ 					break;
++#endif
+ 				case CPU_TYPE_I386:
+ 					if ( MachOChecker<x86>::validFile(p + offset) )
+ 						MachOChecker<x86>::make(p + offset, size, path);
+ 					else
+ 						throw "in universal file, i386 slice does not contain i386 mach-o";
+ 					break;
++#if SUPPORT_ARCH_ppc64
+ 				case CPU_TYPE_POWERPC64:
+ 					if ( MachOChecker<ppc64>::validFile(p + offset) )
+ 						MachOChecker<ppc64>::make(p + offset, size, path);
+ 					else
+ 						throw "in universal file, ppc64 slice does not contain ppc64 mach-o";
+ 					break;
++#endif
+ 				case CPU_TYPE_X86_64:
+ 					if ( MachOChecker<x86_64>::validFile(p + offset) )
+ 						MachOChecker<x86_64>::make(p + offset, size, path);
+ 					else
+ 						throw "in universal file, x86_64 slice does not contain x86_64 mach-o";
+ 					break;
++#if SUPPORT_ARCH_arm_any
+ 				case CPU_TYPE_ARM:
+ 					if ( MachOChecker<arm>::validFile(p + offset) )
+ 						MachOChecker<arm>::make(p + offset, size, path);
+ 					else
+ 						throw "in universal file, arm slice does not contain arm mach-o";
+ 					break;
++#endif
+ 				default:
+ 						throwf("in universal file, unknown architecture slice 0x%x\n", cputype);
+ 				}
+@@ -1532,18 +1583,24 @@ static void check(const char* path)
+ 		else if ( MachOChecker<x86>::validFile(p) ) {
+ 			MachOChecker<x86>::make(p, length, path);
+ 		}
++#if SUPPORT_ARCH_ppc
+ 		else if ( MachOChecker<ppc>::validFile(p) ) {
+ 			MachOChecker<ppc>::make(p, length, path);
+ 		}
++#endif
++#if SUPPORT_ARCH_ppc64
+ 		else if ( MachOChecker<ppc64>::validFile(p) ) {
+ 			MachOChecker<ppc64>::make(p, length, path);
+ 		}
++#endif
+ 		else if ( MachOChecker<x86_64>::validFile(p) ) {
+ 			MachOChecker<x86_64>::make(p, length, path);
+ 		}
++#if SUPPORT_ARCH_arm_any
+ 		else if ( MachOChecker<arm>::validFile(p) ) {
+ 			MachOChecker<arm>::make(p, length, path);
+ 		}
++#endif
+ 		else {
+ 			throw "not a known file type";
+ 		}
+diff --git a/src/other/rebase.cpp b/src/other/rebase.cpp
+index 2255789..62d396b 100644
+--- a/src/other/rebase.cpp
++++ b/src/other/rebase.cpp
+@@ -147,21 +147,27 @@ MultiArchRebaser::MultiArchRebaser(const char* path, bool writable)
+ 			uint32_t fileOffset = OSSwapBigToHostInt32(archs[i].offset);
+ 			try {
+ 				switch ( OSSwapBigToHostInt32(archs[i].cputype) ) {
++#if SUPPORT_ARCH_ppc
+ 					case CPU_TYPE_POWERPC:
+ 						fRebasers.push_back(new Rebaser<ppc>(&p[fileOffset]));
+ 						break;
++#endif
++#if SUPPORT_ARCH_ppc64
+ 					case CPU_TYPE_POWERPC64:
+ 						fRebasers.push_back(new Rebaser<ppc64>(&p[fileOffset]));
+ 						break;
++#endif
+ 					case CPU_TYPE_I386:
+ 						fRebasers.push_back(new Rebaser<x86>(&p[fileOffset]));
+ 						break;
+ 					case CPU_TYPE_X86_64:
+ 						fRebasers.push_back(new Rebaser<x86_64>(&p[fileOffset]));
+ 						break;
++#if SUPPORT_ARCH_arm_any
+ 					case CPU_TYPE_ARM:
+ 						fRebasers.push_back(new Rebaser<arm>(&p[fileOffset]));
+ 						break;
++#endif
+ 					default:
+ 						throw "unknown file format";
+ 				}
+@@ -173,21 +179,28 @@ MultiArchRebaser::MultiArchRebaser(const char* path, bool writable)
+ 	}
+ 	else {
+ 		try {
+-			if ( (OSSwapBigToHostInt32(mh->magic) == MH_MAGIC) && (OSSwapBigToHostInt32(mh->cputype) == CPU_TYPE_POWERPC)) {
++			if (0) { }
++#if SUPPORT_ARCH_ppc
++			else if ( (OSSwapBigToHostInt32(mh->magic) == MH_MAGIC) && (OSSwapBigToHostInt32(mh->cputype) == CPU_TYPE_POWERPC)) {
+ 				fRebasers.push_back(new Rebaser<ppc>(mh));
+ 			}
++#endif
++#if SUPPORT_ARCH_ppc64
+ 			else if ( (OSSwapBigToHostInt32(mh->magic) == MH_MAGIC_64) && (OSSwapBigToHostInt32(mh->cputype) == CPU_TYPE_POWERPC64)) {
+ 				fRebasers.push_back(new Rebaser<ppc64>(mh));
+ 			}
++#endif
+ 			else if ( (OSSwapLittleToHostInt32(mh->magic) == MH_MAGIC) && (OSSwapLittleToHostInt32(mh->cputype) == CPU_TYPE_I386)) {
+ 				fRebasers.push_back(new Rebaser<x86>(mh));
+ 			}
+ 			else if ( (OSSwapLittleToHostInt32(mh->magic) == MH_MAGIC_64) && (OSSwapLittleToHostInt32(mh->cputype) == CPU_TYPE_X86_64)) {
+ 				fRebasers.push_back(new Rebaser<x86_64>(mh));
+ 			}
++#if SUPPORT_ARCH_arm_any
+ 			else if ( (OSSwapLittleToHostInt32(mh->magic) == MH_MAGIC) && (OSSwapLittleToHostInt32(mh->cputype) == CPU_TYPE_ARM)) {
+ 				fRebasers.push_back(new Rebaser<arm>(mh));
+ 			}
++#endif
+ 			else {
+ 				throw "unknown file format";
+ 			}
+@@ -231,11 +244,17 @@ Rebaser<A>::Rebaser(const void* machHeader)
+ 		
+ }
+ 
++#if SUPPORT_ARCH_ppc
+ template <> cpu_type_t Rebaser<ppc>::getArchitecture()    const { return CPU_TYPE_POWERPC; }
++#endif
++#if SUPPORT_ARCH_ppc64
+ template <> cpu_type_t Rebaser<ppc64>::getArchitecture()  const { return CPU_TYPE_POWERPC64; }
++#endif
+ template <> cpu_type_t Rebaser<x86>::getArchitecture()    const { return CPU_TYPE_I386; }
+ template <> cpu_type_t Rebaser<x86_64>::getArchitecture() const { return CPU_TYPE_X86_64; }
++#if SUPPORT_ARCH_arm_any
+ template <> cpu_type_t Rebaser<arm>::getArchitecture() const { return CPU_TYPE_ARM; }
++#endif
+ 
+ template <typename A>
+ uint64_t Rebaser<A>::getBaseAddress() const
+@@ -640,6 +659,7 @@ void Rebaser<x86_64>::doLocalRelocation(const macho_relocation_info<x86_64::P>*
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_ppc
+ template <>
+ void Rebaser<ppc>::doLocalRelocation(const macho_relocation_info<P>* reloc)
+ {
+@@ -650,9 +670,15 @@ void Rebaser<ppc>::doLocalRelocation(const macho_relocation_info<P>* reloc)
+ 		}
+ 	}
+ 	else {
++		macho_scattered_relocation_info<P>* sreloc = (macho_scattered_relocation_info<P>*)reloc;
++		if ( sreloc->r_type() == PPC_RELOC_PB_LA_PTR ) {
++			sreloc->set_r_value( sreloc->r_value() + fSlide );
++		}
++		else
+ 		throw "cannot rebase final linked image with scattered relocations";
+ 	}
+ }
++#endif
+ 
+ template <>
+ void Rebaser<x86>::doLocalRelocation(const macho_relocation_info<P>* reloc)
+@@ -674,6 +700,7 @@ void Rebaser<x86>::doLocalRelocation(const macho_relocation_info<P>* reloc)
+ 	}
+ }
+ 
++#if SUPPORT_ARCH_arm_any
+ template <>
+ void Rebaser<arm>::doLocalRelocation(const macho_relocation_info<P>* reloc)
+ {
+@@ -693,6 +720,7 @@ void Rebaser<arm>::doLocalRelocation(const macho_relocation_info<P>* reloc)
+ 		}
+ 	}
+ }
++#endif
+ 
+ template <typename A>
+ void Rebaser<A>::doLocalRelocation(const macho_relocation_info<P>* reloc)
+@@ -717,6 +745,7 @@ void Rebaser<A>::setRelocBase()
+ 	//fprintf(stderr, "fOrignalVMRelocBaseAddress=0x%08X\n", fOrignalVMRelocBaseAddress);
+ }
+ 
++#if SUPPORT_ARCH_ppc64
+ template <>
+ void Rebaser<ppc64>::setRelocBase()
+ {
+@@ -742,6 +771,7 @@ void Rebaser<ppc64>::setRelocBase()
+ 	// just use base address
+ 	fOrignalVMRelocBaseAddress = this->getBaseAddress();
+ }
++#endif
+ 
+ template <>
+ void Rebaser<x86_64>::setRelocBase()
+@@ -864,16 +894,22 @@ static void setSizes(fileInfo& info, const std::set<cpu_type_t>& onlyArchs)
+ static const char* nameForArch(cpu_type_t arch)
+ {
+ 	switch( arch ) {
++#if SUPPORT_ARCH_ppc
+ 		case CPU_TYPE_POWERPC:
+ 			return "ppc";
++#endif
++#if SUPPORT_ARCH_ppc64
+ 		case CPU_TYPE_POWERPC64:
+ 			return "ppca64";
++#endif
+ 		case CPU_TYPE_I386:
+ 			return "i386";
+ 		case CPU_TYPE_X86_64:
+ 			return "x86_64";
++#if SUPPORT_ARCH_arm_any
+ 		case CPU_TYPE_ARM:
+ 			return "arm";
++#endif
+ 	}
+ 	return "unknown";
+ }
+@@ -952,7 +988,11 @@ static uint64_t startAddress(cpu_type_t arch, std::vector<fileInfo>& files, uint
+ 		return highAddress - totalSize;
+ 	}
+ 	else {
+-		if ( (arch == CPU_TYPE_I386) || (arch == CPU_TYPE_POWERPC) ) {
++		if ( (arch == CPU_TYPE_I386)
++#if SUPPORT_ARCH_ppc
++				|| (arch == CPU_TYPE_POWERPC)
++#endif
++				) {
+ 			// place dylibs below dyld
+ 			uint64_t topAddr = 0x8FE00000;
+ 			uint64_t totalSize = totalVMSize(arch, files);
+@@ -960,12 +1000,15 @@ static uint64_t startAddress(cpu_type_t arch, std::vector<fileInfo>& files, uint
+ 				throwf("total size of images (0x%X) does not fit below 0x8FE00000", totalSize);
+ 			return topAddr - totalSize;
+ 		}
++#if SUPPORT_ARCH_ppc64
+ 		else if ( arch == CPU_TYPE_POWERPC64 ) {
+ 			return 0x200000000ULL;
+ 		}
++#endif
+ 		else if ( arch == CPU_TYPE_X86_64 ) {
+ 			return 0x200000000ULL;
+ 		}
++#if SUPPORT_ARCH_arm_any
+ 		else if ( arch == CPU_TYPE_ARM ) {
+ 			// place dylibs below dyld
+ 			uint64_t topAddr = 0x2FE00000;
+@@ -974,6 +1017,7 @@ static uint64_t startAddress(cpu_type_t arch, std::vector<fileInfo>& files, uint
+ 				throwf("total size of images (0x%X) does not fit below 0x2FE00000", totalSize);
+ 			return topAddr - totalSize;
+ 		}
++#endif
+ 		else
+ 			throw "unknown architecture";
+ 	}
+@@ -1009,15 +1053,21 @@ int main(int argc, const char* argv[])
+ 				}
+ 				else if ( strcmp(arg, "-arch") == 0 ) {
+ 					const char* arch = argv[++i];
+-					if ( strcmp(arch, "ppc") == 0 ) 
++					if (0) { }
++#if SUPPORT_ARCH_ppc
++					else if ( strcmp(arch, "ppc") == 0 ) 
+ 						onlyArchs.insert(CPU_TYPE_POWERPC);
++#endif
++#if SUPPORT_ARCH_ppc64
+ 					else if ( strcmp(arch, "ppc64") == 0 )
+ 						onlyArchs.insert(CPU_TYPE_POWERPC64);
++#endif
+ 					else if ( strcmp(arch, "i386") == 0 )
+ 						onlyArchs.insert(CPU_TYPE_I386);
+ 					else if ( strcmp(arch, "x86_64") == 0 )
+ 						onlyArchs.insert(CPU_TYPE_X86_64);
+ 					else {
++#if SUPPORT_ARCH_arm_any
+ 						bool found = false;
+ 						for (const ARMSubType* t=ARMSubTypes; t->subTypeName != NULL; ++t) {
+ 							if ( strcmp(t->subTypeName,arch) == 0 ) {
+@@ -1027,6 +1077,7 @@ int main(int argc, const char* argv[])
+ 							}
+ 						}
+ 						if ( !found )
++#endif
+ 							throwf("unknown architecture %s", arch);
+ 					}
+ 				}
+@@ -1045,11 +1096,17 @@ int main(int argc, const char* argv[])
+ 		
+ 		// use all architectures if no restrictions specified
+ 		if ( onlyArchs.size() == 0 ) {
++#if SUPPORT_ARCH_ppc
+ 			onlyArchs.insert(CPU_TYPE_POWERPC);
++#endif
++#if SUPPORT_ARCH_ppc64
+ 			onlyArchs.insert(CPU_TYPE_POWERPC64);
++#endif
+ 			onlyArchs.insert(CPU_TYPE_I386);
+ 			onlyArchs.insert(CPU_TYPE_X86_64);
++#if SUPPORT_ARCH_arm_any
+ 			onlyArchs.insert(CPU_TYPE_ARM);
++#endif
+ 		}
+ 		
+ 		// scan files and collect sizes
+diff --git a/src/other/unwinddump.cpp b/src/other/unwinddump.cpp
+index 9060557..07875e2 100644
+--- a/src/other/unwinddump.cpp
++++ b/src/other/unwinddump.cpp
+@@ -104,9 +104,17 @@ private:
+ };
+ 
+ 
++#if SUPPORT_ARCH_ppc
++template <>	 const char*	UnwindPrinter<ppc>::archName()		{ return "ppc"; }
++#endif
++#if SUPPORT_ARCH_ppc64
++template <>	 const char*	UnwindPrinter<ppc64>::archName()	{ return "ppc64"; }
++#endif
+ template <>	 const char*	UnwindPrinter<x86>::archName()		{ return "i386"; }
+ template <>	 const char*	UnwindPrinter<x86_64>::archName()	{ return "x86_64"; }
++#if SUPPORT_ARCH_arm_any
+ template <>	 const char*	UnwindPrinter<arm>::archName()		{ return "arm"; }
++#endif
+ 
+ 
+ template <>

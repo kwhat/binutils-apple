@@ -1,0 +1,16 @@
+Add array operand to delete to silence warning from clang:
+
+abstraction/MachOTrie.hpp:386:2: warning: 'delete' applied to a pointer that
+was allocated with 'new[]'; did you mean 'delete[]'?
+
+--- ld64-253.3/src/abstraction/MachOTrie.hpp.orig	2016-04-01 20:54:23.000000000 +0200
++++ ld64-253.3/src/abstraction/MachOTrie.hpp	2016-04-01 20:54:27.000000000 +0200
+@@ -383,7 +383,7 @@
+ 	output.reserve(entries.size());
+ 	for (std::vector<EntryWithOffset>::iterator it=entries.begin(); it != entries.end(); ++it)
+ 		output.push_back(it->entry);
+-	delete cummulativeString;
++	delete[] cummulativeString;
+ }
+ 
+ 

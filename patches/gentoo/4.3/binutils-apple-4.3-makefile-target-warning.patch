@@ -1,0 +1,35 @@
+Keep make from complaining "Makefile:62: target `.' given more than once in the
+same rule.".
+
+--- cctools-822/as/Makefile.orig	2015-02-20 21:10:52.000000000 +0100
++++ cctools-822/as/Makefile	2015-02-20 21:11:46.000000000 +0100
+@@ -485,7 +485,12 @@
+ 		$(DSTROOT)$(LOCLIBDIR)/i860/as
+ endif
+ 
+-$(OFILE_DIRS) $(SYM_DIRS):
++$(OFILE_DIRS):
+ 	$(MKDIRS) $@
+ 
++ifneq "$(OBJROOT)" "$(SYMROOT)"
++$(SYM_DIRS):
++	$(MKDIRS) $@
++endif
++
+ -include $(DEP_DIR)/Makedep
+--- cctools-822/ar/Makefile.orig	2015-02-20 21:10:59.000000000 +0100
++++ cctools-822/ar/Makefile	2015-02-20 21:12:09.000000000 +0100
+@@ -80,7 +80,12 @@
+ 	gnutar cf - $(INSTALL_FILES) | (cd $(SRCROOT); gnutar xf -)
+ 	chmod 444 $(SRCROOT)/*
+ 
+-$(OFILE_DIR) $(SYMROOT) $(DSTDIRS):
++$(OFILE_DIR) $(DSTDIRS):
+ 	$(MKDIRS) $@
+ 
++ifneq "$(OBJROOT)" "$(SYMROOT)"
++$(SYMROOT):
++	$(MKDIRS) $@
++endif
++
+ -include $(OFILE_DIR)/Makedep

@@ -1,0 +1,277 @@
+Disable loading of Xcode libLTO. Adjust relative path to prefix libLTO and add
+necessary rpath linker option to tools dynamically loading libLTO at runtime so
+that other LLVM libs referenced by libLTO are found.
+
+--- cctools-870/libstuff/llvm.c.orig	2014-02-05 22:40:54.000000000 +0100
++++ cctools-870/libstuff/llvm.c	2016-03-31 14:11:58.000000000 +0200
+@@ -35,6 +35,7 @@
+  */
+ static void load_llvm(void)
+ {
++#ifdef LTO_SUPPORT
+    uint32_t bufsize;
+    char *p, *prefix, *llvm_path, buf[MAXPATHLEN], resolved_name[PATH_MAX];
+    int i;
+@@ -59,9 +59,10 @@
+ 	    p = rindex(prefix, '/');
+ 	    if(p != NULL)
+ 		p[1] = '\0';
+-	    llvm_path = makestr(prefix, "../lib/" LIB_LLVM, NULL);
++	    llvm_path = makestr(prefix, LTO_LIBDIR "/" LIB_LLVM, NULL);
+ 
+ 	    llvm_handle = dlopen(llvm_path, RTLD_NOW);
++#if WITH_APPLE_SDK_TOOLS
+ 	    if(llvm_handle == NULL){
+ 		free(llvm_path);
+ 		llvm_path = NULL;
+@@ -70,6 +71,7 @@
+ 				     "xctoolchain/usr/lib/" LIB_LLVM,
+ 				     RTLD_NOW);
+ 	    }
++#endif
+ 	    if(llvm_handle == NULL)
+ 		return;
+ 
+@@ -103,6 +104,7 @@
+ 	}
+ 	if(llvm_handle == NULL)
+ 	    return;
++#endif
+ }
+ 
+ /*
+--- cctools-870/libstuff/lto.c.orig	2013-12-10 20:28:11.000000000 +0100
++++ cctools-870/libstuff/lto.c	2016-03-31 14:05:08.000000000 +0200
+@@ -109,9 +109,10 @@
+ 	    p = rindex(prefix, '/');
+ 	    if(p != NULL)
+ 		p[1] = '\0';
+-	    lto_path = makestr(prefix, "../lib/libLTO.dylib", NULL);
++	    lto_path = makestr(prefix, LTO_LIBDIR "/libLTO.dylib", NULL);
+ 
+ 	    lto_handle = dlopen(lto_path, RTLD_NOW);
++#if WITH_APPLE_SDK_TOOLS
+ 	    if(lto_handle == NULL){
+ 		free(lto_path);
+ 		lto_path = NULL;
+@@ -120,6 +121,7 @@
+ 				    "xctoolchain/usr/lib/libLTO.dylib",
+ 				    RTLD_NOW);
+ 	    }
++#endif
+ 	    if(lto_handle == NULL)
+ 		return(0);
+ 
+--- cctools-870/libstuff/Makefile.orig	2016-03-31 14:06:19.000000000 +0200
++++ cctools-870/libstuff/Makefile	2016-03-31 14:07:25.000000000 +0200
+@@ -19,7 +19,8 @@
+ endif
+ 
+ OFLAG = -Os
+-LTO = -DLTO_SUPPORT
++LTO_LIBDIR = ../../../lib
++LTO = -DLTO_SUPPORT -D'LTO_LIBDIR="$(LTO_LIBDIR)"'
+ G = -g
+ CFLAGS = $(OFLAG) $(LTO) $(G) -I$(SRCROOT)/../include -Wall $(LEGACY) $(SDK)
+ PG = -pg
+--- cctools-870/Makefile.orig	2016-03-31 14:04:45.000000000 +0200
++++ cctools-870/Makefile	2016-03-31 14:10:42.000000000 +0200
+@@ -14,7 +14,11 @@
+ 
+ OLD_LIBKLD = NO
+ BUILD_DYLIBS = YES
+-LTO = -DLTO_SUPPORT
++ifeq ($(ENABLE_LTO),1)
++LTO_LIBDIR = ../../../lib
++LTO = -DLTO_SUPPORT -D'LTO_LIBDIR=\"$(LTO_LIBDIR)\"'
++LTO_LDFLAGS = -Wl,-rpath,@executable_path/$(LTO_LIBDIR)
++endif
+ 
+ ifeq "macos" "$(RC_OS)"
+   TRIE := $(shell if [ "$(RC_MAJOR_RELEASE_TRAIN)" = "Tiger" ] || \
+@@ -46,6 +50,7 @@
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"	\
+ 			EFITOOLS="$(EFITOOLS)" 				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT	\
+ 			SRCROOT=$(SRCROOT)/$$i				\
+ 			OBJROOT=$(OBJROOT)/$$i				\
+@@ -66,6 +71,7 @@
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"	\
+ 			EFITOOLS="$(EFITOOLS)" 				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT	\
+ 			SRCROOT=$(SRCROOT)/$$i				\
+ 			OBJROOT=$(OBJROOT)/$$i				\
+@@ -80,6 +86,7 @@
+ 		    (cd $$i; $(MAKE) RC_CFLAGS="$(RC_CFLAGS) $(HIDE)"	\
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			EFITOOLS="$(EFITOOLS)" 				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT 	\
+ 			$@) || exit 1 ; 				\
+ 	      done;							\
+@@ -97,6 +104,7 @@
+ 		    (cd $$i; $(MAKE) RC_CFLAGS="$$SED_RC_CFLAGS"	\
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			EFITOOLS="$(EFITOOLS)"				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT	\
+ 			$@) || exit 1 ; 				\
+ 	        done;							\
+@@ -127,6 +135,7 @@
+ 		RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"			\
+ 		VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"		\
+ 		EFITOOLS="$(EFITOOLS)" TRIE="$(TRIE)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		LTO="$(LTO)" DSTROOT=$$DSTROOT/$(INSTALL_LOCATION)	\
+ 		SRCROOT=$(SRCROOT)					\
+ 		OBJROOT=$(OBJROOT)					\
+@@ -139,6 +148,7 @@
+ 		SUBDIRS_32="$(SUBDIRS_32)"				\
+ 		VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"		\
+ 		EFITOOLS="$(EFITOOLS)" TRIE="$(TRIE)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		LTO="$(LTO)" DSTROOT=$$DSTROOT install_tools 		\
+ 		lib_ofiles_install;					\
+ 	fi
+@@ -156,6 +166,7 @@
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"	\
+ 			EFITOOLS="$(EFITOOLS)" 				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT	\
+ 			SRCROOT=$(SRCROOT)/$$i				\
+ 			OBJROOT=$(OBJROOT)/$$i				\
+@@ -176,6 +187,7 @@
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"	\
+ 			EFITOOLS="$(EFITOOLS)"				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT	\
+ 			SRCROOT=$(SRCROOT)/$$i				\
+ 			OBJROOT=$(OBJROOT)/$$i				\
+@@ -191,6 +203,7 @@
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"	\
+ 			EFITOOLS="$(EFITOOLS)"				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT 	\
+ 			install) || exit 1;				\
+ 	      done;							\
+@@ -209,6 +222,7 @@
+ 			RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"		\
+ 			VERS_STRING_FLAGS="$(VERS_STRING_FLAGS)"	\
+ 			EFITOOLS="$(EFITOOLS)"				\
++			LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 			TRIE="$(TRIE)" LTO="$(LTO)" DSTROOT=$$DSTROOT 	\
+ 			install) || exit 1;				\
+ 	        done;							\
+@@ -225,6 +239,7 @@
+ 		OBJROOT=$(OBJROOT)					\
+ 		SYMROOT=$(SYMROOT)					\
+ 		EFITOOLS="$(EFITOOLS)" TRIE="$(TRIE)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		LTO="$(LTO)" lib_ofiles_install
+ 
+ lib_ofiles lib_ofiles_install: installhdrs
+@@ -273,6 +288,7 @@
+ 	    echo =========== $(MAKE) $@ for misc =============;		\
+ 	    (cd misc; $(MAKE) "RC_CFLAGS=$(RC_CFLAGS) $(HIDE)"		\
+ 		RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		TRIE="$(TRIE)" LTO="$(LTO)"				\
+ 		DSTROOT=$$DSTROOT					\
+ 		SRCROOT=$(SRCROOT)/misc					\
+@@ -315,6 +331,7 @@
+ 	    echo =========== $(MAKE) $@ for misc =============;		\
+ 	    (cd misc; $(MAKE) "RC_CFLAGS=$(RC_CFLAGS) $(HIDE)"		\
+ 		RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		TRIE="$(TRIE)" LTO="$(LTO)"				\
+ 		DSTROOT=$$DSTROOT $@) || exit 1;			\
+ 	    (cd cbtlibs; $(MAKE) "RC_CFLAGS=$(RC_CFLAGS) $(HIDE)"	\
+@@ -333,6 +350,7 @@
+ 		OBJROOT=$(OBJROOT)					\
+ 		SYMROOT=$(SYMROOT)					\
+ 		EFITOOLS="$(EFITOOLS)" TRIE="$(TRIE)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		LTO="$(LTO)" install
+ 
+ install_os_tools: installhdrs
+@@ -350,6 +368,7 @@
+ 	    echo =========== $(MAKE) $@ for misc =============;	\
+ 	    (cd misc; $(MAKE) "RC_CFLAGS=$(RC_CFLAGS) $(HIDE)"		\
+ 		RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		TRIE="$(TRIE)" LTO="$(LTO)"				\
+ 		DSTROOT=$$DSTROOT					\
+ 		SRCROOT=$(SRCROOT)/misc					\
+@@ -371,6 +390,7 @@
+ 	    echo =========== $(MAKE) $@ for misc =============;		\
+ 	    (cd misc; $(MAKE) "RC_CFLAGS=$(RC_CFLAGS) $(HIDE)"		\
+ 		RC_ARCHS="$(RC_ARCHS)" RC_OS="$(RC_OS)"			\
++		LTO_LDFLAGS="$(LTO_LDFLAGS)" \
+ 		TRIE="$(TRIE)" LTO="$(LTO)"				\
+ 		DSTROOT=$$DSTROOT $@) || exit 1;			\
+ 	    echo =========== $(MAKE) $@ for man =============;		\
+--- cctools-870/misc/Makefile.orig	2016-03-31 14:04:45.000000000 +0200
++++ cctools-870/misc/Makefile	2016-03-31 14:07:54.000000000 +0200
+@@ -12,5 +12,7 @@
+ OFLAG = -Os
+ LTO = -DLTO_SUPPORT
++LTO_LIBDIR = ../../../lib
++LTO_LDFLAGS = -Wl,-rpath,@executable_path/$(LTO_LIBDIR)
+ TRIE = -DTRIE_SUPPORT
+ CFLAGS = $(OFLAG) $(LTO) $(TRIE) -Wall \
+ 	 -I$(SRCROOT) -I$(SRCROOT)/../include -I$(OFILE_DIR) $(SDK) \
+@@ -87,7 +91,7 @@
+ 	$(CC) $(RC_CFLAGS) -nostdlib -r \
+ 		-o $(OBJROOT)/lipo.private.o \
+ 		$(OFILE_DIR)/lipo.o $(LIBSTUFF)
+-	$(CC) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/lipo.NEW \
++	$(CC) $(LTO_LDFLAGS) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/lipo.NEW \
+ 		$(OFILE_DIR)/lipo.private.o
+ 	$(DSYMUTIL) $(SYMROOT)/lipo.NEW
+ 
+@@ -111,7 +115,7 @@
+ 	$(CC) $(RC_CFLAGS) -nostdlib -r \
+ 		-o $(OBJROOT)/nm.private.o \
+ 		$(OFILE_DIR)/nm.o $(LIBSTUFF)
+-	$(CC) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/nm.NEW \
++	$(CC) $(LTO_LDFLAGS) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/nm.NEW \
+ 		$(OFILE_DIR)/nm.private.o
+ 	$(DSYMUTIL) $(SYMROOT)/nm.NEW
+ 
+@@ -119,7 +123,7 @@
+ 	$(CC) $(RC_CFLAGS) -nostdlib -r \
+ 		-o $(OBJROOT)/libtool.private.o \
+ 		$(OFILE_DIR)/libtool.o $(LIBSTUFF)
+-	$(CC) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/libtool.NEW \
++	$(CC) $(LTO_LDFLAGS) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/libtool.NEW \
+ 		$(OFILE_DIR)/libtool.private.o
+ 	$(DSYMUTIL) $(SYMROOT)/libtool.NEW
+ 
+--- cctools-870/otool/Makefile.orig	2016-03-31 14:04:45.000000000 +0200
++++ cctools-870/otool/Makefile	2016-03-31 14:08:03.000000000 +0200
+@@ -14,7 +14,9 @@
+ endif
+ 
+ OFLAG = -Os
+ LTO = -DLTO_SUPPORT
++LTO_LIBDIR = ../../../lib
++LTO_LDFLAGS = -Wl,-rpath,@executable_path/$(LTO_LIBDIR)
+ LEGACY = -D_MACH_I386_THREAD_STATUS_FPSTATE_LEGACY_FIELD_NAMES_ \
+ 	 -D_ARCHITECTURE_I386_FPU_FPSTATE_LEGACY_FIELD_NAMES_
+ CFLAGS = $(OFLAG) $(LTO) -Wall -I$(SRCROOT)/../include \
+@@ -52,7 +56,7 @@
+ $(PRODUCT).NEW:	$(OFILE_DIR) $(SYMROOT) $(OBJS)
+ 	$(CC) $(RC_CFLAGS) -nostdlib -r -o $(OBJROOT)/private.o \
+ 		$(OBJS) $(LIBSTUFF)
+-	$(CXX) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/$@ $(OBJROOT)/private.o \
++	$(CXX) $(LTO_LDFLAGS) $(RC_CFLAGS) $(SDK) -o $(SYMROOT)/$@ $(OBJROOT)/private.o \
+ 		$(LIBSTUFF) $(CXXLIB)
+ 	$(DSYMUTIL) $(SYMROOT)/$@
+ 

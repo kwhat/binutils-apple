@@ -1,5 +1,5 @@
 --- a/misc/libtool.c	2018-06-27 22:49:16.915266867 -0700
-+++ b/binutils-apple-working/misc/libtool.c	2018-06-27 22:07:18.560094343 -0700
++++ b/misc/libtool.c	2018-06-27 22:07:18.560094343 -0700
 @@ -27,7 +27,15 @@
   */
  #include <mach/mach.h>
@@ -17,6 +17,20 @@
  #ifndef __OPENSTEP__
  #include <utime.h>
  #endif
+@@ -382,8 +382,11 @@
+ 	    p++;
+ 	else
+ 	    p = argv[0];
+-	if(strncmp(p, "ranlib", sizeof("ranlib") - 1) == 0)
+-	    cmd_flags.ranlib = TRUE;
++
++	// Patch Jul 23, 2018 - Gentoo
++	if ((i = strlen(p)) >= sizeof("ranlib") - 1 &&
++			strcmp(p + (i - (sizeof("ranlib") - 1)), "ranlib") == 0)
++		cmd_flags.ranlib = TRUE;
+ 
+ 	/* The default is to used long names */
+ 	cmd_flags.use_long_names = TRUE;
 @@ -1369,8 +1377,12 @@
  			    }
  			}

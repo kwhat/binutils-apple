@@ -1,0 +1,72 @@
+Avoid error with gcc on 32bit platforms:
+ld/LinkEdit.hpp:1329: error: integer constant is too large for 'long' type
+
+--- ld64-241.9/src/ld/LinkEdit.hpp.orig	2015-02-21 00:57:12.000000000 +0100
++++ ld64-241.9/src/ld/LinkEdit.hpp	2015-02-21 21:25:20.000000000 +0100
+@@ -1390,7 +1390,7 @@
+ void FunctionStartsAtom<A>::encode() const
+ {
+ 	this->_encodedData.reserve(8192);
+-	const uint64_t badAddress = 0xFFFFFFFFFFFFFFFF;
++	const uint64_t badAddress = 0xFFFFFFFFFFFFFFFFULL;
+ 	uint64_t addr = badAddress;
+ 	// delta compress all function addresses
+ 	for (std::vector<ld::Internal::FinalSection*>::iterator it = this->_state.sections.begin(); it != this->_state.sections.end(); ++it) {
+--- ld64-241.9/src/ld/Options.cpp.orig	2015-02-21 00:57:12.000000000 +0100
++++ ld64-241.9/src/ld/Options.cpp	2015-02-21 21:26:32.000000000 +0100
+@@ -4649,7 +4649,7 @@
+ #if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
+ #endif
+-				if ( fStackAddr > 0xFFFFFFFF )
++				if ( fStackAddr > 0xFFFFFFFFULL )
+ 					throw "-stack_addr must be < 4G for 32-bit processes";
+ 				break;
+ #if SUPPORT_ARCH_ppc64
+@@ -4674,21 +4674,21 @@
+ #if SUPPORT_ARCH_ppc
+ 			case CPU_TYPE_POWERPC:
+ #endif
+-				if ( fStackSize > 0xFFFFFFFF )
++				if ( fStackSize > 0xFFFFFFFFULL )
+ 					throw "-stack_size must be < 4G for 32-bit processes";
+ 				if ( fStackAddr == 0 ) {
+-					fStackAddr = 0xC0000000;
++					fStackAddr = 0xC0000000ULL;
+ 				}
+-				if ( (fStackAddr > 0xB0000000) && ((fStackAddr-fStackSize) < 0xB0000000)  )
++				if ( (fStackAddr > 0xB0000000ULL) && ((fStackAddr-fStackSize) < 0xB0000000ULL)  )
+ 					warning("custom stack placement overlaps and will disable shared region");
+ 				break;
+ #if SUPPORT_ARCH_arm_any
+             case CPU_TYPE_ARM:
+-				if ( fStackSize > 0x2F000000 )
++				if ( fStackSize > 0x2F000000ULL )
+ 					throw "-stack_size must be < 752MB";
+ 				if ( fStackAddr == 0 )
+-					fStackAddr = 0x2F000000;
+-                if ( fStackAddr > 0x30000000)
++					fStackAddr = 0x2F000000ULL;
++                if ( fStackAddr > 0x30000000ULL)
+                     throw "-stack_addr must be < 0x30000000 for arm";
+ 				break;
+ #endif
+@@ -4697,15 +4697,15 @@
+ #endif
+ 			case CPU_TYPE_X86_64:
+ 				if ( fStackAddr == 0 ) {
+-					fStackAddr = 0x00007FFF5C000000LL;
++					fStackAddr = 0x00007FFF5C000000ULL;
+ 				}
+ 				break;
+ #if SUPPORT_ARCH_arm64
+ 			case CPU_TYPE_ARM64:
+-				if ( fStackSize > 0x20000000 )
++				if ( fStackSize > 0x20000000ULL )
+ 					throw "-stack_size must be < 512MB";
+ 				if ( fStackAddr == 0 ) {
+-					fStackAddr = 0x120000000;
++					fStackAddr = 0x120000000ULL;
+ 				}
+ 				break;
+ #endif

@@ -1,0 +1,55 @@
+Work around redefinition of thread state constants that only seems to happen
+when compiling on PPC.
+
+--- cctools-855//include/stuff/bytesex.h.orig	2015-02-20 20:06:53.000000000 +0100
++++ cctools-855//include/stuff/bytesex.h	2015-02-20 20:08:38.000000000 +0100
+@@ -50,6 +50,10 @@
+ #include <mach/i386/thread_status.h>
+ #include <mach/hppa/thread_status.h>
+ #include <mach/sparc/thread_status.h>
++#undef MACHINE_THREAD_STATE	/* need to undef these to avoid warnings */
++#undef MACHINE_THREAD_STATE_COUNT
++#undef THREAD_STATE_NONE
++#undef VALID_THREAD_STATE_FLAVOR
+ #include <mach/arm/thread_status.h>
+ #include <mach-o/nlist.h>
+ #include <mach-o/reloc.h>
+--- cctools-855//libstuff/bytesex.c.orig	2015-02-20 20:07:27.000000000 +0100
++++ cctools-855//libstuff/bytesex.c	2015-02-20 20:08:01.000000000 +0100
+@@ -200,6 +200,10 @@
+ #include <mach/i386/thread_status.h>
+ #include <mach/hppa/thread_status.h>
+ #include <mach/sparc/thread_status.h>
++#undef MACHINE_THREAD_STATE	/* need to undef these to avoid warnings */
++#undef MACHINE_THREAD_STATE_COUNT
++#undef THREAD_STATE_NONE
++#undef VALID_THREAD_STATE_FLAVOR
+ #include <mach/arm/thread_status.h>
+ #include <mach-o/nlist.h>
+ #include <mach-o/reloc.h>
+--- cctools-855//libstuff/ofile.c.orig	2015-02-20 20:07:10.000000000 +0100
++++ cctools-855//libstuff/ofile.c	2015-02-20 20:08:13.000000000 +0100
+@@ -60,6 +60,10 @@
+ #import <mach/i860/thread_status.h>
+ #import <mach/i386/thread_status.h>
+ #import <mach/sparc/thread_status.h>
++#undef MACHINE_THREAD_STATE     /* need to undef these to avoid warnings */
++#undef MACHINE_THREAD_STATE_COUNT
++#undef THREAD_STATE_NONE
++#undef VALID_THREAD_STATE_FLAVOR
+ #import <mach/arm/thread_status.h>
+ #include <mach-o/nlist.h>
+ #include <mach-o/reloc.h>
+--- cctools-855//libstuff/swap_headers.c.orig	2015-02-20 20:07:01.000000000 +0100
++++ cctools-855//libstuff/swap_headers.c	2015-02-20 20:08:27.000000000 +0100
+@@ -40,6 +40,10 @@
+ #include <mach/i386/thread_status.h>
+ #include <mach/hppa/thread_status.h>
+ #include <mach/sparc/thread_status.h>
++#undef MACHINE_THREAD_STATE	/* need to undef these to avoid warnings */
++#undef MACHINE_THREAD_STATE_COUNT
++#undef THREAD_STATE_NONE
++#undef VALID_THREAD_STATE_FLAVOR
+ #include <mach/arm/thread_status.h>
+ #include "stuff/bool.h"
+ #include "stuff/bytesex.h"
