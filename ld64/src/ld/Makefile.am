@@ -4,7 +4,7 @@ bin_PROGRAMS = ld64
 
 ld64_LDFLAGS = \
 	$(PTHREAD_FLAGS) \
-	-lcrypto -lobjcxx -luuid
+	-lcrypto -lBlocksRuntime -luuid
 
 ld64_CFLAGS =  \
 	${CFLAGS} \

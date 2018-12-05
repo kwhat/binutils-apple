@@ -34,7 +34,7 @@ find ./ -type d -exec chmod 755 -vf {} \;
 # Fix private extern
 find ./ -type f -a \( -name \*.h -o -name \*.c \) -exec sed -i 's/^__private_extern__/__attribute__((visibility("hidden")))/g' {} \;
 
-find ./patches -name *.patch -exec patch -p1 -i {} \;
+find ./patches -maxdepth 1 -name *.patch -exec patch -p1 -i {} \;
 
 echo "Alexander Barker <alex@1stleg.com>" > ./AUTHORS
 touch ChangeLog NEWS README

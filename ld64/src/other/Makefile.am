@@ -78,7 +78,7 @@ ObjectDump_CXXFLAGS =  \
 
 ObjectDump_LDFLAGS = \
 	$(PTHREAD_FLAGS) \
-	-lcrypto -lobjc -luuid
+	-lcrypto -lBlocksRuntime -luuid
 
 ObjectDump_LADD = \
 	$(top_builddir)/libemulated/libemulated.la \
