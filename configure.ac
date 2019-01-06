@@ -309,10 +309,10 @@ AC_SUBST(UUID_LIBS)
 AC_CONFIG_FILES([
 	Makefile
 	libemulated/Makefile
-  libstuff/Makefile
+	libstuff/Makefile
 	ar/Makefile
 	as/Makefile
-  as/arm/Makefile
+	as/arm/Makefile
 	as/i386/Makefile
 	as/ppc/Makefile
 	as/ppc64/Makefile
