@@ -1,4 +1,4 @@
-AC_INIT([cctools-gnu-linux], [4.6], [https://github.com/kwhat/cctools-gnu-linux/])
+AC_INIT([binutils-apple], [4.6], [https://github.com/kwhat/binutils-apple/])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST

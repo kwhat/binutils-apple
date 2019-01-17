@@ -1,0 +1,11 @@
+--- a/ld64/src/abstraction/MachOTrie.hpp	2012-09-24 18:53:30.000000000 -0700
++++ b/ld64/src/abstraction/MachOTrie.hpp	2019-01-16 21:25:30.140260720 -0800
+@@ -383,7 +383,7 @@
+ 	output.reserve(entries.size());
+ 	for (std::vector<EntryWithOffset>::iterator it=entries.begin(); it != entries.end(); ++it)
+ 		output.push_back(it->entry);
+-	delete cummulativeString;
++	delete[] cummulativeString;
+ }
+ 
+ 

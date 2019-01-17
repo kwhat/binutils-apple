@@ -1,5 +1,5 @@
---- a/as/dwarf2dbg.c	2018-06-27 22:49:16.491922020 -0700
-+++ b/as/dwarf2dbg.c	2018-06-27 21:39:50.638496302 -0700
+--- a/as/dwarf2dbg.c	2019-01-16 21:54:53.962260186 -0800
++++ b/as/dwarf2dbg.c	2019-01-16 21:56:26.559824777 -0800
 @@ -56,7 +56,7 @@
  #endif
  
@@ -9,3 +9,13 @@
  
  #ifdef HAVE_DOS_BASED_FILE_SYSTEM
  /* We need to decide which character to use as a directory separator.
+@@ -1577,6 +1577,9 @@
+     }
+   else
+     {
++      expr.X_add_number = 0;
++      emit_expr (&expr, 0);
++      sizeof_offset = 0;
+       as_fatal (_("internal error: unknown dwarf2 format"));
+     }
+ 

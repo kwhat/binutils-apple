@@ -1,0 +1,11 @@
+--- a/as/driver.c	2018-12-04 20:47:20.000000000 -0800
++++ b/as/driver.c	2019-01-16 22:14:03.939986043 -0800
+@@ -60,7 +60,7 @@
+ 	    _NSGetExecutablePath(p, &bufsize);
+ 	}
+ 	prefix = realpath(p, resolved_name);
+-	if(realpath == NULL)
++	if(&realpath == NULL) // Patch: Jan 16,2019 - Fix always false warning.
+ 	    system_fatal("realpath(3) for %s failed", p);
+ 	p = rindex(prefix, '/');
+ 	if(p != NULL)

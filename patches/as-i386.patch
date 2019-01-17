@@ -1,0 +1,13 @@
+--- a/as/i386.c	2018-12-04 20:47:20.000000000 -0800
++++ b/as/i386.c	2019-01-16 21:18:07.351855879 -0800
+@@ -730,8 +730,8 @@
+ #if !defined(BFD64)
+   return 1;
+ #else
+-  return (!(((offsetT) -1 << 31) & num)
+-	  || (((offsetT) -1 << 31) & num) == ((offsetT) -1 << 31));
++  // Patch: Jan 16, 2019 - Fixes shifting signed value warning.
++  return (num & (((offsetT) 2 << 31) - 1)) == num;
+ #endif
+ }				/* fits_in_signed_long() */
+ static INLINE int

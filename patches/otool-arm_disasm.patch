@@ -1,0 +1,23 @@
+--- a/otool/arm_disasm.c	2018-12-04 20:47:20.000000000 -0800
++++ b/otool/arm_disasm.c	2019-01-16 22:19:44.250459395 -0800
+@@ -27,6 +27,7 @@
+ #include "stuff/arch.h"
+ #include "stuff/bool.h"
+ #include <stdio.h>
++#include <limits.h> // Patch: Jan 16, 2019
+ #include <mach-o/loader.h>
+ #include <mach-o/nlist.h>
+ #include <mach-o/reloc.h>
+@@ -2616,8 +2617,10 @@
+ 			imm = (given & 0xf) | ((given & 0xe0) >> 1);
+ 
+ 			/* Is ``imm'' a negative number?  */
+-			if (imm & 0x40)
+-			  imm |= (-1 << 7);
++			if (imm & 0x40) {
++			  // Patch: Jan 16, 2019 - Fixes shifting signed value warning.
++			  imm |= (UINT_MAX << 7);
++			}
+ 
+ 			func (stream, "%d", imm);
+ 		      }

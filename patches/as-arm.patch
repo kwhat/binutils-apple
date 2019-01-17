@@ -1,0 +1,47 @@
+--- a/as/arm.c	2019-01-16 21:33:38.779932701 -0800
++++ b/as/arm.c	2019-01-16 21:00:38.212377808 -0800
+@@ -17829,7 +17829,9 @@
+        {
+          bfd_vma insn;
+          bfd_vma encoded_addend;
+-         bfd_vma addend_abs = abs (value);
++         // Patch: Dec 29, 2014 Shutup compile warning
++         // NOTE This value is casted it int32_t by upstream!
++         bfd_vma addend_abs = abs ((int32_t) value);
+ 
+          /* Check that the absolute value of the addend can be
+             expressed as an 8-bit constant plus a rotation.  */
+@@ -17874,7 +17876,9 @@
+ #endif
+         {
+           bfd_vma insn;
+-          bfd_vma addend_abs = abs (value);
++          // Patch: Dec 29, 2014 Shutup compile warning
++          // NOTE This value is casted it int32_t by upstream!
++          bfd_vma addend_abs = abs ((int32_t) value);
+ 
+           /* Check that the absolute value of the addend can be
+              encoded in 12 bits.  */
+@@ -17917,7 +17921,9 @@
+ #endif
+         {
+           bfd_vma insn;
+-          bfd_vma addend_abs = abs (value);
++          // Patch: Dec 29, 2014 Shutup compile warning
++          // NOTE This value is casted it int32_t by upstream!
++          bfd_vma addend_abs = abs ((int32_t) value);
+ 
+           /* Check that the absolute value of the addend can be
+              encoded in 8 bits.  */
+@@ -17961,7 +17967,10 @@
+ #endif
+         {
+           bfd_vma insn;
+-          bfd_vma addend_abs = abs (value);
++          // Patch: Dec 29, 2014 Shutup compile warning
++          // NOTE This value is casted it int32_t by upstream!
++          bfd_vma addend_abs = abs ((int32_t) value);
++
+ 
+           /* Check that the absolute value of the addend is a multiple of
+              four and, when divided by four, fits in 8 bits.  */

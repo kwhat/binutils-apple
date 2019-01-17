@@ -1,0 +1,90 @@
+--- a/as/read.c	2018-12-04 20:47:20.000000000 -0800
++++ b/as/read.c	2019-01-16 22:02:53.692504378 -0800
+@@ -5032,10 +5032,10 @@
+ }
+ #endif /* PPC */
+ 
+-/* Return the size of a LEB128 value.  */
+-
++#ifdef ARCH64
++// Patch: Jan 16,2019 - Fix unused function warning.
+ static inline int
+-sizeof_sleb128_32 (int32_t value)
++sizeof_uleb128_64 (uint64_t value)
+ {
+   register int size = 0;
+   register unsigned byte;
+@@ -5043,14 +5043,10 @@
+   do
+     {
+       byte = (value & 0x7f);
+-      /* Sadly, we cannot rely on typical arithmetic right shift behaviour.
+-	 Fortunately, we can structure things so that the extra work reduces
+-	 to a noop on systems that do things "properly".  */
+-      value = (value >> 7) | ~(-(offsetT)1 >> 7);
++      value >>= 7;
+       size += 1;
+     }
+-  while (!(((value == 0) && ((byte & 0x40) == 0))
+-	   || ((value == -1) && ((byte & 0x40) != 0))));
++  while (value != 0);
+ 
+   return size;
+ }
+@@ -5076,6 +5072,16 @@
+   return size;
+ }
+ 
++int
++sizeof_leb128 (valueT value, int sign)
++{
++  if (sign)
++    return sizeof_sleb128_64 ((offsetT) value);
++  else
++    return sizeof_uleb128_64 (value);
++}
++#else
++// Patch: Jan 16,2019 - Fix unused function warning.
+ static inline int
+ sizeof_uleb128_32 (uint32_t value)
+ {
+@@ -5094,7 +5100,7 @@
+ }
+ 
+ static inline int
+-sizeof_uleb128_64 (uint64_t value)
++sizeof_sleb128_32 (int32_t value)
+ {
+   register int size = 0;
+   register unsigned byte;
+@@ -5102,24 +5108,18 @@
+   do
+     {
+       byte = (value & 0x7f);
+-      value >>= 7;
++      /* Sadly, we cannot rely on typical arithmetic right shift behaviour.
++	 Fortunately, we can structure things so that the extra work reduces
++	 to a noop on systems that do things "properly".  */
++      value = (value >> 7) | ~(-(offsetT)1 >> 7);
+       size += 1;
+     }
+-  while (value != 0);
++  while (!(((value == 0) && ((byte & 0x40) == 0))
++	   || ((value == -1) && ((byte & 0x40) != 0))));
+ 
+   return size;
+ }
+ 
+-#ifdef ARCH64
+-int
+-sizeof_leb128 (valueT value, int sign)
+-{
+-  if (sign)
+-    return sizeof_sleb128_64 ((offsetT) value);
+-  else
+-    return sizeof_uleb128_64 (value);
+-}
+-#else
+ int
+ sizeof_leb128 (valueT value, int sign)
+ {
