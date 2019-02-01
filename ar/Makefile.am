@@ -7,7 +7,7 @@ ar_CFLAGS = \
 	$(ENDIAN_FLAG) \
 	$(LLVM_CFLAGS) \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 ar_LDFLAGS = \
 	$(LDFLAGS) \

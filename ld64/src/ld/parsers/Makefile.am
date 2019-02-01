@@ -16,7 +16,7 @@ libParsers_la_CXXFLAGS = \
 	-I$(top_srcdir)/ld64/src/abstraction \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 libParsers_la_SOURCES = \
 	archive_file.cpp \

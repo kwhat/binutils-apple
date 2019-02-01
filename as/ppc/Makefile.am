@@ -7,7 +7,7 @@ ppc_as_CFLAGS = \
 	$(ENDIAN_FLAG) \
 	$(LLVM_CFLAGS) \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include \
+	-idirafter${OSX_SDKDIR}/usr/include \
 	-DPPC
 
 ppc_as_LDFLAGS = \
@@ -46,4 +46,4 @@ ppc_as_SOURCES = \
 
 install-exec-hook:
 	mkdir -p $(DESTDIR)$(libexecdir)/as/ppc
-	mv $(DESTDIR)$(libexecdir)/*ppc-as* $(DESTDIR)$(libexecdir)/as/ppc/as 
+	mv $(DESTDIR)$(libexecdir)/*-as* $(DESTDIR)$(libexecdir)/as/ppc/

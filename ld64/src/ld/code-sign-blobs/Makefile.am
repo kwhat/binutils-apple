@@ -10,7 +10,7 @@ libCodeSignBlobs_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/ld64/src/abstraction \
 	-I$(top_srcdir)/ld64/src/ld \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include \
+	-idirafter${OSX_SDKDIR}/usr/include \
 	-DOTOOL
 
 libCodeSignBlobs_la_SOURCES = blob.cpp

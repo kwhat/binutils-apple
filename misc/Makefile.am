@@ -25,7 +25,7 @@ AM_CFLAGS = \
 	$(ENDIAN_FLAG) \
 	-I$(top_srcdir)/include \
 	-isystem /usr/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include \
+	-idirafter${OSX_SDKDIR}/usr/include \
 	-DI386 -Di486 -Di586 -Di686 -DARCH64
 
 AM_LDFLAGS = \

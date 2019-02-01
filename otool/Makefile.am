@@ -16,7 +16,7 @@ otool_CFLAGS = \
 	$(LLVM_CFLAGS) \
 	$(CPU_DEFINES) \
 	$(ENDIAN_FLAG) \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include \
+	-idirafter${OSX_SDKDIR}/usr/include \
 	-DOTOOL -UPC
 
 otool_SOURCES = \

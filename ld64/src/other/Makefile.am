@@ -17,7 +17,7 @@ libprunetrie_la_CXXFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 libprunetrie_la_SOURCES = PruneTrie.cpp
 
@@ -32,7 +32,7 @@ unwinddump_CXXFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 unwinddump_SOURCES = unwinddump.cpp
 
@@ -47,7 +47,7 @@ rebase_CXXFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 rebase_SOURCES = rebase.cpp
 
@@ -62,7 +62,7 @@ ObjectDump_CFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 ObjectDump_CXXFLAGS =  \
 	${CXXFLAGS} \
@@ -74,7 +74,7 @@ ObjectDump_CXXFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 ObjectDump_LDFLAGS = \
 	$(PTHREAD_FLAGS) \
@@ -108,7 +108,7 @@ machocheck_CXXFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 machocheck_LADD = \
 	$(top_builddir)/libemulated/libemulated.la \

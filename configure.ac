@@ -9,7 +9,7 @@ AC_ARG_PROGRAM
 # Force compiler to clang
 CC=clang
 CXX=clang++
-#CPP="clang -E"
+CPP="clang -E"
 
 AM_INIT_AUTOMAKE([1.10 subdir-objects no-define no-dist-gzip dist-bzip2 tar-ustar])
 
@@ -173,15 +173,22 @@ AC_SUBST(LLVM_CXXFLAGS)
 LLVM_LDFLAGS=`llvm-config --ldflags`
 AC_SUBST(LLVM_LDFLAGS)
 
-OSX_CFLAGS="-I/tmp/apple-sdk/usr/include/ar.h -isystem/usr/include -idirafter/tmp/apple-sdk/usr/include"
-AC_SUBST(OSX_CFLAGS)
-
-
 AC_SEARCH_LIBS([dlopen], [dl dld], [], [
   AC_MSG_ERROR([unable to find the dlopen() function])
 ])
 
 AC_CHECK_LIB([dl], [dlopen], [DL_LIBS=-ldl])
+
+AC_ARG_ENABLE([apple-sdk],
+	AS_HELP_STRING([--enable-apple-sdk=/], [Path to the Mac10.X.sdk to use for compiling (default: /)]),
+	[OSX_SDKDIR="$enableval"],
+	[OSX_SDKDIR="/"])
+
+AC_CHECK_FILE([$OSX_SDKDIR/Library],
+	AC_SUBST(OSX_SDKDIR),
+	AC_MSG_ERROR([unable to find the apple-sdk]))
+
+
 
 # Disable warnings.
 WARNINGS=""

@@ -16,7 +16,7 @@ ld64_CFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 ld64_CXXFLAGS =  \
 	${CXXFLAGS} \
@@ -28,7 +28,7 @@ ld64_CXXFLAGS =  \
 	-I$(top_srcdir)/ld64/src/ld/parsers \
 	-I$(top_srcdir)/ld64/src/ld \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include
+	-idirafter${OSX_SDKDIR}/usr/include
 
 LDADD = \
 	$(top_builddir)/libemulated/libemulated.la \

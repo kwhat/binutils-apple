@@ -7,7 +7,7 @@ i386_as_CFLAGS = \
 	$(ENDIAN_FLAG) \
 	$(LLVM_CFLAGS) \
 	-I$(top_srcdir)/include \
-	-idirafter/opt/MacOSX10.8.sdk/usr/include \
+	-idirafter${OSX_SDKDIR}/usr/include \
 	-DI386 -Di486 -Di586 -Di686
 
 i386_as_LDFLAGS = \
@@ -46,4 +46,4 @@ i386_as_SOURCES = \
 
 install-exec-hook:
 	mkdir -p $(DESTDIR)/$(libexecdir)/as/i386
-	mv $(DESTDIR)/$(libexecdir)/*i386-as $(DESTDIR)/$(libexecdir)/as/i386/as
+	mv $(DESTDIR)/$(libexecdir)/*-as $(DESTDIR)/$(libexecdir)/as/i386/
