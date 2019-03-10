@@ -46,4 +46,4 @@ x86_64_as_SOURCES = \
 
 install-exec-hook:
 	mkdir -p $(DESTDIR)$(libexecdir)/as/x86_64
-	mv $(DESTDIR)$(libexecdir)/*-as* $(DESTDIR)$(libexecdir)/as/x86_64/
+	mv $(DESTDIR)$(libexecdir)/*-as* $(DESTDIR)$(libexecdir)/as/x86_64/as

@@ -46,4 +46,4 @@ ppc64_as_SOURCES = \
 
 install-exec-hook:
 	mkdir -p $(DESTDIR)/$(libexecdir)/as/ppc64
-	mv $(DESTDIR)/$(libexecdir)/*-as $(DESTDIR)/$(libexecdir)/as/ppc64/
+	mv $(DESTDIR)/$(libexecdir)/*-as $(DESTDIR)/$(libexecdir)/as/ppc64/as

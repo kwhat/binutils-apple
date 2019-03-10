@@ -46,4 +46,4 @@ arm_as_SOURCES = \
 
 install-exec-hook:
 	mkdir -p $(DESTDIR)/$(libexecdir)/as/arm
-	mv $(DESTDIR)/$(libexecdir)/*-as $(DESTDIR)/$(libexecdir)/as/arm/
+	mv $(DESTDIR)/$(libexecdir)/*-as $(DESTDIR)/$(libexecdir)/as/arm/as

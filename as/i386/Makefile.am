@@ -46,4 +46,4 @@ i386_as_SOURCES = \
 
 install-exec-hook:
 	mkdir -p $(DESTDIR)/$(libexecdir)/as/i386
-	mv $(DESTDIR)/$(libexecdir)/*-as $(DESTDIR)/$(libexecdir)/as/i386/
+	mv $(DESTDIR)/$(libexecdir)/*-as $(DESTDIR)/$(libexecdir)/as/i386/as
