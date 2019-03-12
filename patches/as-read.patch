@@ -1,5 +1,24 @@
 --- a/as/read.c	2018-12-04 20:47:20.000000000 -0800
 +++ b/as/read.c	2019-01-16 22:02:53.692504378 -0800
+@@ -1043,7 +1043,8 @@
+ 				expand_macro(the_macro);
+ 			    }
+ 			    else{
+-				as_bad ("Unknown pseudo-op: %s", s);
++				// Patch Mar 11, 2019 - Alex Barker
++				as_warn ("Unknown pseudo-op: %s", s);
+ 				*after_name_pointer = after_name;
+ 				ignore_rest_of_line();
+ 			    }
+@@ -3095,7 +3096,7 @@
+ void)
+ {
+ 	if(!is_end_of_line(*input_line_pointer)){
+-	    as_bad("Rest of line ignored. 1st junk character valued %d (%c).",
++	    as_warn("Rest of line ignored. 1st junk character valued %d (%c).",
+ 		    *input_line_pointer, *input_line_pointer);
+ 	    while(input_line_pointer < buffer_limit &&
+ 		  !is_end_of_line(*input_line_pointer))
 @@ -5032,10 +5032,10 @@
  }
  #endif /* PPC */
