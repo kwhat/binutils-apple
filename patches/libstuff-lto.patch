@@ -1,0 +1,21 @@
+--- a/libstuff/lto.c	2019-03-19 19:16:34.525294396 -0700
++++ b/libstuff/lto.c	2019-03-19 20:39:29.635704571 -0700
+@@ -109,16 +109,13 @@
+ 	    p = rindex(prefix, '/');
+ 	    if(p != NULL)
+ 		p[1] = '\0';
+-	    lto_path = makestr(prefix, "../lib/libLTO.dylib", NULL);
++	    lto_path = makestr(prefix, "../lib/libLTO.so", NULL); // Patch Dec 28, 2014 - Alex Barker
+ 
+ 	    lto_handle = dlopen(lto_path, RTLD_NOW);
+ 	    if(lto_handle == NULL){
+ 		free(lto_path);
+ 		lto_path = NULL;
+-		lto_handle = dlopen("/Applications/Xcode.app/Contents/"
+-				    "Developer/Toolchains/XcodeDefault."
+-				    "xctoolchain/usr/lib/libLTO.dylib",
+-				    RTLD_NOW);
++		lto_handle = dlopen("/usr/lib/llvm/libLTO.so", RTLD_NOW); // Patch Dec 28, 2014 - Alex Barker
+ 	    }
+ 	    if(lto_handle == NULL)
+ 		return(0);

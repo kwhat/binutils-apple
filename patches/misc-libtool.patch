@@ -1,12 +1,17 @@
 --- a/misc/libtool.c	2018-06-27 22:49:16.915266867 -0700
 +++ b/misc/libtool.c	2018-06-27 22:07:18.560094343 -0700
-@@ -27,7 +27,10 @@
+@@ -27,7 +27,15 @@
   */
  #include <mach/mach.h>
  #include "stuff/openstep_mach.h"
 -#include <libc.h>
 +// Being Patch Jun 27, 2018 - Alexander Barker
-+#include "libc.h"
++//#include <libc.h>
++#include <unistd.h>
++#include <time.h>
++#include <fcntl.h>
++#include <limits.h>
++#include <sys/param.h>
 +// End Patch
 +
  #ifndef __OPENSTEP__
