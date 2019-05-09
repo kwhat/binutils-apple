@@ -11,7 +11,11 @@ curl -L https://opensource.apple.com/tarballs/cctools/cctools-839.tar.gz | tar x
 mkdir ./ld64
 curl -L https://opensource.apple.com/tarballs/ld64/ld64-136.tar.gz | tar xzv -C ./ld64 --strip 1
 curl -L https://opensource.apple.com/tarballs/dyld/dyld-210.2.3.tar.gz | tar xzv -C ./ld64/src/abstraction/ --strip 2 dyld-210.2.3/include/mach-o/
-curl -L http://opensource.apple.com/tarballs/libunwind/libunwind-35.1.tar.gz | tar xzv -C ./ld64/src/abstraction/ --strip 2 libunwind-35.1/include/
+curl -L https://opensource.apple.com/tarballs/libunwind/libunwind-35.1.tar.gz | tar xzv -C ./ld64/src/abstraction/ --strip 2 libunwind-35.1/include/
+
+#curl -L https://opensource.apple.com/tarballs/xnu/xnu-2050.24.15.tar.gz | tar xzv -C ./include --strip 2 xnu-2050.24.15/osfmk/mach
+#curl -L https://opensource.apple.com/tarballs/xnu/xnu-2050.24.15.tar.gz | tar xzv -C ./include --strip 2 xnu-2050.24.15/libkern/libkern
+#curl -L https://opensource.apple.com/tarballs/xnu/xnu-2050.24.15.tar.gz | tar xzv -C ./include --strip 2 xnu-2050.24.15/bsd/sys
 touch ./ld64/src/ld/configure.h
 
 mkdir ./include/i386
@@ -38,4 +42,4 @@ find ./patches -maxdepth 1 -name *.patch -exec patch -p1 -i {} \;
 
 echo "Alexander Barker <alex@1stleg.com>" > ./AUTHORS
 touch ChangeLog NEWS README
-mv APPLE_LICENSE COPYING
+mv -f APPLE_LICENSE COPYING

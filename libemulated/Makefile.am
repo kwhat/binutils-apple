@@ -22,3 +22,4 @@ libemulated_la_SOURCES = \
 	strlcat.c \
 	strlcpy.c \
 	strmode.c
+
