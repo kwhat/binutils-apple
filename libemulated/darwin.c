@@ -26,7 +26,8 @@ kern_return_t vm_allocate(vm_map_t target_task, vm_address_t *address, vm_size_t
 
 kern_return_t vm_deallocate(vm_map_t target_task, vm_address_t address, vm_size_t size)
 {
-  free((void *) address);
+  // FIXME It appears that ranlib is leaking memory...
+  //free((void *) address);
 
   return 0;
 }
