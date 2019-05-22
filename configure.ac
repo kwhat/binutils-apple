@@ -95,7 +95,6 @@ case $target_cpu in
         AC_DEFINE(SUPPORT_ARCH_armv7f)
         AC_DEFINE(SUPPORT_ARCH_armv7k)
         AC_DEFINE(SUPPORT_ARCH_armv7s)
-        CPU_DEFINES="-DARM"
     ;;
      arm64*|aarch64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777228, [Emulated CPU type])
@@ -108,27 +107,20 @@ case $target_cpu in
         AC_DEFINE(SUPPORT_ARCH_armv7f)
         AC_DEFINE(SUPPORT_ARCH_armv7k)
         AC_DEFINE(SUPPORT_ARCH_armv7s)
-        
-        CPU_DEFINES="-DARM -DARCH64"
     ;;
      powerpc)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 18, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 100, [Emulated CPU subtype])
-
-        CPU_DEFINES="-DPPC"
     ;;
     powerpc64*)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777234, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 0, [Emulated CPU subtype])
-
-        CPU_DEFINES="-DPPC -DARCH64"
        ;;
     i?86)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 7, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 10, [Emulated CPU subtype])
 
         AC_DEFINE(SUPPORT_ARCH_i386)
-        CPU_DEFINES="-DI386 -i486 -i586 -i686"
     ;;
     x86_64|amd64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777223, [Emulated CPU type])
@@ -136,7 +128,6 @@ case $target_cpu in
         
         AC_DEFINE(SUPPORT_ARCH_i386)
         AC_DEFINE(SUPPORT_ARCH_x86_64)
-        CPU_DEFINES="-DI386 -i486 -i586 -i686 -DARCH64"
     ;;
     *)
         AC_MSG_ERROR([Unsupported target $target_cpu])
@@ -188,6 +179,60 @@ AC_CHECK_FILE([$OSX_SDKDIR/Library],
 	AC_SUBST(OSX_SDKDIR),
 	AC_MSG_ERROR([unable to find the apple-sdk]))
 
+
+AC_ARG_ENABLE([arm-support],
+	AS_HELP_STRING([--disable-arm-support], [Disable support for the arm architecture (32-bit and 64-bit)]),
+	[ARM_SUPPORT="arm"],
+	[ARM_SUPPORT=""])
+AC_SUBST([ARM_SUPPORT])
+
+AC_ARG_ENABLE([hppa-support],
+	AS_HELP_STRING([--enable-hppa-support], [Enable support for the hppa architecture]),
+	[HPPA_SUPPORT="hppa"],
+	[HPPA_SUPPORT=""])
+AC_SUBST([HPPA_SUPPORT])
+
+AC_ARG_ENABLE([i860-support],
+	AS_HELP_STRING([--enable-i860-support], [Enable support for the i860 architecture]),
+	[I860_SUPPORT="i860"],
+	[I860_SUPPORT=""])
+AC_SUBST([I860_SUPPORT])
+
+AC_ARG_ENABLE([m68k-support],
+	AS_HELP_STRING([--enable-m68k-support], [Enable support for the m68k architecture]),
+	[M68K_SUPPORT="m68k"],
+	[M68K_SUPPORT=""])
+AC_SUBST([M68K_SUPPORT])
+
+AC_ARG_ENABLE([m88k-support],
+	AS_HELP_STRING([--enable-m88k-support], [Enable support for the m88k architecture]),
+	[M88K_SUPPORT="m88k"],
+	[M88K_SUPPORT=""])
+AC_SUBST([M88K_SUPPORT])
+
+AC_ARG_ENABLE([ppc-support],
+	AS_HELP_STRING([--disable-ppc-support], [Disable support for the ppc architecture (32-bit and 64-bit)]),
+	[PPC_SUPPORT="ppc ppc64"],
+	[PPC_SUPPORT=""])
+AC_SUBST([PPC_SUPPORT])
+
+AC_ARG_ENABLE([sparc-support],
+	AS_HELP_STRING([--enable-sparc-support], [Enable support for the sparc architecture]),
+	[SPARC_SUPPORT="sparc"],
+	[SPARC_SUPPORT=""])
+AC_SUBST([SPARC_SUPPORT])
+
+AC_ARG_ENABLE([x86-support],
+	AS_HELP_STRING([--disable-x86-support], [Disable support for the x86 architecture (32-bit and 64-bit)]),
+	[X86_SUPPORT="i386 x86_64"],
+	[X86_SUPPORT=""])
+AC_SUBST([X86_SUPPORT])
+
+
+AC_ARG_ENABLE([lto],
+	AS_HELP_STRING([--disable-lto], [Disable support for the link-time-optimizer]),
+	[AC_DEFINE(LTO_SUPPORT)],
+	[])
 
 
 # Disable warnings.
@@ -273,45 +318,11 @@ CFLAGS=$ORIGCFLAGS
 AC_SUBST([WARNINGS], [$WARNINGS])
 
 
-
-
-
-#AC_SUBST(DL_LIBS)
-
 AC_CHECK_LIB([pthread],[pthread_create],[PTHREAD_FLAGS=-pthread])
 AC_SUBST(PTHREAD_FLAGS)
 
 AC_CHECK_LIB([uuid],[uuid_generate_random],[UUID_LIBS=-luuid])
 AC_SUBST(UUID_LIBS)
-
-#AC_CHECK_LIB([ crypto ], [ MD5_Init ], [ CRYPT_LIBS=-lcrypto ])
-#AC_SUBST(CRYPT_LIBS)
-
-
-#for as wrapper.
-#AC_SUBST([ASLIBEXECDIR], ['${libexecdir}/as'])
-
-# For ld_class involk in ld64 and other command call.
-
-
-#compile ld_classic or not. only for 32bit.
-# LD32=""
-# cat > conftest.c <<EOF
-# #if defined(__x86_64__) || (!defined(__i386__) && defined(__LP64__))
-# host_address=64
-# #else
-# host_address=32
-# #endif
-# EOF
-# OSBIT=`${CC-cc} -E conftest.c | grep host_address=`
-# rm -f conftest.c
-
-# if test "$OSBIT" = "host_address=32"; then
-# AC_MSG_NOTICE(["Your system is 32bit, enable ld_classic build"])
-# LD32="ld"
-# else
-# AC_MSG_NOTICE(["Your system is 64bit, disable ld_classic"])
-# fi
 
 AC_CONFIG_FILES([
 	Makefile
@@ -320,9 +331,14 @@ AC_CONFIG_FILES([
 	ar/Makefile
 	as/Makefile
 	as/arm/Makefile
+	as/hppa/Makefile
 	as/i386/Makefile
+	as/i860/Makefile
+	as/m68k/Makefile
+	as/m88k/Makefile
 	as/ppc/Makefile
 	as/ppc64/Makefile
+	as/sparc/Makefile
 	as/x86_64/Makefile
 	misc/Makefile
 	otool/Makefile

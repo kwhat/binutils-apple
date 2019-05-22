@@ -1,4 +1,12 @@
-SUBDIRS = arm i386 x86_64 ppc ppc64
+SUBDIRS = \
+	$(ARM_SUPPORT) \
+	${HPPA_SUPPORT} \
+	${I860_SUPPORT} \
+	${M68K_SUPPORT} \
+	${M88K_SUPPORT} \
+	${PPC_SUPPORT} \
+	${SPARC_SUPPORT} \
+	${X86_SUPPORT}
 
 bin_PROGRAMS = as 
 
