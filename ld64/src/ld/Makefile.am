@@ -2,10 +2,6 @@ SUBDIRS = code-sign-blobs parsers passes
 
 bin_PROGRAMS = ld64
 
-ld64_LDFLAGS = \
-	$(PTHREAD_FLAGS) \
-	-lcrypto -lBlocksRuntime -luuid
-
 ld64_CFLAGS =  \
 	${CFLAGS} \
 	-fblocks \
@@ -30,7 +26,12 @@ ld64_CXXFLAGS =  \
 	-I$(top_srcdir)/include \
 	-idirafter${OSX_SDKDIR}/usr/include
 
-LDADD = \
+ld64_LDFLAGS = \
+	$(LDFLAGS) \
+	$(LLVM_LDFLAGS) \
+	-lBlocksRuntime -lcrypto -lLTO -luuid
+
+ld64_LDADD = \
 	$(top_builddir)/libemulated/libemulated.la \
 	$(top_builddir)/libstuff/libstuff.la \
 	$(top_builddir)/ld64/src/ld/code-sign-blobs/libCodeSignBlobs.la \

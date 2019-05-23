@@ -13,4 +13,9 @@ libCodeSignBlobs_la_CXXFLAGS = \
 	-idirafter${OSX_SDKDIR}/usr/include \
 	-DOTOOL
 
+libCodeSignBlobs_la_LDFLAGS = \
+	$(LDFLAGS) \
+	$(LLVM_LDFLAGS) \
+	-lBlocksRuntime -lcrypto -lLTO -luuid
+
 libCodeSignBlobs_la_SOURCES = blob.cpp

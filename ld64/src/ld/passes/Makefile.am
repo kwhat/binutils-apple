@@ -21,6 +21,11 @@ libPasses_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-idirafter${OSX_SDKDIR}/usr/include
 
+libPasses_la_LDFLAGS = \
+	$(LDFLAGS) \
+	$(LLVM_LDFLAGS) \
+	-lBlocksRuntime -lcrypto -lLTO -luuid
+
 libPasses_la_SOURCES = \
 	branch_island.cpp \
 	branch_shim.cpp \

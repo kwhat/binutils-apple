@@ -6,14 +6,13 @@ otool_LDADD =  \
 	$(DL_LIBS) 
 
 otool_LDFLAGS = \
-	$(AM_LDFLAGS) \
+	$(LDFLAGS) \
 	$(PTHREAD_FLAGS)
 
 otool_CFLAGS = \
-	$(CFLAGS) \
 	$(WARNINGS) \
 	-I$(top_srcdir)/include \
-	$(LLVM_CFLAGS) \
+	$(CFLAGS) \
 	$(CPU_DEFINES) \
 	$(ENDIAN_FLAG) \
 	-idirafter${OSX_SDKDIR}/usr/include \

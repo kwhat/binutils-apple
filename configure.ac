@@ -142,7 +142,6 @@ AC_DEFINE(NeXT_MOD)
 AC_DEFINE(_SYS_UCRED_H_)
 AC_DEFINE(__DYNAMIC__)
 
-#AC_DEFINE(__MAC_OS_X_VERSION_MIN_REQUIRED, 1070)
 if test "$target_alias"; then
     AC_DEFINE(PROGRAM_PREFIX, "${target_alias}-")
 else 
@@ -155,14 +154,10 @@ AC_C_BIGENDIAN(
 )
 
 
-LLVM_CFLAGS=`llvm-config --cflags`
-AC_SUBST(LLVM_CFLAGS)
+CFLAGS+=" "`llvm-config --cflags`
+CXXFLAGS+=" "`llvm-config --cxxflags`
+LDFLAGS+=" "`llvm-config --ldflags`
 
-LLVM_CXXFLAGS=`llvm-config --cxxflags`
-AC_SUBST(LLVM_CXXFLAGS)
-
-LLVM_LDFLAGS=`llvm-config --ldflags`
-AC_SUBST(LLVM_LDFLAGS)
 
 AC_SEARCH_LIBS([dlopen], [dl dld], [], [
   AC_MSG_ERROR([unable to find the dlopen() function])
@@ -178,61 +173,6 @@ AC_ARG_ENABLE([apple-sdk],
 AC_CHECK_FILE([$OSX_SDKDIR/Library],
 	AC_SUBST(OSX_SDKDIR),
 	AC_MSG_ERROR([unable to find the apple-sdk]))
-
-
-AC_ARG_ENABLE([arm-support],
-	AS_HELP_STRING([--disable-arm-support], [Disable support for the arm architecture (32-bit and 64-bit)]),
-	[ARM_SUPPORT="arm"],
-	[ARM_SUPPORT=""])
-AC_SUBST([ARM_SUPPORT])
-
-AC_ARG_ENABLE([hppa-support],
-	AS_HELP_STRING([--enable-hppa-support], [Enable support for the hppa architecture]),
-	[HPPA_SUPPORT="hppa"],
-	[HPPA_SUPPORT=""])
-AC_SUBST([HPPA_SUPPORT])
-
-AC_ARG_ENABLE([i860-support],
-	AS_HELP_STRING([--enable-i860-support], [Enable support for the i860 architecture]),
-	[I860_SUPPORT="i860"],
-	[I860_SUPPORT=""])
-AC_SUBST([I860_SUPPORT])
-
-AC_ARG_ENABLE([m68k-support],
-	AS_HELP_STRING([--enable-m68k-support], [Enable support for the m68k architecture]),
-	[M68K_SUPPORT="m68k"],
-	[M68K_SUPPORT=""])
-AC_SUBST([M68K_SUPPORT])
-
-AC_ARG_ENABLE([m88k-support],
-	AS_HELP_STRING([--enable-m88k-support], [Enable support for the m88k architecture]),
-	[M88K_SUPPORT="m88k"],
-	[M88K_SUPPORT=""])
-AC_SUBST([M88K_SUPPORT])
-
-AC_ARG_ENABLE([ppc-support],
-	AS_HELP_STRING([--disable-ppc-support], [Disable support for the ppc architecture (32-bit and 64-bit)]),
-	[PPC_SUPPORT="ppc ppc64"],
-	[PPC_SUPPORT=""])
-AC_SUBST([PPC_SUPPORT])
-
-AC_ARG_ENABLE([sparc-support],
-	AS_HELP_STRING([--enable-sparc-support], [Enable support for the sparc architecture]),
-	[SPARC_SUPPORT="sparc"],
-	[SPARC_SUPPORT=""])
-AC_SUBST([SPARC_SUPPORT])
-
-AC_ARG_ENABLE([x86-support],
-	AS_HELP_STRING([--disable-x86-support], [Disable support for the x86 architecture (32-bit and 64-bit)]),
-	[X86_SUPPORT="i386 x86_64"],
-	[X86_SUPPORT=""])
-AC_SUBST([X86_SUPPORT])
-
-
-AC_ARG_ENABLE([lto],
-	AS_HELP_STRING([--disable-lto], [Disable support for the link-time-optimizer]),
-	[AC_DEFINE(LTO_SUPPORT)],
-	[])
 
 
 # Disable warnings.
@@ -318,11 +258,66 @@ CFLAGS=$ORIGCFLAGS
 AC_SUBST([WARNINGS], [$WARNINGS])
 
 
-AC_CHECK_LIB([pthread],[pthread_create],[PTHREAD_FLAGS=-pthread])
-AC_SUBST(PTHREAD_FLAGS)
 
-AC_CHECK_LIB([uuid],[uuid_generate_random],[UUID_LIBS=-luuid])
-AC_SUBST(UUID_LIBS)
+AC_ARG_ENABLE([arm-support],
+	AS_HELP_STRING([--disable-arm-support], [Disable support for the arm architecture (32-bit and 64-bit)]),
+	[ARM_SUPPORT="arm"],
+	[ARM_SUPPORT=""])
+AC_SUBST([ARM_SUPPORT])
+
+AC_ARG_ENABLE([hppa-support],
+	AS_HELP_STRING([--enable-hppa-support], [Enable support for the hppa architecture]),
+	[HPPA_SUPPORT="hppa"],
+	[HPPA_SUPPORT=""])
+AC_SUBST([HPPA_SUPPORT])
+
+AC_ARG_ENABLE([i860-support],
+	AS_HELP_STRING([--enable-i860-support], [Enable support for the i860 architecture]),
+	[I860_SUPPORT="i860"],
+	[I860_SUPPORT=""])
+AC_SUBST([I860_SUPPORT])
+
+AC_ARG_ENABLE([m68k-support],
+	AS_HELP_STRING([--enable-m68k-support], [Enable support for the m68k architecture]),
+	[M68K_SUPPORT="m68k"],
+	[M68K_SUPPORT=""])
+AC_SUBST([M68K_SUPPORT])
+
+AC_ARG_ENABLE([m88k-support],
+	AS_HELP_STRING([--enable-m88k-support], [Enable support for the m88k architecture]),
+	[M88K_SUPPORT="m88k"],
+	[M88K_SUPPORT=""])
+AC_SUBST([M88K_SUPPORT])
+
+AC_ARG_ENABLE([ppc-support],
+	AS_HELP_STRING([--disable-ppc-support], [Disable support for the ppc architecture (32-bit and 64-bit)]),
+	[PPC_SUPPORT="ppc ppc64"],
+	[PPC_SUPPORT=""])
+AC_SUBST([PPC_SUPPORT])
+
+AC_ARG_ENABLE([sparc-support],
+	AS_HELP_STRING([--enable-sparc-support], [Enable support for the sparc architecture]),
+	[SPARC_SUPPORT="sparc"],
+	[SPARC_SUPPORT=""])
+AC_SUBST([SPARC_SUPPORT])
+
+AC_ARG_ENABLE([x86-support],
+	AS_HELP_STRING([--disable-x86-support], [Disable support for the x86 architecture (32-bit and 64-bit)]),
+	[X86_SUPPORT="i386 x86_64"],
+	[X86_SUPPORT=""])
+AC_SUBST([X86_SUPPORT])
+
+
+AC_ARG_ENABLE([lto],
+	AS_HELP_STRING([--disable-lto], [Disable support for the link-time-optimizer]),
+	[AC_SEARCH_LIBS([lto_api_version], [LTO], [AC_DEFINE(LTO_SUPPORT)], [AC_MSG_ERROR([unable to find libLTO])])],
+	[])
+
+
+AC_SEARCH_LIBS([Block_size], [BlocksRuntime], [], [AC_MSG_ERROR([unable to find blocks runtime])])
+AC_SEARCH_LIBS([MD5_Init], [crypto], [], [AC_MSG_ERROR([unable to find libcrypto])])
+AC_SEARCH_LIBS([pthread_create], [pthread], [], [AC_MSG_ERROR([unable to find pthreads])])
+AC_SEARCH_LIBS([uuid_generate_random], [uuid], [], [AC_MSG_ERROR([unable to find libuuid])])
 
 AC_CONFIG_FILES([
 	Makefile

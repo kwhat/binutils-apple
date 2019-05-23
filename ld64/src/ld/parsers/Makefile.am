@@ -18,6 +18,11 @@ libParsers_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-idirafter${OSX_SDKDIR}/usr/include
 
+libParsers_la_LDFLAGS = \
+	$(LDFLAGS) \
+	$(LLVM_LDFLAGS) \
+	-lBlocksRuntime -lcrypto -lLTO -luuid
+
 libParsers_la_SOURCES = \
 	archive_file.cpp \
 	lto_file.cpp \

@@ -1,5 +1,10 @@
 bin_PROGRAMS = unwinddump rebase ObjectDump machocheck
 
+AM_LDFLAGS = \
+	$(LDFLAGS) \
+	$(LLVM_LDFLAGS) \
+	-lBlocksRuntime -lcrypto -lLTO -luuid
+
 LDADD = \
 	$(top_builddir)/libemulated/libemulated.la \
 	$(top_builddir)/libstuff/libstuff.la
@@ -78,7 +83,7 @@ ObjectDump_CXXFLAGS =  \
 
 ObjectDump_LDFLAGS = \
 	$(PTHREAD_FLAGS) \
-	-lcrypto -lBlocksRuntime -luuid
+	-lcrypto -lBlocksRuntime -lLTO -luuid
 
 ObjectDump_LADD = \
 	$(top_builddir)/libemulated/libemulated.la \
@@ -110,8 +115,12 @@ machocheck_CXXFLAGS =  \
 	-I$(top_srcdir)/include \
 	-idirafter${OSX_SDKDIR}/usr/include
 
+machocheck_LDFLAGS = \
+	$(PTHREAD_FLAGS) \
+	-lcrypto -lBlocksRuntime -lLTO -luuid
+
 machocheck_LADD = \
 	$(top_builddir)/libemulated/libemulated.la \
 	$(top_builddir)/libstuff/libstuff.la
-	
+
 machocheck_SOURCES = machochecker.cpp
