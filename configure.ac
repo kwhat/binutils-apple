@@ -119,15 +119,10 @@ case $target_cpu in
     i?86)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 7, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 10, [Emulated CPU subtype])
-
-        AC_DEFINE(SUPPORT_ARCH_i386)
     ;;
     x86_64|amd64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777223, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 3, [Emulated CPU subtype])
-        
-        AC_DEFINE(SUPPORT_ARCH_i386)
-        AC_DEFINE(SUPPORT_ARCH_x86_64)
     ;;
     *)
         AC_MSG_ERROR([Unsupported target $target_cpu])
@@ -303,7 +298,9 @@ AC_SUBST([SPARC_SUPPORT])
 
 AC_ARG_ENABLE([x86-support],
 	AS_HELP_STRING([--disable-x86-support], [Disable support for the x86 architecture (32-bit and 64-bit)]),
-	[X86_SUPPORT="i386 x86_64"],
+	[X86_SUPPORT="i386 x86_64"
+	 AC_DEFINE(SUPPORT_ARCH_i386)
+	 AC_DEFINE(SUPPORT_ARCH_x86_64)],
 	[X86_SUPPORT=""])
 AC_SUBST([X86_SUPPORT])
 
