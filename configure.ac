@@ -95,6 +95,8 @@ case $target_cpu in
         AC_DEFINE(SUPPORT_ARCH_armv7f)
         AC_DEFINE(SUPPORT_ARCH_armv7k)
         AC_DEFINE(SUPPORT_ARCH_armv7s)
+        
+        AS_ARCH="arm"
     ;;
      arm64*|aarch64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777228, [Emulated CPU type])
@@ -107,27 +109,39 @@ case $target_cpu in
         AC_DEFINE(SUPPORT_ARCH_armv7f)
         AC_DEFINE(SUPPORT_ARCH_armv7k)
         AC_DEFINE(SUPPORT_ARCH_armv7s)
+        
+        AS_ARCH="arm"
     ;;
      powerpc)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 18, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 100, [Emulated CPU subtype])
+        
+        AS_ARCH="ppc ppc64"
     ;;
     powerpc64*)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777234, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 0, [Emulated CPU subtype])
+        
+        AS_ARCH="ppc ppc64"
        ;;
     i?86)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 7, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 10, [Emulated CPU subtype])
+        
+        AS_ARCH="i386"
     ;;
     x86_64|amd64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777223, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 3, [Emulated CPU subtype])
+        
+        AS_ARCH="x86_64"
     ;;
     *)
         AC_MSG_ERROR([Unsupported target $target_cpu])
     ;;
 esac
+AC_SUBST([AS_ARCH])
+
 
 AC_DEFINE(_POSIX_C_SOURCE)
 AC_DEFINE(_DARWIN_C_SOURCE)
@@ -251,58 +265,6 @@ AC_COMPILE_IFELSE(
 CFLAGS=$ORIGCFLAGS
 
 AC_SUBST([WARNINGS], [$WARNINGS])
-
-
-
-AC_ARG_ENABLE([arm-support],
-	AS_HELP_STRING([--disable-arm-support], [Disable support for the arm architecture (32-bit and 64-bit)]),
-	[ARM_SUPPORT="arm"],
-	[ARM_SUPPORT=""])
-AC_SUBST([ARM_SUPPORT])
-
-AC_ARG_ENABLE([hppa-support],
-	AS_HELP_STRING([--enable-hppa-support], [Enable support for the hppa architecture]),
-	[HPPA_SUPPORT="hppa"],
-	[HPPA_SUPPORT=""])
-AC_SUBST([HPPA_SUPPORT])
-
-AC_ARG_ENABLE([i860-support],
-	AS_HELP_STRING([--enable-i860-support], [Enable support for the i860 architecture]),
-	[I860_SUPPORT="i860"],
-	[I860_SUPPORT=""])
-AC_SUBST([I860_SUPPORT])
-
-AC_ARG_ENABLE([m68k-support],
-	AS_HELP_STRING([--enable-m68k-support], [Enable support for the m68k architecture]),
-	[M68K_SUPPORT="m68k"],
-	[M68K_SUPPORT=""])
-AC_SUBST([M68K_SUPPORT])
-
-AC_ARG_ENABLE([m88k-support],
-	AS_HELP_STRING([--enable-m88k-support], [Enable support for the m88k architecture]),
-	[M88K_SUPPORT="m88k"],
-	[M88K_SUPPORT=""])
-AC_SUBST([M88K_SUPPORT])
-
-AC_ARG_ENABLE([ppc-support],
-	AS_HELP_STRING([--disable-ppc-support], [Disable support for the ppc architecture (32-bit and 64-bit)]),
-	[PPC_SUPPORT="ppc ppc64"],
-	[PPC_SUPPORT=""])
-AC_SUBST([PPC_SUPPORT])
-
-AC_ARG_ENABLE([sparc-support],
-	AS_HELP_STRING([--enable-sparc-support], [Enable support for the sparc architecture]),
-	[SPARC_SUPPORT="sparc"],
-	[SPARC_SUPPORT=""])
-AC_SUBST([SPARC_SUPPORT])
-
-AC_ARG_ENABLE([x86-support],
-	AS_HELP_STRING([--disable-x86-support], [Disable support for the x86 architecture (32-bit and 64-bit)]),
-	[X86_SUPPORT="i386 x86_64"
-	 AC_DEFINE(SUPPORT_ARCH_i386)
-	 AC_DEFINE(SUPPORT_ARCH_x86_64)],
-	[X86_SUPPORT=""])
-AC_SUBST([X86_SUPPORT])
 
 
 AC_ARG_ENABLE([lto],
