@@ -82,7 +82,6 @@ AC_CHECK_FUNCS([memset strdup strrchr strtoul])
 
 
 # For libstuff emulated.c
-AC_DEFINE(ALL_SUPPORTED_ARCHS, "i386 x86_64 armv4t armv5 armv6 armv7 armv7f armv7k armv7s")
 case $target_cpu in
     arm*)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 12, [Emulated CPU type])
@@ -96,7 +95,7 @@ case $target_cpu in
         AC_DEFINE(SUPPORT_ARCH_armv7k)
         AC_DEFINE(SUPPORT_ARCH_armv7s)
         
-        AS_ARCH="arm"
+        ALL_SUPPORTED_ARCHS="arm"
     ;;
      arm64*|aarch64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777228, [Emulated CPU type])
@@ -110,37 +109,37 @@ case $target_cpu in
         AC_DEFINE(SUPPORT_ARCH_armv7k)
         AC_DEFINE(SUPPORT_ARCH_armv7s)
         
-        AS_ARCH="arm"
+        ALL_SUPPORTED_ARCHS="arm"
     ;;
      powerpc)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 18, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 100, [Emulated CPU subtype])
         
-        AS_ARCH="ppc ppc64"
+        ALL_SUPPORTED_ARCHS="ppc ppc64"
     ;;
     powerpc64*)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777234, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 0, [Emulated CPU subtype])
         
-        AS_ARCH="ppc ppc64"
+        ALL_SUPPORTED_ARCHS="ppc ppc64"
        ;;
     i?86)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 7, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 10, [Emulated CPU subtype])
         
-        AS_ARCH="i386"
+        ALL_SUPPORTED_ARCHS="i386"
     ;;
     x86_64|amd64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777223, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 3, [Emulated CPU subtype])
         
-        AS_ARCH="x86_64"
+        ALL_SUPPORTED_ARCHS="x86_64"
     ;;
     *)
         AC_MSG_ERROR([Unsupported target $target_cpu])
     ;;
 esac
-AC_SUBST([AS_ARCH])
+AC_DEFINE([ALL_SUPPORTED_ARCHS])
 
 
 AC_DEFINE(_POSIX_C_SOURCE)
