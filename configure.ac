@@ -127,11 +127,15 @@ case $target_cpu in
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 7, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 10, [Emulated CPU subtype])
         
+        AC_DEFINE(SUPPORT_ARCH_i386)
+        
         ALL_SUPPORTED_ARCHS="i386"
     ;;
     x86_64|amd64)
         AC_DEFINE(EMULATED_HOST_CPU_TYPE, 16777223, [Emulated CPU type])
         AC_DEFINE(EMULATED_HOST_CPU_SUBTYPE, 3, [Emulated CPU subtype])
+        
+        AC_DEFINE(SUPPORT_ARCH_x86_64)
         
         ALL_SUPPORTED_ARCHS="x86_64"
     ;;
