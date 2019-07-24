@@ -1,0 +1,29 @@
+--- a/libstuff/execute.c	2019-07-24 15:12:54.300861847 -0700
++++ b/libstuff/execute.c	2019-07-24 15:13:44.936205187 -0700
+@@ -147,7 +147,7 @@
+ char *str)
+ {
+ 	int i;
+-	char *p;
++	char *p, *t; // Begin Patch Jul 24, 2019 - Alex Barker
+ 	char *prefix, buf[MAXPATHLEN], resolved_name[PATH_MAX];
+ 	uint32_t bufsize;
+ 
+@@ -162,9 +162,16 @@
+ 	    _NSGetExecutablePath(p, &bufsize);
+ 	}
+ 	prefix = realpath(p, resolved_name);
++
++	// Begin Patch Jul 24, 2019 - Alex Barker
+ 	p = rindex(prefix, '/');
+-	if(p != NULL)
++	t = rindex(prefix, '-');
++	if (t > p) {
++	    t[1] = '\0';
++	} else if(p != NULL) {
+ 	    p[1] = '\0';
++	}
++	// End Patch Jul 24, 2019 - Alex Barker
+ 
+ 	return(makestr(prefix, str, NULL));
+ }
